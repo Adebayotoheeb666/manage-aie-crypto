@@ -573,13 +573,24 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
-                        {tx.type === "receive" ? "+" : "-"}
-                        {tx.amount} {tx.symbol}
+                        {tx.tx_type === "receive" ? "+" : "-"}
+                        {tx.amount.toFixed(8)} {tx.symbol}
                       </p>
                       <p className="text-sm text-gray-600">
-                        ${tx.usdValue.toLocaleString()}
+                        ${(tx.amount_usd || 0).toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
                       </p>
-                      <span className="inline-block mt-2 px-2 py-1 rounded text-xs font-medium bg-green-100 text-green-700">
+                      <span
+                        className={`inline-block mt-2 px-2 py-1 rounded text-xs font-medium ${
+                          tx.status === "confirmed"
+                            ? "bg-green-100 text-green-700"
+                            : tx.status === "pending"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-red-100 text-red-700"
+                        }`}
+                      >
                         {tx.status}
                       </span>
                     </div>
