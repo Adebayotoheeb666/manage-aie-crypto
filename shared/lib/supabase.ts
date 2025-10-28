@@ -22,17 +22,47 @@ if (!SUPABASE_ANON_KEY) {
   console.warn('[supabase] SUPABASE_ANON_KEY is missing or empty');
 }
 
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  {
+// Lazily initialize Supabase client. If envs are missing the proxy will throw a clear error
+let _supabaseClient: SupabaseClient<Database> | null = null;
+function createSupabaseClient(): SupabaseClient<Database> {
+  if (_supabaseClient) return _supabaseClient;
+  if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
+    throw new Error('[supabase] SUPABASE_URL is missing or invalid. Ensure VITE_SUPABASE_URL is set and starts with http(s)://');
+  }
+  if (!SUPABASE_ANON_KEY) {
+    throw new Error('[supabase] SUPABASE_ANON_KEY is missing. Ensure VITE_SUPABASE_ANON_KEY is set');
+  }
+  _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
+  });
+  return _supabaseClient;
+}
+
+export const supabase: SupabaseClient<Database> = new Proxy(
+  {},
+  {
+    get(_target, prop: string | symbol) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      return client[prop];
+    },
+    set(_target, prop: string | symbol, value) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      client[prop] = value;
+      return true;
+    },
+    apply(_target, thisArg, args) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      return (client as any).apply(thisArg, args);
+    },
   }
-);
+) as unknown as SupabaseClient<Database>;
 
 // ==========================================
 // PORTFOLIO FUNCTIONS
