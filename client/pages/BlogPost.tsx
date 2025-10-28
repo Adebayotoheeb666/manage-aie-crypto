@@ -57,7 +57,7 @@ export default function BlogPost() {
         />
 
         <article className="prose prose-blue max-w-none">
-          {post.content.split('\n').map((paragraph, idx) => (
+          {post.content.split("\n").map((paragraph, idx) => (
             <p key={idx} className="text-gray-700 leading-relaxed mb-4">
               {paragraph}
             </p>
