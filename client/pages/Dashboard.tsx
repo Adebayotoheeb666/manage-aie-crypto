@@ -206,9 +206,9 @@ export default function Dashboard() {
         <AnimatedCard className="bg-white rounded-xl p-6 border border-blue-100 mb-8 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
-              <p className="text-gray-600 text-sm mb-2">Wallet Address</p>
+              <p className="text-gray-600 text-sm mb-2">Primary Wallet</p>
               <p className="font-mono text-lg text-gray-900 flex items-center gap-2">
-                {walletAddress}
+                {primaryWallet || "No wallet connected"}
                 <motion.button
                   onClick={handleCopyAddress}
                   whileHover={{ scale: 1.1 }}
