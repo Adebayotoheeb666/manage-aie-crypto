@@ -245,32 +245,6 @@ export default function About() {
         </div>
       </section>
 
-      {/* Team */}
-      <section className="py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8">The Team</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-            {team.map((m) => (
-              <motion.div
-                key={m.name}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-xl p-4 border border-blue-100 text-center"
-              >
-                <img
-                  src={m.img}
-                  alt={m.name}
-                  className="w-20 h-20 rounded-full mx-auto object-cover mb-3"
-                />
-                <div className="font-semibold text-gray-900">{m.name}</div>
-                <div className="text-sm text-gray-600">{m.role}</div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Partners */}
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
