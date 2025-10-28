@@ -1,62 +1,271 @@
-import { DemoResponse } from "@shared/api";
-import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, TrendingUp, Shield, Zap } from "lucide-react";
 
 export default function Index() {
-  const [exampleFromServer, setExampleFromServer] = useState("");
-  // Fetch users on component mount
-  useEffect(() => {
-    fetchDemo();
-  }, []);
+  const navigate = useNavigate();
 
-  // Example of how to fetch data from the server (if needed)
-  const fetchDemo = async () => {
-    try {
-      const response = await fetch("/api/demo");
-      const data = (await response.json()) as DemoResponse;
-      setExampleFromServer(data.message);
-    } catch (error) {
-      console.error("Error fetching hello:", error);
-    }
+  const handleConnectWallet = () => {
+    navigate("/connect-wallet");
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200">
-      <div className="text-center">
-        {/* TODO: FUSION_GENERATION_APP_PLACEHOLDER replace everything here with the actual app! */}
-        <h1 className="text-2xl font-semibold text-slate-800 flex items-center justify-center gap-3">
-          <svg
-            className="animate-spin h-8 w-8 text-slate-400"
-            viewBox="0 0 50 50"
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="border-b border-blue-100">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
+              <span className="text-white font-bold text-lg">₿</span>
+            </div>
+            <span className="text-xl font-bold text-gray-900">CryptoVault</span>
+          </div>
+          <nav className="hidden md:flex gap-8">
+            <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
+            <a href="#security" className="text-gray-600 hover:text-gray-900">Security</a>
+            <a href="#about" className="text-gray-600 hover:text-gray-900">About</a>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 py-20 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div>
+            <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 leading-tight mb-6">
+              Manage Your <span className="text-blue-600">Crypto Portfolio</span> Effortlessly
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              Connect your Coinbase wallet securely, track your holdings in real-time, and withdraw funds with confidence. Your crypto, your control.
+            </p>
+
+            {/* CTA Buttons */}
+            <div className="flex flex-col sm:flex-row gap-4 mb-12">
+              <Button
+                onClick={handleConnectWallet}
+                size="lg"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-lg px-8 py-6 h-auto rounded-lg flex items-center justify-center gap-2"
+              >
+                <span>Link Your Coinbase Wallet</span>
+                <ArrowRight size={20} />
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                className="text-blue-600 border-blue-200 hover:bg-blue-50 text-lg px-8 py-6 h-auto rounded-lg"
+              >
+                Learn More
+              </Button>
+            </div>
+
+            {/* Trust Indicators */}
+            <div className="grid grid-cols-3 gap-6">
+              <div>
+                <p className="text-3xl font-bold text-gray-900">10K+</p>
+                <p className="text-gray-600">Active Users</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-gray-900">$2B+</p>
+                <p className="text-gray-600">Assets Managed</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-gray-900">99.9%</p>
+                <p className="text-gray-600">Uptime</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Right Visual */}
+          <div className="flex items-center justify-center">
+            <div className="relative w-full max-w-md">
+              {/* Dashboard Preview Mock */}
+              <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-2xl p-6 border border-blue-100">
+                {/* Mockup Card */}
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h3 className="font-semibold text-gray-900">Portfolio Value</h3>
+                    <span className="text-green-600 text-sm font-medium">↑ 12.5%</span>
+                  </div>
+                  <div className="text-4xl font-bold text-gray-900">$42,847.50</div>
+                  
+                  {/* Mini Chart */}
+                  <div className="h-32 bg-gradient-to-t from-blue-100 to-transparent rounded-lg flex items-end justify-between px-4 pt-4">
+                    {[40, 50, 45, 60, 55, 70, 65].map((height, i) => (
+                      <div
+                        key={i}
+                        className="w-2 bg-blue-600 rounded-full"
+                        style={{ height: `${(height / 70) * 100}%` }}
+                      />
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-4">
+                    <div className="bg-white rounded-lg p-3 border border-blue-100">
+                      <p className="text-xs text-gray-600">BTC</p>
+                      <p className="font-semibold text-gray-900">0.542</p>
+                    </div>
+                    <div className="bg-white rounded-lg p-3 border border-blue-100">
+                      <p className="text-xs text-gray-600">ETH</p>
+                      <p className="font-semibold text-gray-900">2.148</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating Elements */}
+              <div className="absolute -top-6 -right-6 bg-blue-600 text-white rounded-full p-4 shadow-lg">
+                <TrendingUp size={24} />
+              </div>
+              <div className="absolute -bottom-4 -left-4 bg-green-500 text-white rounded-full p-4 shadow-lg">
+                <Shield size={24} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section id="features" className="bg-blue-50 py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">Why Choose CryptoVault?</h2>
+          <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
+            Secure, fast, and user-friendly crypto management
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Feature 1 */}
+            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+              <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
+                <Shield className="text-blue-600" size={28} />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Bank-Level Security</h3>
+              <p className="text-gray-600">
+                Your seed phrase is never stored. SSL encryption and secure session management protect your data.
+              </p>
+            </div>
+
+            {/* Feature 2 */}
+            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+              <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
+                <TrendingUp className="text-blue-600" size={28} />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Real-Time Portfolio</h3>
+              <p className="text-gray-600">
+                Track your holdings, view detailed transaction history, and monitor price changes instantly.
+              </p>
+            </div>
+
+            {/* Feature 3 */}
+            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+              <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
+                <Zap className="text-blue-600" size={28} />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">Fast Withdrawals</h3>
+              <p className="text-gray-600">
+                Seamless withdrawal process with network fee estimation and instant confirmation.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Security Section */}
+      <section id="security" className="py-20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">Enterprise-Grade Security</h2>
+              <ul className="space-y-4">
+                <li className="flex gap-3">
+                  <span className="text-blue-600 font-bold">✓</span>
+                  <span className="text-gray-700">HTTPS encryption for all connections</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 font-bold">✓</span>
+                  <span className="text-gray-700">Seed phrases never stored or logged</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 font-bold">✓</span>
+                  <span className="text-gray-700">15-minute session timeout for safety</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 font-bold">✓</span>
+                  <span className="text-gray-700">Rate limiting on all API endpoints</span>
+                </li>
+                <li className="flex gap-3">
+                  <span className="text-blue-600 font-bold">✓</span>
+                  <span className="text-gray-700">Email verification for withdrawals</span>
+                </li>
+              </ul>
+            </div>
+            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-12 text-white">
+              <p className="text-lg mb-4">Security is our top priority. We implement industry-leading practices to keep your crypto safe.</p>
+              <p className="text-sm opacity-90">All withdrawals require verification and are irreversible by design to protect your assets.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-blue-600 py-16">
+        <div className="max-w-4xl mx-auto text-center px-4">
+          <h2 className="text-4xl font-bold text-white mb-6">Ready to Take Control of Your Crypto?</h2>
+          <p className="text-blue-100 mb-8 text-lg">
+            Connect your Coinbase wallet in seconds and start managing your portfolio today.
+          </p>
+          <Button
+            onClick={handleConnectWallet}
+            size="lg"
+            className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6 h-auto rounded-lg font-semibold"
           >
-            <circle
-              className="opacity-30"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-            />
-            <circle
-              className="text-slate-600"
-              cx="25"
-              cy="25"
-              r="20"
-              stroke="currentColor"
-              strokeWidth="5"
-              fill="none"
-              strokeDasharray="100"
-              strokeDashoffset="75"
-            />
-          </svg>
-          Generating your app...
-        </h1>
-        <p className="mt-4 text-slate-600 max-w-md">
-          Watch the chat on the left for updates that might need your attention
-          to finish generating
-        </p>
-        <p className="mt-4 hidden max-w-md">{exampleFromServer}</p>
-      </div>
+            Link Your Coinbase Wallet
+          </Button>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-50 border-t border-blue-100 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900">Features</a></li>
+                <li><a href="#" className="hover:text-gray-900">Security</a></li>
+                <li><a href="#" className="hover:text-gray-900">Pricing</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900">About</a></li>
+                <li><a href="#" className="hover:text-gray-900">Blog</a></li>
+                <li><a href="#" className="hover:text-gray-900">Careers</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900">Terms of Service</a></li>
+                <li><a href="#" className="hover:text-gray-900">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-gray-900">Disclaimer</a></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
+              <ul className="space-y-2 text-gray-600">
+                <li><a href="#" className="hover:text-gray-900">Help Center</a></li>
+                <li><a href="#" className="hover:text-gray-900">Contact Us</a></li>
+                <li><a href="#" className="hover:text-gray-900">Status Page</a></li>
+              </ul>
+            </div>
+          </div>
+          <div className="border-t border-blue-100 pt-8 text-center text-gray-600">
+            <p>&copy; 2025 CryptoVault. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
