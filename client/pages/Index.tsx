@@ -267,44 +267,44 @@ export default function Index() {
       <section id="security" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+            >
               <h2 className="text-4xl font-bold text-gray-900 mb-6">
                 Enterprise-Grade Security
               </h2>
               <ul className="space-y-4">
-                <li className="flex gap-3">
-                  <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">
-                    HTTPS encryption for all connections
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">
-                    Seed phrases never stored or logged
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">
-                    15-minute session timeout for safety
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">
-                    Rate limiting on all API endpoints
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">
-                    Email verification for withdrawals
-                  </span>
-                </li>
+                {[
+                  "HTTPS encryption for all connections",
+                  "Seed phrases never stored or logged",
+                  "15-minute session timeout for safety",
+                  "Rate limiting on all API endpoints",
+                  "Email verification for withdrawals",
+                ].map((item, index) => (
+                  <motion.li
+                    key={index}
+                    initial={{ opacity: 0, x: -20 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    viewport={{ once: true }}
+                    className="flex gap-3"
+                  >
+                    <span className="text-blue-600 font-bold">✓</span>
+                    <span className="text-gray-700">{item}</span>
+                  </motion.li>
+                ))}
               </ul>
-            </div>
-            <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-12 text-white">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 50 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8 }}
+              viewport={{ once: true }}
+              className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-12 text-white shadow-xl"
+            >
               <p className="text-lg mb-4">
                 Security is our top priority. We implement industry-leading
                 practices to keep your crypto safe.
@@ -313,14 +313,20 @@ export default function Index() {
                 All withdrawals require verification and are irreversible by
                 design to protect your assets.
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="bg-blue-600 py-16">
-        <div className="max-w-4xl mx-auto text-center px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8 }}
+          viewport={{ once: true }}
+          className="max-w-4xl mx-auto text-center px-4"
+        >
           <h2 className="text-4xl font-bold text-white mb-6">
             Ready to Take Control of Your Crypto?
           </h2>
@@ -328,104 +334,78 @@ export default function Index() {
             Connect your Coinbase wallet in seconds and start managing your
             portfolio today.
           </p>
-          <Button
-            onClick={handleConnectWallet}
-            size="lg"
-            className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6 h-auto rounded-lg font-semibold"
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            Link Your Coinbase Wallet
-          </Button>
-        </div>
+            <Button
+              onClick={handleConnectWallet}
+              size="lg"
+              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6 h-auto rounded-lg font-semibold"
+            >
+              Link Your Coinbase Wallet
+            </Button>
+          </motion.div>
+        </motion.div>
       </section>
 
       {/* Footer */}
       <footer className="bg-gray-50 border-t border-blue-100 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Features
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Security
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Pricing
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    About
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Blog
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Careers
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Terms of Service
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Privacy Policy
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Disclaimer
-                  </a>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
-              <ul className="space-y-2 text-gray-600">
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Help Center
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Contact Us
-                  </a>
-                </li>
-                <li>
-                  <a href="#" className="hover:text-gray-900">
-                    Status Page
-                  </a>
-                </li>
-              </ul>
-            </div>
+            {[
+              {
+                title: "Product",
+                links: ["Features", "Security", "Pricing"],
+              },
+              {
+                title: "Company",
+                links: ["About", "Blog", "Careers"],
+              },
+              {
+                title: "Legal",
+                links: ["Terms of Service", "Privacy Policy", "Disclaimer"],
+              },
+              {
+                title: "Support",
+                links: ["Help Center", "Contact Us", "Status Page"],
+              },
+            ].map((section, idx) => (
+              <motion.div
+                key={idx}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: idx * 0.1 }}
+                viewport={{ once: true }}
+              >
+                <h4 className="font-semibold text-gray-900 mb-4">
+                  {section.title}
+                </h4>
+                <ul className="space-y-2 text-gray-600">
+                  {section.links.map((link, linkIdx) => (
+                    <motion.li
+                      key={linkIdx}
+                      whileHover={{ x: 5 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <a href="#" className="hover:text-gray-900">
+                        {link}
+                      </a>
+                    </motion.li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
           </div>
-          <div className="border-t border-blue-100 pt-8 text-center text-gray-600">
+          <motion.div
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ duration: 0.8, delay: 0.4 }}
+            viewport={{ once: true }}
+            className="border-t border-blue-100 pt-8 text-center text-gray-600"
+          >
             <p>&copy; 2025 CryptoVault. All rights reserved.</p>
-          </div>
+          </motion.div>
         </div>
       </footer>
     </div>
