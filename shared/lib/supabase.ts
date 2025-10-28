@@ -2,19 +2,15 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@shared/types/database";
 
 function getEnvVar(name: string) {
-  // Prefer Vite's import.meta.env for client builds
-  // @ts-ignore
-  const fromImportMeta =
-    typeof import.meta !== "undefined"
-      ? (import.meta as any)["env"]?.[name]
-      : undefined;
-  const fromProcess =
-    typeof process !== "undefined" ? (process as any).env?.[name] : undefined;
+  // Read from a runtime-injected window.__env__ (set by /api/env.js) first,
+  // then fall back to process.env when running on the server.
   const fromWindow =
     typeof window !== "undefined"
       ? (window as any)?.__env__?.[name]
       : undefined;
-  return fromImportMeta ?? fromWindow ?? fromProcess ?? undefined;
+  const fromProcess =
+    typeof process !== "undefined" ? (process as any).env?.[name] : undefined;
+  return fromWindow ?? fromProcess ?? undefined;
 }
 
 const SUPABASE_URL =

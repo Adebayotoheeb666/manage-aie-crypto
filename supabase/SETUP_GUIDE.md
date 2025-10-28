@@ -3,6 +3,7 @@
 Complete guide to set up the CryptoVault Supabase schema and integrate it with your application.
 
 ## Table of Contents
+
 1. [Prerequisites](#prerequisites)
 2. [Step 1: Connect Supabase](#step-1-connect-supabase)
 3. [Step 2: Deploy Schema](#step-2-deploy-schema)
@@ -28,10 +29,12 @@ Complete guide to set up the CryptoVault Supabase schema and integrate it with y
 
 Your environment variables are already set:
 
+Set these in your hosting provider's environment settings (do not commit values to the repo):
+
 ```env
-VITE_SUPABASE_URL=https://rdrmehocsdmadhostbgz.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-NEXT_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+VITE_SUPABASE_URL=<set in host env>
+VITE_SUPABASE_ANON_KEY=<set in host env>
+NEXT_SUPABASE_SERVICE_ROLE_KEY=<set in host env>
 ```
 
 These are already configured in your project environment.
@@ -106,6 +109,7 @@ supabase db push
 In **Authentication > URL Configuration**:
 
 Add redirect URLs:
+
 ```
 http://localhost:5173/dashboard
 http://localhost:5173/auth/callback
@@ -128,10 +132,10 @@ RLS is already enabled in the schema.sql file. Verify in Supabase:
 Your `.env` file should already have:
 
 ```env
-# Supabase URLs and Keys
-VITE_SUPABASE_URL=https://rdrmehocsdmadhostbgz.supabase.co
-VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-NEXT_SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+# Supabase URLs and Keys (configure in host env, not in files)
+VITE_SUPABASE_URL=<set in host env>
+VITE_SUPABASE_ANON_KEY=<set in host env>
+NEXT_SUPABASE_SERVICE_ROLE_KEY=<set in host env>
 ```
 
 These are available to the app automatically.
@@ -145,41 +149,43 @@ These are available to the app automatically.
 Create a test file `test-supabase.ts`:
 
 ```typescript
-import { supabase } from '@shared/lib/supabase';
+import { supabase } from "@shared/lib/supabase";
 
 async function testConnection() {
   try {
     // Test 1: Check if we can connect
-    const { data: { user } } = await supabase.auth.getUser();
-    console.log('✓ Auth connection working');
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    console.log("✓ Auth connection working");
 
     // Test 2: Check database access
     const { count, error } = await supabase
-      .from('users')
-      .select('*', { count: 'exact', head: true });
+      .from("users")
+      .select("*", { count: "exact", head: true });
 
     if (error) throw error;
-    console.log('✓ Database connection working');
+    console.log("✓ Database connection working");
     console.log(`  Users in database: ${count}`);
 
     // Test 3: Check functions
     if (user?.id) {
       const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('auth_id', user.id)
+        .from("users")
+        .select("*")
+        .eq("auth_id", user.id)
         .single();
 
       if (profile) {
-        console.log('✓ User profile exists');
+        console.log("✓ User profile exists");
       } else {
-        console.log('⚠ User profile not found (expected for new users)');
+        console.log("⚠ User profile not found (expected for new users)");
       }
     }
 
-    console.log('\n✅ All tests passed!');
+    console.log("\n✅ All tests passed!");
   } catch (error) {
-    console.error('❌ Test failed:', error);
+    console.error("❌ Test failed:", error);
     process.exit(1);
   }
 }
@@ -188,6 +194,7 @@ testConnection();
 ```
 
 Run:
+
 ```bash
 npx ts-node test-supabase.ts
 ```
@@ -198,14 +205,14 @@ In your application, test the sign-up flow:
 
 ```typescript
 const { data, error } = await supabase.auth.signUp({
-  email: 'test@example.com',
-  password: 'TestPassword123!',
+  email: "test@example.com",
+  password: "TestPassword123!",
 });
 
 if (error) {
-  console.error('Sign up error:', error);
+  console.error("Sign up error:", error);
 } else {
-  console.log('✓ User created:', data.user?.id);
+  console.log("✓ User created:", data.user?.id);
 }
 ```
 
@@ -223,7 +230,7 @@ import {
   getUserWallets,
   getTransactionHistory,
   createWithdrawalRequest,
-} from '@shared/lib/supabase';
+} from "@shared/lib/supabase";
 
 // Get portfolio value
 const portfolioValue = await getPortfolioValue(userId);
@@ -243,7 +250,12 @@ console.log(`Recent transactions:`, transactions);
 Import types for type-safe code:
 
 ```typescript
-import type { User, Wallet, Transaction, WithdrawalRequest } from '@shared/types/database';
+import type {
+  User,
+  Wallet,
+  Transaction,
+  WithdrawalRequest,
+} from "@shared/types/database";
 
 async function processUser(user: User) {
   console.log(`Processing user: ${user.email}`);
@@ -273,7 +285,7 @@ export function DashboardPage({ userId }: { userId: string }) {
           getPortfolioValue(userId),
           getUserAssets(userId),
         ]);
-        
+
         setPortfolioValue(value);
         setAssets(assetsList);
       } catch (error) {
@@ -318,16 +330,16 @@ Example with Vercel:
 ```typescript
 // api/cron/update-prices.ts
 export const config = {
-  runtime: 'nodejs',
+  runtime: "nodejs",
 };
 
 export default async function handler(req: any, res: any) {
   if (req.headers.authorization !== `Bearer ${process.env.CRON_SECRET}`) {
-    return res.status(401).json({ error: 'Unauthorized' });
+    return res.status(401).json({ error: "Unauthorized" });
   }
 
   try {
-    const { data, error } = await supabase.rpc('update_asset_prices');
+    const { data, error } = await supabase.rpc("update_asset_prices");
     if (error) throw error;
 
     return res.status(200).json({
@@ -336,8 +348,8 @@ export default async function handler(req: any, res: any) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error('Error updating prices:', error);
-    return res.status(500).json({ error: 'Failed to update prices' });
+    console.error("Error updating prices:", error);
+    return res.status(500).json({ error: "Failed to update prices" });
   }
 }
 ```
@@ -347,12 +359,15 @@ export default async function handler(req: any, res: any) {
 Run maintenance functions manually when needed:
 
 ```typescript
-import { updateAssetPrices, cleanupExpiredSessions } from '@shared/lib/supabase';
+import {
+  updateAssetPrices,
+  cleanupExpiredSessions,
+} from "@shared/lib/supabase";
 
 // In your admin panel or API route
 async function runMaintenance() {
-  console.log('Running maintenance...');
-  
+  console.log("Running maintenance...");
+
   const [priceUpdate, sessionCleanup] = await Promise.all([
     updateAssetPrices(),
     cleanupExpiredSessions(),
@@ -371,6 +386,7 @@ async function runMaintenance() {
 
 **Cause:** RLS policies blocking access
 **Solution:**
+
 1. Verify you're logged in with correct user
 2. Check RLS policies in Supabase Dashboard
 3. Ensure `auth.uid()` is set correctly
@@ -379,6 +395,7 @@ async function runMaintenance() {
 
 **Cause:** Schema not deployed
 **Solution:**
+
 1. Re-run the schema.sql script
 2. Check SQL Editor for errors
 3. Verify tables exist in Table Editor
@@ -387,6 +404,7 @@ async function runMaintenance() {
 
 **Cause:** Auth not configured
 **Solution:**
+
 1. Verify Email provider is enabled
 2. Check redirect URLs are correct
 3. Verify ANON_KEY in environment
@@ -395,6 +413,7 @@ async function runMaintenance() {
 
 **Cause:** Policy syntax or auth context
 **Solution:**
+
 1. Test with Service Role key first (unrestricted)
 2. Verify auth.uid() returns correct value
 3. Check policy conditions
@@ -403,6 +422,7 @@ async function runMaintenance() {
 
 **Cause:** Missing function or permissions
 **Solution:**
+
 1. Verify function exists: `SELECT * FROM pg_proc WHERE proname = 'function_name'`
 2. Check function permissions
 3. Test with Service Role key
@@ -504,6 +524,7 @@ Supabase automatically backs up your data. To manually backup:
 3. Download backup file when ready
 
 To restore:
+
 1. In Supabase Dashboard, go to **Settings → Backups**
 2. Select backup to restore
 3. Click "Restore"

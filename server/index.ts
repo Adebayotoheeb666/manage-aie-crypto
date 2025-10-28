@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
 import { handleSupabaseHealth } from "./routes/supabaseHealth";
+import { handleEnvJs } from "./routes/env";
 
 export function createServer() {
   const app = express();
@@ -17,6 +18,9 @@ export function createServer() {
     const ping = process.env.PING_MESSAGE ?? "ping";
     res.json({ message: ping });
   });
+
+  // Runtime env injection for client (served as JS)
+  app.get("/api/env.js", handleEnvJs);
 
   app.get("/api/demo", handleDemo);
 
