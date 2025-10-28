@@ -186,7 +186,12 @@ export default function Dashboard() {
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Total Balance Card */}
-          <div className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.1 }}
+            className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm"
+          >
             <div className="mb-6">
               <p className="text-gray-600 text-sm mb-2">Total Portfolio Value</p>
               <h2 className="text-5xl font-bold text-gray-900 mb-2">
@@ -236,10 +241,15 @@ export default function Dashboard() {
                 Total Balance: <span className="font-bold text-gray-900">{btcEquivalent.toFixed(4)} BTC</span>
               </p>
             </div>
-          </div>
+          </motion.div>
 
           {/* Portfolio Allocation */}
-          <div className="bg-white rounded-xl p-8 border border-blue-100 shadow-sm">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+            className="bg-white rounded-xl p-8 border border-blue-100 shadow-sm"
+          >
             <h3 className="text-lg font-semibold text-gray-900 mb-6">Portfolio Allocation</h3>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
@@ -274,7 +284,7 @@ export default function Dashboard() {
                 </div>
               ))}
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* Assets Overview */}
