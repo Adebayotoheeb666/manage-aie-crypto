@@ -14,7 +14,10 @@ export const handleEnvJs: RequestHandler = (_req, res) => {
   delete (publicEnv as any).SUPABASE_SERVICE_ROLE_KEY;
 
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
-  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, private");
+  res.setHeader(
+    "Cache-Control",
+    "no-store, no-cache, must-revalidate, private",
+  );
 
   const payload = `window.__env__ = Object.assign(window.__env__ || {}, ${JSON.stringify(
     publicEnv,
