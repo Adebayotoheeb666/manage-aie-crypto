@@ -176,7 +176,14 @@ export default function Index() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Feature 1 */}
-            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5 }}
+              className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition"
+            >
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <Shield className="text-blue-600" size={28} />
               </div>
@@ -184,10 +191,17 @@ export default function Index() {
               <p className="text-gray-600">
                 Your seed phrase is never stored. SSL encryption and secure session management protect your data.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 2 */}
-            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.2 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5 }}
+              className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition"
+            >
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <TrendingUp className="text-blue-600" size={28} />
               </div>
@@ -195,10 +209,17 @@ export default function Index() {
               <p className="text-gray-600">
                 Track your holdings, view detailed transaction history, and monitor price changes instantly.
               </p>
-            </div>
+            </motion.div>
 
             {/* Feature 3 */}
-            <div className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              viewport={{ once: true }}
+              whileHover={{ y: -5 }}
+              className="bg-white rounded-xl p-8 border border-blue-100 hover:shadow-lg transition"
+            >
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <Zap className="text-blue-600" size={28} />
               </div>
@@ -206,7 +227,7 @@ export default function Index() {
               <p className="text-gray-600">
                 Seamless withdrawal process with network fee estimation and instant confirmation.
               </p>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
