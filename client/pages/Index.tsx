@@ -22,9 +22,15 @@ export default function Index() {
             <span className="text-xl font-bold text-gray-900">CryptoVault</span>
           </div>
           <nav className="hidden md:flex gap-8">
-            <a href="#features" className="text-gray-600 hover:text-gray-900">Features</a>
-            <a href="#security" className="text-gray-600 hover:text-gray-900">Security</a>
-            <a href="#about" className="text-gray-600 hover:text-gray-900">About</a>
+            <a href="#features" className="text-gray-600 hover:text-gray-900">
+              Features
+            </a>
+            <a href="#security" className="text-gray-600 hover:text-gray-900">
+              Security
+            </a>
+            <a href="#about" className="text-gray-600 hover:text-gray-900">
+              About
+            </a>
           </nav>
         </div>
       </header>
@@ -46,7 +52,9 @@ export default function Index() {
               viewport={{ once: true }}
               className="text-5xl sm:text-6xl font-bold text-gray-900 leading-tight mb-6"
             >
-              Manage Your <span className="text-blue-600">Crypto Portfolio</span> Effortlessly
+              Manage Your{" "}
+              <span className="text-blue-600">Crypto Portfolio</span>{" "}
+              Effortlessly
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -55,7 +63,9 @@ export default function Index() {
               viewport={{ once: true }}
               className="text-xl text-gray-600 mb-8 leading-relaxed"
             >
-              Connect your Coinbase wallet securely, track your holdings in real-time, and withdraw funds with confidence. Your crypto, your control.
+              Connect your Coinbase wallet securely, track your holdings in
+              real-time, and withdraw funds with confidence. Your crypto, your
+              control.
             </motion.p>
 
             {/* CTA Buttons */}
@@ -117,7 +127,11 @@ export default function Index() {
             <motion.div
               initial={{ y: 0 }}
               animate={{ y: -20 }}
-              transition={{ duration: 2, repeat: Infinity, repeatType: "reverse" }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                repeatType: "reverse",
+              }}
               className="relative w-full max-w-md"
             >
               {/* Dashboard Preview Mock */}
@@ -125,11 +139,17 @@ export default function Index() {
                 {/* Mockup Card */}
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-gray-900">Portfolio Value</h3>
-                    <span className="text-green-600 text-sm font-medium">↑ 12.5%</span>
+                    <h3 className="font-semibold text-gray-900">
+                      Portfolio Value
+                    </h3>
+                    <span className="text-green-600 text-sm font-medium">
+                      ↑ 12.5%
+                    </span>
                   </div>
-                  <div className="text-4xl font-bold text-gray-900">$42,847.50</div>
-                  
+                  <div className="text-4xl font-bold text-gray-900">
+                    $42,847.50
+                  </div>
+
                   {/* Mini Chart */}
                   <div className="h-32 bg-gradient-to-t from-blue-100 to-transparent rounded-lg flex items-end justify-between px-4 pt-4">
                     {[40, 50, 45, 60, 55, 70, 65].map((height, i) => (
@@ -169,7 +189,9 @@ export default function Index() {
       {/* Features Section */}
       <section id="features" className="bg-blue-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">Why Choose CryptoVault?</h2>
+          <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">
+            Why Choose CryptoVault?
+          </h2>
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Secure, fast, and user-friendly crypto management
           </p>
@@ -187,9 +209,12 @@ export default function Index() {
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <Shield className="text-blue-600" size={28} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Bank-Level Security</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Bank-Level Security
+              </h3>
               <p className="text-gray-600">
-                Your seed phrase is never stored. SSL encryption and secure session management protect your data.
+                Your seed phrase is never stored. SSL encryption and secure
+                session management protect your data.
               </p>
             </motion.div>
 
@@ -205,9 +230,12 @@ export default function Index() {
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <TrendingUp className="text-blue-600" size={28} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Real-Time Portfolio</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Real-Time Portfolio
+              </h3>
               <p className="text-gray-600">
-                Track your holdings, view detailed transaction history, and monitor price changes instantly.
+                Track your holdings, view detailed transaction history, and
+                monitor price changes instantly.
               </p>
             </motion.div>
 
@@ -223,9 +251,12 @@ export default function Index() {
               <div className="bg-blue-100 rounded-lg p-4 w-fit mb-4">
                 <Zap className="text-blue-600" size={28} />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Fast Withdrawals</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Fast Withdrawals
+              </h3>
               <p className="text-gray-600">
-                Seamless withdrawal process with network fee estimation and instant confirmation.
+                Seamless withdrawal process with network fee estimation and
+                instant confirmation.
               </p>
             </motion.div>
           </div>
@@ -237,33 +268,51 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-4xl font-bold text-gray-900 mb-6">Enterprise-Grade Security</h2>
+              <h2 className="text-4xl font-bold text-gray-900 mb-6">
+                Enterprise-Grade Security
+              </h2>
               <ul className="space-y-4">
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">HTTPS encryption for all connections</span>
+                  <span className="text-gray-700">
+                    HTTPS encryption for all connections
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">Seed phrases never stored or logged</span>
+                  <span className="text-gray-700">
+                    Seed phrases never stored or logged
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">15-minute session timeout for safety</span>
+                  <span className="text-gray-700">
+                    15-minute session timeout for safety
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">Rate limiting on all API endpoints</span>
+                  <span className="text-gray-700">
+                    Rate limiting on all API endpoints
+                  </span>
                 </li>
                 <li className="flex gap-3">
                   <span className="text-blue-600 font-bold">✓</span>
-                  <span className="text-gray-700">Email verification for withdrawals</span>
+                  <span className="text-gray-700">
+                    Email verification for withdrawals
+                  </span>
                 </li>
               </ul>
             </div>
             <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-12 text-white">
-              <p className="text-lg mb-4">Security is our top priority. We implement industry-leading practices to keep your crypto safe.</p>
-              <p className="text-sm opacity-90">All withdrawals require verification and are irreversible by design to protect your assets.</p>
+              <p className="text-lg mb-4">
+                Security is our top priority. We implement industry-leading
+                practices to keep your crypto safe.
+              </p>
+              <p className="text-sm opacity-90">
+                All withdrawals require verification and are irreversible by
+                design to protect your assets.
+              </p>
             </div>
           </div>
         </div>
@@ -272,9 +321,12 @@ export default function Index() {
       {/* CTA Section */}
       <section className="bg-blue-600 py-16">
         <div className="max-w-4xl mx-auto text-center px-4">
-          <h2 className="text-4xl font-bold text-white mb-6">Ready to Take Control of Your Crypto?</h2>
+          <h2 className="text-4xl font-bold text-white mb-6">
+            Ready to Take Control of Your Crypto?
+          </h2>
           <p className="text-blue-100 mb-8 text-lg">
-            Connect your Coinbase wallet in seconds and start managing your portfolio today.
+            Connect your Coinbase wallet in seconds and start managing your
+            portfolio today.
           </p>
           <Button
             onClick={handleConnectWallet}
@@ -293,33 +345,81 @@ export default function Index() {
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Product</h4>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">Features</a></li>
-                <li><a href="#" className="hover:text-gray-900">Security</a></li>
-                <li><a href="#" className="hover:text-gray-900">Pricing</a></li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Features
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Security
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Pricing
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Company</h4>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">About</a></li>
-                <li><a href="#" className="hover:text-gray-900">Blog</a></li>
-                <li><a href="#" className="hover:text-gray-900">Careers</a></li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    About
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Blog
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Careers
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Legal</h4>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-gray-900">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-gray-900">Disclaimer</a></li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Disclaimer
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold text-gray-900 mb-4">Support</h4>
               <ul className="space-y-2 text-gray-600">
-                <li><a href="#" className="hover:text-gray-900">Help Center</a></li>
-                <li><a href="#" className="hover:text-gray-900">Contact Us</a></li>
-                <li><a href="#" className="hover:text-gray-900">Status Page</a></li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Contact Us
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="hover:text-gray-900">
+                    Status Page
+                  </a>
+                </li>
               </ul>
             </div>
           </div>

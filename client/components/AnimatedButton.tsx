@@ -3,7 +3,13 @@ import { Button } from "@/components/ui/button";
 import { forwardRef, ButtonHTMLAttributes } from "react";
 
 interface AnimatedButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: "default" | "outline" | "secondary" | "ghost" | "link" | "destructive";
+  variant?:
+    | "default"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link"
+    | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
   asChild?: boolean;
   children: React.ReactNode;
@@ -22,7 +28,7 @@ const AnimatedButton = forwardRef<HTMLButtonElement, AnimatedButtonProps>(
         </Button>
       </motion.div>
     );
-  }
+  },
 );
 
 AnimatedButton.displayName = "AnimatedButton";

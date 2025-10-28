@@ -14,7 +14,18 @@ import {
   Search,
   Download,
 } from "lucide-react";
-import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
+import {
+  LineChart,
+  Line,
+  ResponsiveContainer,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 
 // Mock portfolio data
@@ -83,7 +94,7 @@ const transactions = [
   },
 ];
 
-const pieChartData = assets.map(asset => ({
+const pieChartData = assets.map((asset) => ({
   name: asset.symbol,
   value: asset.balance * asset.price,
 }));
@@ -104,10 +115,13 @@ export default function Dashboard() {
         price: prices[asset.symbol]?.price || 0,
         change24h: prices[asset.symbol]?.change24h || 0,
       })),
-    [prices]
+    [prices],
   );
 
-  const totalBalance = assets.reduce((sum, asset) => sum + asset.balance * asset.price, 0);
+  const totalBalance = assets.reduce(
+    (sum, asset) => sum + asset.balance * asset.price,
+    0,
+  );
   const btcEquivalent = totalBalance / prices.BTC.price;
   const change24h = 2150; // Mock 24h change
 
@@ -193,14 +207,22 @@ export default function Dashboard() {
             className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm"
           >
             <div className="mb-6">
-              <p className="text-gray-600 text-sm mb-2">Total Portfolio Value</p>
+              <p className="text-gray-600 text-sm mb-2">
+                Total Portfolio Value
+              </p>
               <h2 className="text-5xl font-bold text-gray-900 mb-2">
-                ${totalBalance.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                $
+                {totalBalance.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
               </h2>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
                   <TrendingUp className="text-green-600" size={18} />
-                  <span className="text-green-600 font-semibold">+${change24h.toLocaleString()}</span>
+                  <span className="text-green-600 font-semibold">
+                    +${change24h.toLocaleString()}
+                  </span>
                   <span className="text-green-600 text-sm">(+5.0% 24h)</span>
                 </div>
                 <button className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1">
@@ -238,7 +260,10 @@ export default function Dashboard() {
             {/* BTC Equivalent */}
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-gray-700">
-                Total Balance: <span className="font-bold text-gray-900">{btcEquivalent.toFixed(4)} BTC</span>
+                Total Balance:{" "}
+                <span className="font-bold text-gray-900">
+                  {btcEquivalent.toFixed(4)} BTC
+                </span>
               </p>
             </div>
           </motion.div>
@@ -250,7 +275,9 @@ export default function Dashboard() {
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-white rounded-xl p-8 border border-blue-100 shadow-sm"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Portfolio Allocation</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">
+              Portfolio Allocation
+            </h3>
             <ResponsiveContainer width="100%" height={280}>
               <PieChart>
                 <Pie
@@ -262,7 +289,10 @@ export default function Dashboard() {
                   dataKey="value"
                 >
                   {pieChartData.map((_, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={COLORS[index % COLORS.length]}
+                    />
                   ))}
                 </Pie>
                 <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
@@ -270,16 +300,25 @@ export default function Dashboard() {
             </ResponsiveContainer>
             <div className="space-y-2 mt-4">
               {assets.map((asset, idx) => (
-                <div key={asset.id} className="flex items-center justify-between">
+                <div
+                  key={asset.id}
+                  className="flex items-center justify-between"
+                >
                   <div className="flex items-center gap-2">
                     <div
                       className="w-3 h-3 rounded-full"
                       style={{ backgroundColor: COLORS[idx] }}
                     />
-                    <span className="text-sm text-gray-700">{asset.symbol}</span>
+                    <span className="text-sm text-gray-700">
+                      {asset.symbol}
+                    </span>
                   </div>
                   <span className="text-sm font-medium text-gray-900">
-                    {((asset.balance * asset.price) / totalBalance * 100).toFixed(1)}%
+                    {(
+                      ((asset.balance * asset.price) / totalBalance) *
+                      100
+                    ).toFixed(1)}
+                    %
                   </span>
                 </div>
               ))}
@@ -301,12 +340,24 @@ export default function Dashboard() {
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-blue-100">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Asset</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Balance</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Price</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">Value</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">24h Change</th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">% of Portfolio</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    Asset
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    Balance
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    Price
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    Value
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    24h Change
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
+                    % of Portfolio
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -314,12 +365,21 @@ export default function Dashboard() {
                   const value = asset.balance * asset.price;
                   const percentage = (value / totalBalance) * 100;
                   return (
-                    <tr key={asset.id} className="border-b border-gray-100 hover:bg-gray-50">
+                    <tr
+                      key={asset.id}
+                      className="border-b border-gray-100 hover:bg-gray-50"
+                    >
                       <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{asset.symbol}</div>
-                        <div className="text-sm text-gray-500">{asset.name}</div>
+                        <div className="font-medium text-gray-900">
+                          {asset.symbol}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {asset.name}
+                        </div>
                       </td>
-                      <td className="px-6 py-4 text-gray-900">{asset.balance.toFixed(6)}</td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {asset.balance.toFixed(6)}
+                      </td>
                       <td className="px-6 py-4">
                         <motion.div
                           key={asset.price}
@@ -337,19 +397,27 @@ export default function Dashboard() {
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.5 }}
                         >
-                          ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                          $
+                          {value.toLocaleString("en-US", {
+                            maximumFractionDigits: 2,
+                          })}
                         </motion.div>
                       </td>
-                      <td className={`px-6 py-4 font-medium ${asset.change24h >= 0 ? "text-green-600" : "text-red-600"}`}>
+                      <td
+                        className={`px-6 py-4 font-medium ${asset.change24h >= 0 ? "text-green-600" : "text-red-600"}`}
+                      >
                         <motion.div
                           initial={{ opacity: 0.8 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.3 }}
                         >
-                          {asset.change24h >= 0 ? "↑ " : "↓ "}{Math.abs(asset.change24h).toFixed(2)}%
+                          {asset.change24h >= 0 ? "↑ " : "↓ "}
+                          {Math.abs(asset.change24h).toFixed(2)}%
                         </motion.div>
                       </td>
-                      <td className="px-6 py-4 text-gray-900">{percentage.toFixed(1)}%</td>
+                      <td className="px-6 py-4 text-gray-900">
+                        {percentage.toFixed(1)}%
+                      </td>
                     </tr>
                   );
                 })}
@@ -367,7 +435,9 @@ export default function Dashboard() {
         >
           <div className="p-6 border-b border-blue-100">
             <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Transaction History
+              </h3>
               <Button
                 variant="outline"
                 className="flex items-center gap-2 border-gray-300 text-gray-700 hover:bg-gray-50"
@@ -396,7 +466,10 @@ export default function Dashboard() {
 
             {/* Search */}
             <div className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
+              <Search
+                className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+                size={18}
+              />
               <input
                 type="text"
                 placeholder="Search by hash or address..."
@@ -418,19 +491,29 @@ export default function Dashboard() {
                 <div key={tx.id} className="p-6 hover:bg-gray-50 transition">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                        tx.type === "receive"
-                          ? "bg-green-100"
-                          : tx.type === "send"
-                          ? "bg-red-100"
-                          : "bg-blue-100"
-                      }`}>
-                        {tx.type === "receive" && <ArrowDownLeft className="text-green-600" />}
-                        {tx.type === "send" && <ArrowUpRight className="text-red-600" />}
-                        {tx.type === "swap" && <ArrowLeftRight className="text-blue-600" />}
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                          tx.type === "receive"
+                            ? "bg-green-100"
+                            : tx.type === "send"
+                              ? "bg-red-100"
+                              : "bg-blue-100"
+                        }`}
+                      >
+                        {tx.type === "receive" && (
+                          <ArrowDownLeft className="text-green-600" />
+                        )}
+                        {tx.type === "send" && (
+                          <ArrowUpRight className="text-red-600" />
+                        )}
+                        {tx.type === "swap" && (
+                          <ArrowLeftRight className="text-blue-600" />
+                        )}
                       </div>
                       <div>
-                        <p className="font-medium text-gray-900 capitalize">{tx.type}</p>
+                        <p className="font-medium text-gray-900 capitalize">
+                          {tx.type}
+                        </p>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
                           <span className="font-mono">{tx.hash}</span>
                           <a
@@ -446,7 +529,8 @@ export default function Dashboard() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium text-gray-900">
-                        {tx.type === "receive" ? "+" : "-"}{tx.amount} {tx.symbol}
+                        {tx.type === "receive" ? "+" : "-"}
+                        {tx.amount} {tx.symbol}
                       </p>
                       <p className="text-sm text-gray-600">
                         ${tx.usdValue.toLocaleString()}

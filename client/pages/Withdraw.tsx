@@ -13,7 +13,7 @@ const assets = [
 const networkFees = {
   BTC: { Bitcoin: 0.0005 },
   ETH: { Ethereum: 0.005, "Ethereum L2": 0.001 },
-  USDC: { Ethereum: 0.005, "Polygon": 0.0001 },
+  USDC: { Ethereum: 0.005, Polygon: 0.0001 },
   ADA: { Cardano: 0.17 },
 };
 
@@ -41,7 +41,7 @@ export default function Withdraw() {
   const [saveEmail, setSaveEmail] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const selectedAsset = assets.find(a => a.symbol === selectedCrypto);
+  const selectedAsset = assets.find((a) => a.symbol === selectedCrypto);
   const maxBalance = selectedAsset?.balance ?? 0;
   const selectedPrice = selectedAsset?.price ?? 0;
 
@@ -50,17 +50,22 @@ export default function Withdraw() {
     const newErrors: Record<string, string> = {};
 
     if (!selectedCrypto) newErrors.crypto = "Please select a cryptocurrency";
-    if (!amount || parseFloat(amount) <= 0) newErrors.amount = "Amount must be greater than 0";
-    if (parseFloat(amount) > maxBalance) newErrors.amount = "Insufficient balance";
-    if (parseFloat(amount) < 0.001) newErrors.amount = "Minimum withdrawal is 0.001";
+    if (!amount || parseFloat(amount) <= 0)
+      newErrors.amount = "Amount must be greater than 0";
+    if (parseFloat(amount) > maxBalance)
+      newErrors.amount = "Insufficient balance";
+    if (parseFloat(amount) < 0.001)
+      newErrors.amount = "Minimum withdrawal is 0.001";
     if (!recipientAddress) newErrors.address = "Please enter recipient address";
     if (!validateAddress(recipientAddress, selectedCrypto)) {
       newErrors.address = `Invalid ${selectedCrypto} address format`;
     }
     if (!network) newErrors.network = "Please select a network";
     if (!email) newErrors.email = "Please enter your email";
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Please enter a valid email";
-    if (!confirmCheckbox) newErrors.confirm = "You must confirm the recipient address";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      newErrors.email = "Please enter a valid email";
+    if (!confirmCheckbox)
+      newErrors.confirm = "You must confirm the recipient address";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -83,8 +88,14 @@ export default function Withdraw() {
     }
   };
 
-  const networkOptions = network ? Object.keys(networkFees[selectedCrypto as keyof typeof networkFees] || {}) : [];
-  const networkFeeAmount = network ? networkFees[selectedCrypto as keyof typeof networkFees]?.[network as keyof any] || 0 : 0;
+  const networkOptions = network
+    ? Object.keys(networkFees[selectedCrypto as keyof typeof networkFees] || {})
+    : [];
+  const networkFeeAmount = network
+    ? networkFees[selectedCrypto as keyof typeof networkFees]?.[
+        network as keyof any
+      ] || 0
+    : 0;
   const amountNum = parseFloat(amount) || 0;
   const totalCost = amountNum + networkFeeAmount;
   const receiveAmount = amountNum - networkFeeAmount;
@@ -108,7 +119,9 @@ export default function Withdraw() {
       <div className="max-w-4xl mx-auto px-4 py-8">
         {/* Title */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">Withdraw Funds</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">
+            Withdraw Funds
+          </h1>
           <p className="text-gray-600">
             Transfer your crypto to another wallet securely
           </p>
@@ -116,11 +129,17 @@ export default function Withdraw() {
 
         {/* Warning Banner */}
         <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
-          <AlertCircle className="text-yellow-600 flex-shrink-0 mt-0.5" size={20} />
+          <AlertCircle
+            className="text-yellow-600 flex-shrink-0 mt-0.5"
+            size={20}
+          />
           <div>
-            <p className="font-semibold text-yellow-900 mb-1">⚠️ Cryptocurrency transfers are irreversible</p>
+            <p className="font-semibold text-yellow-900 mb-1">
+              ⚠️ Cryptocurrency transfers are irreversible
+            </p>
             <p className="text-yellow-800 text-sm">
-              Please double-check all details before confirming. Incorrect addresses cannot be corrected.
+              Please double-check all details before confirming. Incorrect
+              addresses cannot be corrected.
             </p>
           </div>
         </div>
@@ -153,13 +172,17 @@ export default function Withdraw() {
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {assets.filter(a => a.balance > 0).map(asset => (
-                  <option key={asset.symbol} value={asset.symbol}>
-                    {asset.name} ({asset.symbol}) - {asset.balance} available
-                  </option>
-                ))}
+                {assets
+                  .filter((a) => a.balance > 0)
+                  .map((asset) => (
+                    <option key={asset.symbol} value={asset.symbol}>
+                      {asset.name} ({asset.symbol}) - {asset.balance} available
+                    </option>
+                  ))}
               </select>
-              {errors.crypto && <p className="text-red-600 text-sm mt-2">{errors.crypto}</p>}
+              {errors.crypto && (
+                <p className="text-red-600 text-sm mt-2">{errors.crypto}</p>
+              )}
             </div>
 
             {/* Withdrawal Amount */}
@@ -189,10 +212,15 @@ export default function Withdraw() {
               </div>
               {amount && (
                 <p className="text-sm text-gray-600 mt-2">
-                  ≈ ${(amountNum * selectedPrice).toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                  ≈ $
+                  {(amountNum * selectedPrice).toLocaleString("en-US", {
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               )}
-              {errors.amount && <p className="text-red-600 text-sm mt-2">{errors.amount}</p>}
+              {errors.amount && (
+                <p className="text-red-600 text-sm mt-2">{errors.amount}</p>
+              )}
             </div>
 
             {/* Recipient Address */}
@@ -218,11 +246,17 @@ export default function Withdraw() {
                 >
                   <QrCode size={20} />
                 </button>
-                {recipientAddress && validateAddress(recipientAddress, selectedCrypto) && (
-                  <CheckCircle2 className="absolute right-12 top-1/2 transform -translate-y-1/2 text-green-600" size={20} />
-                )}
+                {recipientAddress &&
+                  validateAddress(recipientAddress, selectedCrypto) && (
+                    <CheckCircle2
+                      className="absolute right-12 top-1/2 transform -translate-y-1/2 text-green-600"
+                      size={20}
+                    />
+                  )}
               </div>
-              {errors.address && <p className="text-red-600 text-sm mt-2">{errors.address}</p>}
+              {errors.address && (
+                <p className="text-red-600 text-sm mt-2">{errors.address}</p>
+              )}
             </div>
 
             {/* Network Selection */}
@@ -239,13 +273,21 @@ export default function Withdraw() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="">Select a network</option>
-                {Object.keys(networkFees[selectedCrypto as keyof typeof networkFees] || {}).map(net => (
+                {Object.keys(
+                  networkFees[selectedCrypto as keyof typeof networkFees] || {},
+                ).map((net) => (
                   <option key={net} value={net}>
-                    {net} - Fee: {networkFees[selectedCrypto as keyof typeof networkFees]?.[net as keyof any]?.toFixed(6)} {selectedCrypto}
+                    {net} - Fee:{" "}
+                    {networkFees[selectedCrypto as keyof typeof networkFees]?.[
+                      net as keyof any
+                    ]?.toFixed(6)}{" "}
+                    {selectedCrypto}
                   </option>
                 ))}
               </select>
-              {errors.network && <p className="text-red-600 text-sm mt-2">{errors.network}</p>}
+              {errors.network && (
+                <p className="text-red-600 text-sm mt-2">{errors.network}</p>
+              )}
             </div>
 
             {/* Fee Summary */}
@@ -253,18 +295,29 @@ export default function Withdraw() {
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Withdrawal Amount:</span>
-                  <span className="font-medium text-gray-900">{amountNum} {selectedCrypto}</span>
+                  <span className="font-medium text-gray-900">
+                    {amountNum} {selectedCrypto}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Network Fee:</span>
-                  <span className="font-medium text-gray-900">{networkFeeAmount.toFixed(6)} {selectedCrypto}</span>
+                  <span className="font-medium text-gray-900">
+                    {networkFeeAmount.toFixed(6)} {selectedCrypto}
+                  </span>
                 </div>
                 <div className="border-t border-gray-300 pt-2 flex justify-between">
-                  <span className="font-semibold text-gray-900">You'll Receive:</span>
-                  <span className="font-bold text-blue-600">{receiveAmount.toFixed(8)} {selectedCrypto}</span>
+                  <span className="font-semibold text-gray-900">
+                    You'll Receive:
+                  </span>
+                  <span className="font-bold text-blue-600">
+                    {receiveAmount.toFixed(8)} {selectedCrypto}
+                  </span>
                 </div>
                 <p className="text-xs text-gray-600 pt-2">
-                  ≈ ${(receiveAmount * selectedPrice).toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                  ≈ $
+                  {(receiveAmount * selectedPrice).toLocaleString("en-US", {
+                    maximumFractionDigits: 2,
+                  })}
                 </p>
               </div>
             )}
@@ -285,9 +338,12 @@ export default function Withdraw() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-600 mt-2">
-                You'll receive withdrawal confirmation and updates at this address
+                You'll receive withdrawal confirmation and updates at this
+                address
               </p>
-              {errors.email && <p className="text-red-600 text-sm mt-2">{errors.email}</p>}
+              {errors.email && (
+                <p className="text-red-600 text-sm mt-2">{errors.email}</p>
+              )}
             </div>
 
             {/* Save Email Checkbox */}
@@ -318,15 +374,21 @@ export default function Withdraw() {
                   className="w-5 h-5 rounded border-gray-300 mt-0.5"
                 />
                 <div>
-                  <label htmlFor="confirm" className="text-sm font-medium text-gray-900">
+                  <label
+                    htmlFor="confirm"
+                    className="text-sm font-medium text-gray-900"
+                  >
                     I verify the recipient address is correct
                   </label>
                   <p className="text-xs text-gray-600 mt-1">
-                    Cryptocurrency transactions are irreversible. Please triple-check the address.
+                    Cryptocurrency transactions are irreversible. Please
+                    triple-check the address.
                   </p>
                 </div>
               </div>
-              {errors.confirm && <p className="text-red-600 text-sm mt-2">{errors.confirm}</p>}
+              {errors.confirm && (
+                <p className="text-red-600 text-sm mt-2">{errors.confirm}</p>
+              )}
             </div>
 
             {/* Action Buttons */}

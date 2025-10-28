@@ -32,12 +32,14 @@ export function useRealtimePrices(updateInterval = 3000) {
 
       Object.keys(newPrices).forEach((symbol) => {
         const current = newPrices[symbol];
-        const volatility = symbol === "BTC" ? 0.02 : symbol === "ETH" ? 0.03 : 0.001;
+        const volatility =
+          symbol === "BTC" ? 0.02 : symbol === "ETH" ? 0.03 : 0.001;
         const changePercent = (Math.random() - 0.5) * volatility;
         const newPrice = current.price * (1 + changePercent);
 
         // Update 24h change with weighted average
-        const newChange24h = current.change24h * 0.95 + changePercent * 100 * 0.05;
+        const newChange24h =
+          current.change24h * 0.95 + changePercent * 100 * 0.05;
 
         newPrices[symbol] = {
           previousPrice: current.price,
