@@ -526,38 +526,49 @@ export default function Dashboard() {
                     <div className="flex items-center gap-4">
                       <div
                         className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                          tx.type === "receive"
+                          tx.tx_type === "receive"
                             ? "bg-green-100"
-                            : tx.type === "send"
+                            : tx.tx_type === "send"
                               ? "bg-red-100"
                               : "bg-blue-100"
                         }`}
                       >
-                        {tx.type === "receive" && (
+                        {tx.tx_type === "receive" && (
                           <ArrowDownLeft className="text-green-600" />
                         )}
-                        {tx.type === "send" && (
+                        {tx.tx_type === "send" && (
                           <ArrowUpRight className="text-red-600" />
                         )}
-                        {tx.type === "swap" && (
+                        {tx.tx_type === "swap" && (
                           <ArrowLeftRight className="text-blue-600" />
                         )}
                       </div>
                       <div>
                         <p className="font-medium text-gray-900 capitalize">
-                          {tx.type}
+                          {tx.tx_type}
                         </p>
                         <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                          <span className="font-mono">{tx.hash}</span>
-                          <a
-                            href="#"
-                            className="text-blue-600 hover:text-blue-700"
-                            onClick={(e) => e.preventDefault()}
-                          >
-                            <ExternalLink size={14} />
-                          </a>
+                          <span className="font-mono">{tx.tx_hash ? tx.tx_hash.substring(0, 16) + "..." : "Pending"}</span>
+                          {tx.tx_hash && (
+                            <a
+                              href={`https://etherscan.io/tx/${tx.tx_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <ExternalLink size={14} />
+                            </a>
+                          )}
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">{tx.date}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {new Date(tx.created_at).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
