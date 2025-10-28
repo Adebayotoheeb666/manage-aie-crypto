@@ -1,4 +1,3 @@
-/** @import must precede all other statements */
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap");
 
 @tailwind base;
@@ -116,5 +115,12 @@
   code {
     overflow-x: auto;
     white-space: pre;
+  }
+}
+
+@layer base {
+  /* Prevent horizontal scroll on small devices while preserving internal scroll for pre/code */
+  html, body {
+    overflow-x: hidden;
   }
 }
