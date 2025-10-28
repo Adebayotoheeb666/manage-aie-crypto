@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { AnimatedCard } from "@/components/AnimatedCard";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
