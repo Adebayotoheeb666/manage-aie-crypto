@@ -320,12 +320,35 @@ export default function Dashboard() {
                         <div className="text-sm text-gray-500">{asset.name}</div>
                       </td>
                       <td className="px-6 py-4 text-gray-900">{asset.balance.toFixed(6)}</td>
-                      <td className="px-6 py-4 text-gray-900">${asset.price.toLocaleString()}</td>
+                      <td className="px-6 py-4">
+                        <motion.div
+                          key={asset.price}
+                          initial={{ scale: 1 }}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.3 }}
+                          className="text-gray-900"
+                        >
+                          ${asset.price.toLocaleString()}
+                        </motion.div>
+                      </td>
                       <td className="px-6 py-4 font-medium text-gray-900">
-                        ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                        <motion.div
+                          initial={{ opacity: 0.8 }}
+                          animate={{ opacity: 1 }}
+                          transition={{ duration: 0.5 }}
+                        >
+                          ${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}
+                        </motion.div>
                       </td>
                       <td className={`px-6 py-4 font-medium ${asset.change24h >= 0 ? "text-green-600" : "text-red-600"}`}>
-                        {asset.change24h >= 0 ? "+" : ""}{asset.change24h}%
+                        <motion.div
+                          initial={{ scale: 1 }}
+                          animate={{ scale: 1.05 }}
+                          transition={{ duration: 0.3 }}
+                          className="inline-block"
+                        >
+                          {asset.change24h >= 0 ? "↑ " : "↓ "}{Math.abs(asset.change24h).toFixed(2)}%
+                        </motion.div>
                       </td>
                       <td className="px-6 py-4 text-gray-900">{percentage.toFixed(1)}%</td>
                     </tr>
