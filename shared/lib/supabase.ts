@@ -46,23 +46,87 @@ if (!SUPABASE_ANON_KEY) {
 let _supabaseClient: SupabaseClient<Database> | null = null;
 function createSupabaseClient(): SupabaseClient<Database> {
   if (_supabaseClient) return _supabaseClient;
-  if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
-    throw new Error(
-      "[supabase] SUPABASE_URL is missing or invalid. Ensure VITE_SUPABASE_URL is set and starts with http(s)://",
-    );
+
+  // If envs are present, create real client
+  if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+      },
+    });
+    return _supabaseClient;
   }
-  if (!SUPABASE_ANON_KEY) {
-    throw new Error(
-      "[supabase] SUPABASE_ANON_KEY is missing. Ensure VITE_SUPABASE_ANON_KEY is set",
-    );
-  }
-  _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
+
+  // Fall back to a noop client that provides the minimal surface area used by the app
+  console.warn(
+    "[supabase] SUPABASE env vars are missing or invalid. Returning a noop supabase client. Some features will be disabled.",
+  );
+
+  const noop = {
     auth: {
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: true,
+      async getSession() {
+        return { data: { session: null }, error: null } as any;
+      },
+      onAuthStateChange(_: any) {
+        return {
+          data: { subscription: { unsubscribe: () => {} } },
+        } as any;
+      },
+      async signUp(_: any) {
+        return { data: { user: null }, error: new Error("Supabase not configured") } as any;
+      },
+      async signInWithPassword(_: any) {
+        return { data: { user: null }, error: new Error("Supabase not configured") } as any;
+      },
+      async signOut() {
+        return { error: null } as any;
+      },
     },
-  });
+    from(_table: string) {
+      // Return a chainable query builder stub
+      const chain: any = {
+        select() {
+          return chain;
+        },
+        eq() {
+          return chain;
+        },
+        order() {
+          return chain;
+        },
+        range() {
+          return chain;
+        },
+        limit() {
+          return chain;
+        },
+        insert() {
+          return {
+            select: async () => ({ data: null, error: null }),
+          };
+        },
+        update() {
+          return {
+            select: async () => ({ data: null, error: null }),
+          };
+        },
+        delete() {
+          return {
+            then: async () => ({ data: null, error: null }),
+          };
+        },
+        single: async () => ({ data: null, error: { code: "PGRST116" } }),
+      } as unknown as any;
+      return chain;
+    },
+    async rpc() {
+      return { data: null, error: null } as any;
+    },
+  } as unknown as SupabaseClient<Database>;
+
+  _supabaseClient = noop;
   return _supabaseClient;
 }
 
