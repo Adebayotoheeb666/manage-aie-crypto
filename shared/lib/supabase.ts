@@ -1,27 +1,99 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@shared/types/database';
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@shared/types/database";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+function getEnvVar(name: string) {
+  // Prefer Vite's import.meta.env for client builds
+  // @ts-ignore
+  const fromImportMeta =
+    typeof import.meta !== "undefined"
+      ? (import.meta as any)["env"]?.[name]
+      : undefined;
+  const fromProcess =
+    typeof process !== "undefined" ? (process as any).env?.[name] : undefined;
+  const fromWindow =
+    typeof window !== "undefined"
+      ? (window as any)?.__env__?.[name]
+      : undefined;
+  return fromImportMeta ?? fromWindow ?? fromProcess ?? undefined;
+}
 
-export const supabase: SupabaseClient<Database> = createClient<Database>(
-  SUPABASE_URL,
-  SUPABASE_ANON_KEY,
-  {
+const SUPABASE_URL =
+  getEnvVar("VITE_SUPABASE_URL") ||
+  getEnvVar("NEXT_PUBLIC_SUPABASE_URL") ||
+  getEnvVar("NEXT_SUPABASE_URL") ||
+  "";
+const SUPABASE_ANON_KEY =
+  getEnvVar("VITE_SUPABASE_ANON_KEY") ||
+  getEnvVar("NEXT_PUBLIC_SUPABASE_ANON_KEY") ||
+  getEnvVar("NEXT_SUPABASE_ANON_KEY") ||
+  "";
+
+// Basic runtime validation to give a clearer error if envs are missing
+if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
+  console.warn(
+    "[supabase] SUPABASE_URL is missing or invalid. import.meta.env keys:",
+    {
+      VITE_SUPABASE_URL: Boolean(getEnvVar("VITE_SUPABASE_URL")),
+      NEXT_PUBLIC_SUPABASE_URL: Boolean(getEnvVar("NEXT_PUBLIC_SUPABASE_URL")),
+    },
+  );
+}
+if (!SUPABASE_ANON_KEY) {
+  console.warn("[supabase] SUPABASE_ANON_KEY is missing or empty");
+}
+
+// Lazily initialize Supabase client. If envs are missing the proxy will throw a clear error
+let _supabaseClient: SupabaseClient<Database> | null = null;
+function createSupabaseClient(): SupabaseClient<Database> {
+  if (_supabaseClient) return _supabaseClient;
+  if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
+    throw new Error(
+      "[supabase] SUPABASE_URL is missing or invalid. Ensure VITE_SUPABASE_URL is set and starts with http(s)://",
+    );
+  }
+  if (!SUPABASE_ANON_KEY) {
+    throw new Error(
+      "[supabase] SUPABASE_ANON_KEY is missing. Ensure VITE_SUPABASE_ANON_KEY is set",
+    );
+  }
+  _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: true,
     },
-  }
-);
+  });
+  return _supabaseClient;
+}
+
+export const supabase: SupabaseClient<Database> = new Proxy(
+  {},
+  {
+    get(_target, prop: string | symbol) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      return client[prop];
+    },
+    set(_target, prop: string | symbol, value) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      client[prop] = value;
+      return true;
+    },
+    apply(_target, thisArg, args) {
+      const client = createSupabaseClient();
+      // @ts-ignore
+      return (client as any).apply(thisArg, args);
+    },
+  },
+) as unknown as SupabaseClient<Database>;
 
 // ==========================================
 // PORTFOLIO FUNCTIONS
 // ==========================================
 
 export async function getPortfolioValue(userId: string) {
-  const { data, error } = await supabase.rpc('calculate_portfolio_value', {
+  const { data, error } = await supabase.rpc("calculate_portfolio_value", {
     p_user_id: userId,
   });
 
@@ -30,7 +102,7 @@ export async function getPortfolioValue(userId: string) {
 }
 
 export async function getPortfolio24hChange(userId: string) {
-  const { data, error } = await supabase.rpc('get_portfolio_24h_change', {
+  const { data, error } = await supabase.rpc("get_portfolio_24h_change", {
     p_user_id: userId,
   });
 
@@ -39,7 +111,7 @@ export async function getPortfolio24hChange(userId: string) {
 }
 
 export async function getPortfolioAllocation(userId: string) {
-  const { data, error } = await supabase.rpc('get_portfolio_allocation', {
+  const { data, error } = await supabase.rpc("get_portfolio_allocation", {
     p_user_id: userId,
   });
 
@@ -52,7 +124,7 @@ export async function getPortfolioAllocation(userId: string) {
 // ==========================================
 
 export async function getTransactionSummary(userId: string, days: number = 30) {
-  const { data, error } = await supabase.rpc('get_transaction_summary', {
+  const { data, error } = await supabase.rpc("get_transaction_summary", {
     p_user_id: userId,
     p_days: days,
   });
@@ -64,13 +136,13 @@ export async function getTransactionSummary(userId: string, days: number = 30) {
 export async function getTransactionHistory(
   userId: string,
   limit: number = 20,
-  offset: number = 0
+  offset: number = 0,
 ) {
   const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .from("transactions")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 
   if (error) throw error;
@@ -79,9 +151,9 @@ export async function getTransactionHistory(
 
 export async function getTransactionByHash(txHash: string) {
   const { data, error } = await supabase
-    .from('transactions')
-    .select('*')
-    .eq('tx_hash', txHash)
+    .from("transactions")
+    .select("*")
+    .eq("tx_hash", txHash)
     .single();
 
   if (error) throw error;
@@ -94,11 +166,11 @@ export async function getTransactionByHash(txHash: string) {
 
 export async function getUserWallets(userId: string) {
   const { data, error } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('is_active', true)
-    .order('is_primary', { ascending: false });
+    .from("wallets")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .order("is_primary", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -106,14 +178,14 @@ export async function getUserWallets(userId: string) {
 
 export async function getPrimaryWallet(userId: string) {
   const { data, error } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('is_primary', true)
-    .eq('is_active', true)
+    .from("wallets")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_primary", true)
+    .eq("is_active", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error && error.code !== "PGRST116") throw error;
   return data || null;
 }
 
@@ -121,10 +193,10 @@ export async function createWallet(
   userId: string,
   walletAddress: string,
   walletType: string,
-  label?: string
+  label?: string,
 ) {
   const { data, error } = await supabase
-    .from('wallets')
+    .from("wallets")
     .insert({
       user_id: userId,
       wallet_address: walletAddress,
@@ -142,12 +214,12 @@ export async function createWallet(
 
 export async function disconnectWallet(walletId: string) {
   const { data, error } = await supabase
-    .from('wallets')
+    .from("wallets")
     .update({
       is_active: false,
       disconnected_at: new Date().toISOString(),
     })
-    .eq('id', walletId)
+    .eq("id", walletId)
     .select()
     .single();
 
@@ -161,11 +233,11 @@ export async function disconnectWallet(walletId: string) {
 
 export async function getUserAssets(userId: string) {
   const { data, error } = await supabase
-    .from('assets')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('balance', 0)
-    .order('balance_usd', { ascending: false });
+    .from("assets")
+    .select("*")
+    .eq("user_id", userId)
+    .gt("balance", 0)
+    .order("balance_usd", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -173,11 +245,11 @@ export async function getUserAssets(userId: string) {
 
 export async function getWalletAssets(walletId: string) {
   const { data, error } = await supabase
-    .from('assets')
-    .select('*')
-    .eq('wallet_id', walletId)
-    .gt('balance', 0)
-    .order('balance_usd', { ascending: false });
+    .from("assets")
+    .select("*")
+    .eq("wallet_id", walletId)
+    .gt("balance", 0)
+    .order("balance_usd", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -186,17 +258,17 @@ export async function getWalletAssets(walletId: string) {
 export async function updateAssetBalance(
   assetId: string,
   balance: number,
-  priceUsd: number
+  priceUsd: number,
 ) {
   const { data, error } = await supabase
-    .from('assets')
+    .from("assets")
     .update({
       balance,
       balance_usd: balance * priceUsd,
       price_usd: priceUsd,
       last_synced: new Date().toISOString(),
     })
-    .eq('id', assetId)
+    .eq("id", assetId)
     .select()
     .single();
 
@@ -217,10 +289,10 @@ export async function createWithdrawalRequest(
   destinationAddress: string,
   network: string,
   feeAmount?: number,
-  feeUsd?: number
+  feeUsd?: number,
 ) {
   const { data, error } = await supabase
-    .from('withdrawal_requests')
+    .from("withdrawal_requests")
     .insert({
       user_id: userId,
       wallet_id: walletId,
@@ -231,7 +303,7 @@ export async function createWithdrawalRequest(
       network,
       fee_amount: feeAmount,
       fee_usd: feeUsd,
-      status: 'pending',
+      status: "pending",
     })
     .select()
     .single();
@@ -242,10 +314,10 @@ export async function createWithdrawalRequest(
 
 export async function getWithdrawalRequests(userId: string) {
   const { data, error } = await supabase
-    .from('withdrawal_requests')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false });
+    .from("withdrawal_requests")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -254,16 +326,16 @@ export async function getWithdrawalRequests(userId: string) {
 export async function updateWithdrawalStatus(
   withdrawalId: string,
   status: string,
-  txHash?: string
+  txHash?: string,
 ) {
   const update: any = { status };
   if (txHash) update.tx_hash = txHash;
-  if (status === 'completed') update.completed_at = new Date().toISOString();
+  if (status === "completed") update.completed_at = new Date().toISOString();
 
   const { data, error } = await supabase
-    .from('withdrawal_requests')
+    .from("withdrawal_requests")
     .update(update)
-    .eq('id', withdrawalId)
+    .eq("id", withdrawalId)
     .select()
     .single();
 
@@ -278,14 +350,17 @@ export async function updateWithdrawalStatus(
 export async function getPriceHistory(
   symbol: string,
   daysBack: number = 30,
-  limit: number = 1000
+  limit: number = 1000,
 ) {
   const { data, error } = await supabase
-    .from('price_history')
-    .select('*')
-    .eq('symbol', symbol)
-    .gt('timestamp', new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString())
-    .order('timestamp', { ascending: false })
+    .from("price_history")
+    .select("*")
+    .eq("symbol", symbol)
+    .gt(
+      "timestamp",
+      new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString(),
+    )
+    .order("timestamp", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -294,14 +369,14 @@ export async function getPriceHistory(
 
 export async function getLatestPrice(symbol: string) {
   const { data, error } = await supabase
-    .from('price_history')
-    .select('*')
-    .eq('symbol', symbol)
-    .order('timestamp', { ascending: false })
+    .from("price_history")
+    .select("*")
+    .eq("symbol", symbol)
+    .order("timestamp", { ascending: false })
     .limit(1)
     .single();
 
-  if (error && error.code !== 'PGRST116') throw error;
+  if (error && error.code !== "PGRST116") throw error;
   return data || null;
 }
 
@@ -312,10 +387,10 @@ export async function insertPriceHistory(
   marketCap?: number,
   volume24h?: number,
   circulatingSupply?: number,
-  source: string = 'coinbase'
+  source: string = "coinbase",
 ) {
   const { data, error } = await supabase
-    .from('price_history')
+    .from("price_history")
     .insert({
       symbol,
       price_usd: priceUsd,
@@ -340,11 +415,11 @@ export async function insertPriceHistory(
 export async function createPriceAlert(
   userId: string,
   symbol: string,
-  alertType: 'above' | 'below',
-  targetPrice: number
+  alertType: "above" | "below",
+  targetPrice: number,
 ) {
   const { data, error } = await supabase
-    .from('price_alerts')
+    .from("price_alerts")
     .insert({
       user_id: userId,
       symbol,
@@ -359,15 +434,15 @@ export async function createPriceAlert(
   return data;
 }
 
-export async function getUserPriceAlerts(userId: string, activeOnly: boolean = true) {
-  const query = supabase
-    .from('price_alerts')
-    .select('*')
-    .eq('user_id', userId);
+export async function getUserPriceAlerts(
+  userId: string,
+  activeOnly: boolean = true,
+) {
+  const query = supabase.from("price_alerts").select("*").eq("user_id", userId);
 
-  if (activeOnly) query.eq('is_active', true);
+  if (activeOnly) query.eq("is_active", true);
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  const { data, error } = await query.order("created_at", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -375,9 +450,9 @@ export async function getUserPriceAlerts(userId: string, activeOnly: boolean = t
 
 export async function deletePriceAlert(alertId: string) {
   const { error } = await supabase
-    .from('price_alerts')
+    .from("price_alerts")
     .delete()
-    .eq('id', alertId);
+    .eq("id", alertId);
 
   if (error) throw error;
   return true;
@@ -393,10 +468,10 @@ export async function createPortfolioSnapshot(
   totalValueBtc: number,
   totalValueEth: number,
   assetsCount: number,
-  allocationData?: any
+  allocationData?: any,
 ) {
   const { data, error } = await supabase
-    .from('portfolio_snapshots')
+    .from("portfolio_snapshots")
     .insert({
       user_id: userId,
       total_value_usd: totalValueUsd,
@@ -412,13 +487,19 @@ export async function createPortfolioSnapshot(
   return data;
 }
 
-export async function getPortfolioSnapshots(userId: string, daysBack: number = 90) {
+export async function getPortfolioSnapshots(
+  userId: string,
+  daysBack: number = 90,
+) {
   const { data, error } = await supabase
-    .from('portfolio_snapshots')
-    .select('*')
-    .eq('user_id', userId)
-    .gt('snapshot_date', new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString())
-    .order('snapshot_date', { ascending: false });
+    .from("portfolio_snapshots")
+    .select("*")
+    .eq("user_id", userId)
+    .gt(
+      "snapshot_date",
+      new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString(),
+    )
+    .order("snapshot_date", { ascending: false });
 
   if (error) throw error;
   return data;
@@ -430,10 +511,10 @@ export async function getPortfolioSnapshots(userId: string, daysBack: number = 9
 
 export async function getAuditLogs(userId: string, limit: number = 50) {
   const { data, error } = await supabase
-    .from('audit_logs')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
+    .from("audit_logs")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (error) throw error;
@@ -448,9 +529,9 @@ export async function logAuditEvent(
   oldValues?: any,
   newValues?: any,
   ipAddress?: string,
-  userAgent?: string
+  userAgent?: string,
 ) {
-  const { data, error } = await supabase.rpc('log_audit_event', {
+  const { data, error } = await supabase.rpc("log_audit_event", {
     p_user_id: userId,
     p_action: action,
     p_entity_type: entityType,
@@ -471,9 +552,9 @@ export async function logAuditEvent(
 
 export async function getUserProfile(userId: string) {
   const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('id', userId)
+    .from("users")
+    .select("*")
+    .eq("id", userId)
     .single();
 
   if (error) throw error;
@@ -482,9 +563,9 @@ export async function getUserProfile(userId: string) {
 
 export async function updateUserProfile(userId: string, updates: Partial<any>) {
   const { data, error } = await supabase
-    .from('users')
+    .from("users")
     .update(updates)
-    .eq('id', userId)
+    .eq("id", userId)
     .select()
     .single();
 
@@ -492,14 +573,18 @@ export async function updateUserProfile(userId: string, updates: Partial<any>) {
   return data;
 }
 
-export async function createUserProfile(userId: string, email: string, authId: string) {
+export async function createUserProfile(
+  userId: string,
+  email: string,
+  authId: string,
+) {
   const { data, error } = await supabase
-    .from('users')
+    .from("users")
     .insert({
       id: userId,
       auth_id: authId,
       email,
-      account_status: 'active',
+      account_status: "active",
       is_verified: false,
     })
     .select()
@@ -514,21 +599,21 @@ export async function createUserProfile(userId: string, email: string, authId: s
 // ==========================================
 
 export async function updateAssetPrices() {
-  const { data, error } = await supabase.rpc('update_asset_prices');
+  const { data, error } = await supabase.rpc("update_asset_prices");
 
   if (error) throw error;
   return data;
 }
 
 export async function checkAndTriggerPriceAlerts() {
-  const { data, error } = await supabase.rpc('check_and_trigger_price_alerts');
+  const { data, error } = await supabase.rpc("check_and_trigger_price_alerts");
 
   if (error) throw error;
   return data;
 }
 
 export async function cleanupExpiredSessions() {
-  const { data, error } = await supabase.rpc('cleanup_expired_sessions');
+  const { data, error } = await supabase.rpc("cleanup_expired_sessions");
 
   if (error) throw error;
   return data;
