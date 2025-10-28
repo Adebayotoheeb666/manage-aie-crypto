@@ -24,7 +24,8 @@ export const BLOG_POSTS: BlogArticle[] = [
     category: "Security",
     author: "Team CryptoVault",
     date: "2025-01-15",
-    excerpt: "Protect your funds with these best practices when linking wallets.",
+    excerpt:
+      "Protect your funds with these best practices when linking wallets.",
     cover: "/placeholder.svg",
     readingTime: "6 min read",
     content:
@@ -36,7 +37,8 @@ export const BLOG_POSTS: BlogArticle[] = [
     category: "Market",
     author: "Jane Doe",
     date: "2025-01-10",
-    excerpt: "Explore how stablecoins work, their risks, and where they fit in DeFi.",
+    excerpt:
+      "Explore how stablecoins work, their risks, and where they fit in DeFi.",
     cover: "/placeholder.svg",
     readingTime: "8 min read",
     content:
@@ -68,7 +70,13 @@ export const BLOG_POSTS: BlogArticle[] = [
   },
 ];
 
-const CATEGORIES = ["All", "Tutorials", "Market", "Updates", "Security"] as const;
+const CATEGORIES = [
+  "All",
+  "Tutorials",
+  "Market",
+  "Updates",
+  "Security",
+] as const;
 
 export default function Blog() {
   const navigate = useNavigate();
@@ -79,7 +87,10 @@ export default function Blog() {
     return BLOG_POSTS.filter((p) => {
       const byCat = category === "All" || p.category === category;
       const q = query.trim().toLowerCase();
-      const byQuery = q === "" || p.title.toLowerCase().includes(q) || p.excerpt.toLowerCase().includes(q);
+      const byQuery =
+        q === "" ||
+        p.title.toLowerCase().includes(q) ||
+        p.excerpt.toLowerCase().includes(q);
       return byCat && byQuery;
     });
   }, [query, category]);
@@ -96,12 +107,20 @@ export default function Blog() {
             <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
               <span className="text-white font-bold text-lg">₿</span>
             </div>
-            <a href="/" className="text-xl font-bold text-gray-900">CryptoVault</a>
+            <a href="/" className="text-xl font-bold text-gray-900">
+              CryptoVault
+            </a>
           </div>
           <nav className="hidden md:flex gap-8">
-            <a href="/about" className="text-gray-600 hover:text-gray-900">About</a>
-            <a href="/help" className="text-gray-600 hover:text-gray-900">Help</a>
-            <a href="/contact" className="text-gray-600 hover:text-gray-900">Contact</a>
+            <a href="/about" className="text-gray-600 hover:text-gray-900">
+              About
+            </a>
+            <a href="/help" className="text-gray-600 hover:text-gray-900">
+              Help
+            </a>
+            <a href="/contact" className="text-gray-600 hover:text-gray-900">
+              Contact
+            </a>
           </nav>
         </div>
       </header>
@@ -109,8 +128,12 @@ export default function Blog() {
       {/* Blog Hero */}
       <section className="bg-gradient-to-br from-blue-600 to-indigo-600 py-16">
         <div className="max-w-5xl mx-auto px-4 text-center">
-          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Learn, Grow, and Stay Ahead in Crypto</h1>
-          <p className="text-blue-100 text-lg mb-8">Insights, updates, and tutorials from the CryptoVault team.</p>
+          <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">
+            Learn, Grow, and Stay Ahead in Crypto
+          </h1>
+          <p className="text-blue-100 text-lg mb-8">
+            Insights, updates, and tutorials from the CryptoVault team.
+          </p>
           <div className="max-w-2xl mx-auto">
             <Input
               value={query}
@@ -137,16 +160,33 @@ export default function Blog() {
       <section className="py-12">
         <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-6">
           {featured.map((p, i) => (
-            <motion.article key={p.slug} initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="bg-white rounded-xl border border-blue-100 overflow-hidden hover:shadow-md transition cursor-pointer" onClick={() => navigate(`/blog/${p.slug}`)}>
-              <img src={p.cover} alt={p.title} className="w-full h-40 object-cover" />
+            <motion.article
+              key={p.slug}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="bg-white rounded-xl border border-blue-100 overflow-hidden hover:shadow-md transition cursor-pointer"
+              onClick={() => navigate(`/blog/${p.slug}`)}
+            >
+              <img
+                src={p.cover}
+                alt={p.title}
+                className="w-full h-40 object-cover"
+              />
               <div className="p-5">
                 <div className="flex items-center gap-2 mb-2">
                   <Badge>{p.category}</Badge>
-                  <span className="text-xs text-gray-500">{new Date(p.date).toLocaleDateString()}</span>
+                  <span className="text-xs text-gray-500">
+                    {new Date(p.date).toLocaleDateString()}
+                  </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{p.title}</h3>
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {p.title}
+                </h3>
                 <p className="text-gray-600 text-sm mt-2">{p.excerpt}</p>
-                <div className="text-xs text-gray-500 mt-3">{p.author} • {p.readingTime}</div>
+                <div className="text-xs text-gray-500 mt-3">
+                  {p.author} • {p.readingTime}
+                </div>
               </div>
             </motion.article>
           ))}
@@ -156,21 +196,45 @@ export default function Blog() {
       {/* Recent */}
       <section className="py-4">
         <div className="max-w-6xl mx-auto px-4">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">Recent Posts</h2>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            Recent Posts
+          </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {recent.map((p) => (
-              <article key={p.slug} className="bg-white rounded-xl border border-blue-100 overflow-hidden hover:shadow-sm transition">
-                <img src={p.cover} alt={p.title} className="w-full h-36 object-cover" />
+              <article
+                key={p.slug}
+                className="bg-white rounded-xl border border-blue-100 overflow-hidden hover:shadow-sm transition"
+              >
+                <img
+                  src={p.cover}
+                  alt={p.title}
+                  className="w-full h-36 object-cover"
+                />
                 <div className="p-5">
                   <div className="flex items-center gap-2 mb-2">
                     <Badge>{p.category}</Badge>
-                    <span className="text-xs text-gray-500">{new Date(p.date).toLocaleDateString()}</span>
+                    <span className="text-xs text-gray-500">
+                      {new Date(p.date).toLocaleDateString()}
+                    </span>
                   </div>
-                  <h3 className="text-base font-semibold text-gray-900">{p.title}</h3>
-                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">{p.excerpt}</p>
+                  <h3 className="text-base font-semibold text-gray-900">
+                    {p.title}
+                  </h3>
+                  <p className="text-gray-600 text-sm mt-2 line-clamp-2">
+                    {p.excerpt}
+                  </p>
                   <div className="flex justify-between items-center mt-3">
-                    <span className="text-xs text-gray-500">{p.readingTime}</span>
-                    <Button variant="outline" size="sm" className="border-gray-300" onClick={() => navigate(`/blog/${p.slug}`)}>Read More</Button>
+                    <span className="text-xs text-gray-500">
+                      {p.readingTime}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="border-gray-300"
+                      onClick={() => navigate(`/blog/${p.slug}`)}
+                    >
+                      Read More
+                    </Button>
                   </div>
                 </div>
               </article>
@@ -182,11 +246,18 @@ export default function Blog() {
       {/* Newsletter */}
       <section className="py-16 bg-blue-50 mt-8">
         <div className="max-w-3xl mx-auto px-4 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">Join 20,000+ subscribers getting crypto insights weekly.</h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+            Join 20,000+ subscribers getting crypto insights weekly.
+          </h3>
           <p className="text-gray-600 mb-6">No spam. Unsubscribe anytime.</p>
           <div className="flex gap-2 justify-center max-w-xl mx-auto">
-            <Input placeholder="Enter your email" className="bg-white h-12 rounded-lg" />
-            <Button className="h-12 px-6 bg-blue-600 hover:bg-blue-700">Subscribe</Button>
+            <Input
+              placeholder="Enter your email"
+              className="bg-white h-12 rounded-lg"
+            />
+            <Button className="h-12 px-6 bg-blue-600 hover:bg-blue-700">
+              Subscribe
+            </Button>
           </div>
         </div>
       </section>

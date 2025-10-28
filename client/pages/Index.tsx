@@ -381,14 +381,23 @@ export default function Index() {
                 <ul className="space-y-2 text-gray-600">
                   {section.links.map((link, linkIdx) => {
                     const href =
-                      link === "Features" ? "/#features" :
-                      link === "Security" ? "/#security" :
-                      link === "About" ? "/about" :
-                      link === "Blog" ? "/blog" :
-                      link === "Terms of Service" ? "/terms" :
-                      link === "Privacy Policy" ? "/privacy" :
-                      link === "Help Center" ? "/help" :
-                      link === "Contact Us" ? "/contact" : "#";
+                      link === "Features"
+                        ? "/#features"
+                        : link === "Security"
+                          ? "/#security"
+                          : link === "About"
+                            ? "/about"
+                            : link === "Blog"
+                              ? "/blog"
+                              : link === "Terms of Service"
+                                ? "/terms"
+                                : link === "Privacy Policy"
+                                  ? "/privacy"
+                                  : link === "Help Center"
+                                    ? "/help"
+                                    : link === "Contact Us"
+                                      ? "/contact"
+                                      : "#";
                     return (
                       <motion.li
                         key={linkIdx}

@@ -28,19 +28,33 @@ export default function BlogPost() {
     <div className="min-h-screen bg-white">
       <header className="border-b border-blue-100">
         <div className="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate("/blog")} className="text-gray-600">Back</Button>
-          <a href="/" className="font-bold text-gray-900">CryptoVault</a>
+          <Button
+            variant="ghost"
+            onClick={() => navigate("/blog")}
+            className="text-gray-600"
+          >
+            Back
+          </Button>
+          <a href="/" className="font-bold text-gray-900">
+            CryptoVault
+          </a>
         </div>
       </header>
 
       <main className="max-w-3xl mx-auto px-4 py-10">
         <div className="flex items-center gap-2 mb-2">
           <Badge>{post.category}</Badge>
-          <span className="text-xs text-gray-500">{new Date(post.date).toLocaleDateString()} • {post.readingTime}</span>
+          <span className="text-xs text-gray-500">
+            {new Date(post.date).toLocaleDateString()} • {post.readingTime}
+          </span>
         </div>
         <h1 className="text-4xl font-bold text-gray-900 mb-3">{post.title}</h1>
         <p className="text-gray-600 mb-6">By {post.author}</p>
-        <img src={post.cover} alt={post.title} className="w-full h-64 object-cover rounded-xl mb-6 border border-blue-100" />
+        <img
+          src={post.cover}
+          alt={post.title}
+          className="w-full h-64 object-cover rounded-xl mb-6 border border-blue-100"
+        />
 
         <article className="prose prose-blue max-w-none">
           <p>{post.content}</p>
@@ -48,10 +62,20 @@ export default function BlogPost() {
 
         <div className="flex items-center gap-3 mt-8">
           <span className="text-sm text-gray-600">Share:</span>
-          <a href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}`} className="text-blue-600 hover:text-blue-700" target="_blank" rel="noreferrer">
+          <a
+            href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(post.title)}&url=${encodeURIComponent(window.location.href)}`}
+            className="text-blue-600 hover:text-blue-700"
+            target="_blank"
+            rel="noreferrer"
+          >
             <Twitter size={18} />
           </a>
-          <a href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`} className="text-blue-600 hover:text-blue-700" target="_blank" rel="noreferrer">
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+            className="text-blue-600 hover:text-blue-700"
+            target="_blank"
+            rel="noreferrer"
+          >
             <Facebook size={18} />
           </a>
         </div>
@@ -59,14 +83,20 @@ export default function BlogPost() {
         <div className="flex justify-between items-center mt-10 pt-6 border-t border-gray-200">
           <div>
             {prev && (
-              <Link to={`/blog/${prev.slug}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+              <Link
+                to={`/blog/${prev.slug}`}
+                className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+              >
                 <ArrowLeft size={16} /> {prev.title}
               </Link>
             )}
           </div>
           <div>
             {next && (
-              <Link to={`/blog/${next.slug}`} className="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+              <Link
+                to={`/blog/${next.slug}`}
+                className="text-blue-600 hover:text-blue-700 flex items-center gap-2"
+              >
                 {next.title} <ArrowRight size={16} />
               </Link>
             )}
@@ -76,7 +106,9 @@ export default function BlogPost() {
         <div className="mt-12">
           <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center text-gray-600">
             <p>Comments</p>
-            <p className="text-sm text-gray-500 mt-1">Integrate Disqus or Hashnode embed here.</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Integrate Disqus or Hashnode embed here.
+            </p>
           </div>
         </div>
       </main>
