@@ -120,7 +120,8 @@
 
 @layer base {
   /* Prevent horizontal scroll on small devices while preserving internal scroll for pre/code */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 }
