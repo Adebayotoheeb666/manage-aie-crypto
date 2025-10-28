@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { handleDemo } from "./routes/demo";
+import { handleSupabaseHealth } from "./routes/supabaseHealth";
 
 export function createServer() {
   const app = express();
@@ -18,6 +19,21 @@ export function createServer() {
   });
 
   app.get("/api/demo", handleDemo);
+
+  // Supabase health check
+  // GET /api/supabase-health
+  try {
+    // diagnostic: ensure app.route exists
+    // eslint-disable-next-line no-console
+    console.log(
+      "registering supabase health route, app.route type:",
+      typeof (app as any).route,
+    );
+    app.get("/api/supabase-health", handleSupabaseHealth);
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn("Could not register supabase health route", e);
+  }
 
   return app;
 }
