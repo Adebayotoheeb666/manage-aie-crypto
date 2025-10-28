@@ -335,18 +335,13 @@ export default function Index() {
             Connect your Coinbase wallet in seconds and start managing your
             portfolio today.
           </p>
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <AnimatedButton
+            onClick={handleConnectWallet}
+            size="lg"
+            className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6 h-auto rounded-lg font-semibold"
           >
-            <Button
-              onClick={handleConnectWallet}
-              size="lg"
-              className="bg-white text-blue-600 hover:bg-gray-100 text-lg px-8 py-6 h-auto rounded-lg font-semibold"
-            >
-              Link Your Coinbase Wallet
-            </Button>
-          </motion.div>
+            Link Your Coinbase Wallet
+          </AnimatedButton>
         </motion.div>
       </section>
 
