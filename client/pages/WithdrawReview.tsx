@@ -1,6 +1,9 @@
 import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { getLatestPrice, createWithdrawalRequest } from "@shared/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
   CheckCircle2,
@@ -13,9 +16,10 @@ import {
 export default function WithdrawReview() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { authUser, dbUser } = useAuth();
 
   const state = location.state || {};
-  const { crypto, amount, address, network, email, saveEmail } = state;
+  const { crypto, amount, address, network, email, saveEmail, walletId } = state;
 
   const [step, setStep] = useState<
     "review" | "confirming" | "processing" | "success" | "failure"
@@ -24,12 +28,34 @@ export default function WithdrawReview() {
     verify: false,
     irreversible: false,
   });
+  const [price, setPrice] = useState(0);
+  const [txHash, setTxHash] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data
-  const networkFee = 0.0005;
-  const price = 42500; // Mock price for BTC
-  const receiveAmount = (amount || 0.5) - networkFee;
-  const txHash = "3f4e5d6c7b8a9f0e1d2c3b4a5f6e7d8c9";
+  // Fetch real price data
+  useEffect(() => {
+    async function fetchPrice() {
+      try {
+        const priceData = await getLatestPrice(crypto);
+        if (priceData) {
+          setPrice(priceData.price_usd);
+        }
+      } catch (err) {
+        console.error("Failed to fetch price:", err);
+        setError("Failed to load price data");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (crypto) {
+      fetchPrice();
+    }
+  }, [crypto]);
+
+  const networkFee = 0.0005; // This should be fetched from API in production
+  const receiveAmount = (amount || 0) - networkFee;
 
   const handleCopyAddress = () => {
     navigator.clipboard.writeText(address || "");
