@@ -342,10 +342,9 @@ export default function Dashboard() {
                       </td>
                       <td className={`px-6 py-4 font-medium ${asset.change24h >= 0 ? "text-green-600" : "text-red-600"}`}>
                         <motion.div
-                          initial={{ scale: 1 }}
-                          animate={{ scale: 1.05 }}
+                          initial={{ opacity: 0.8 }}
+                          animate={{ opacity: 1 }}
                           transition={{ duration: 0.3 }}
-                          className="inline-block"
                         >
                           {asset.change24h >= 0 ? "↑ " : "↓ "}{Math.abs(asset.change24h).toFixed(2)}%
                         </motion.div>
