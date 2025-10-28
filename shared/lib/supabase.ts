@@ -1,8 +1,26 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@shared/types/database';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const SUPABASE_URL =
+  import.meta.env.VITE_SUPABASE_URL ||
+  // fallback to common env names if VITE_ vars weren't set by the environment
+  import.meta.env.NEXT_PUBLIC_SUPABASE_URL ||
+  import.meta.env.NEXT_SUPABASE_URL ||
+  '';
+const SUPABASE_ANON_KEY =
+  import.meta.env.VITE_SUPABASE_ANON_KEY ||
+  import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  import.meta.env.NEXT_SUPABASE_ANON_KEY ||
+  '';
+
+// Basic runtime validation to give a clearer error if envs are missing
+if (!SUPABASE_URL || !/^https?:\/\//.test(SUPABASE_URL)) {
+  // Avoid throwing here to keep dev server up; throw when createClient is invoked instead
+  console.warn('[supabase] SUPABASE_URL is missing or invalid:', SUPABASE_URL);
+}
+if (!SUPABASE_ANON_KEY) {
+  console.warn('[supabase] SUPABASE_ANON_KEY is missing or empty');
+}
 
 export const supabase: SupabaseClient<Database> = createClient<Database>(
   SUPABASE_URL,
