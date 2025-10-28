@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import {
   ArrowUpRight,
   ArrowDownLeft,
@@ -14,6 +15,7 @@ import {
   Download,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell } from "recharts";
+import { useRealtimePrices } from "@/hooks/useRealtimePrices";
 
 // Mock portfolio data
 const portfolioData = [
