@@ -335,8 +335,11 @@ export default function ConnectWallet() {
           </div>
         )}
 
-        {/* Security Warning */}
-        <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
+        {/* Seed Phrase Connection */}
+        {connectionTab === "seedphrase" && (
+          <>
+            {/* Security Warning */}
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
           <AlertCircle className="text-yellow-600 flex-shrink-0" size={24} />
           <div>
             <h3 className="font-semibold text-yellow-900 mb-1">
@@ -476,12 +479,14 @@ export default function ConnectWallet() {
           </Button>
         </div>
 
-        {/* Help Link */}
-        <div className="text-center mt-8">
-          <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
-            Need Help? Contact Support
-          </a>
-        </div>
+            {/* Help Link */}
+            <div className="text-center mt-8">
+              <a href="#" className="text-blue-600 hover:text-blue-700 font-medium">
+                Need Help? Contact Support
+              </a>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
