@@ -170,7 +170,7 @@ export function useWalletConnect(): UseWalletConnectReturn {
       }
 
       try {
-        const signer = wallet.provider.getSigner();
+        const signer: JsonRpcSigner = wallet.provider.getSigner();
         if (!signer) {
           throw new Error("Failed to get signer from provider");
         }
