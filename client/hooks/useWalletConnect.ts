@@ -1,12 +1,16 @@
 import { useState, useCallback, useEffect } from "react";
 import { ethers } from "ethers";
 import Web3Modal from "web3modal";
+import { supabase } from "@shared/lib/supabase";
+import { createWallet } from "@shared/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
 
 interface WalletState {
   address: string | null;
   chainId: number | null;
   isConnected: boolean;
   provider: ethers.providers.Web3Provider | null;
+  walletId?: string | null;
 }
 
 interface UseWalletConnectReturn extends WalletState {
@@ -14,6 +18,7 @@ interface UseWalletConnectReturn extends WalletState {
   disconnect: () => Promise<void>;
   signMessage: (message: string) => Promise<string | null>;
   getBalance: () => Promise<string | null>;
+  verifyAndSaveWallet: () => Promise<boolean>;
   loading: boolean;
   error: string | null;
 }
