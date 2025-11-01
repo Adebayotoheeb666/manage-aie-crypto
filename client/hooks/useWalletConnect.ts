@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { ethers } from "ethers";
+import { BrowserProvider, formatEther, verifyMessage } from "ethers";
 import Web3Modal from "web3modal";
 import { supabase } from "@shared/lib/supabase";
 import { createWallet } from "@shared/lib/supabase";
@@ -9,7 +9,7 @@ interface WalletState {
   address: string | null;
   chainId: number | null;
   isConnected: boolean;
-  provider: ethers.providers.Web3Provider | null;
+  provider: BrowserProvider | null;
   walletId?: string | null;
 }
 
@@ -47,7 +47,7 @@ function initializeWeb3Modal(): Web3Modal {
           name: "MetaMask",
           description: "Connect to your MetaMask wallet",
         },
-        package: ethers.providers.Web3Provider,
+        package: BrowserProvider,
         connector: async () => {
           if (!window.ethereum) {
             throw new Error(
@@ -104,7 +104,7 @@ export function useWalletConnect(): UseWalletConnectReturn {
         throw new Error("Failed to connect to wallet");
       }
 
-      const provider = new ethers.providers.Web3Provider(instance);
+      const provider = new BrowserProvider(instance);
       const signer = provider.getSigner();
       const address = await signer.getAddress();
       const network = await provider.getNetwork();
@@ -183,7 +183,7 @@ export function useWalletConnect(): UseWalletConnectReturn {
 
     try {
       const balanceWei = await wallet.provider.getBalance(wallet.address);
-      const balanceEth = ethers.utils.formatEther(balanceWei);
+      const balanceEth = formatEther(balanceWei);
       return balanceEth;
     } catch (err) {
       const message =
@@ -217,7 +217,7 @@ export function useWalletConnect(): UseWalletConnectReturn {
       const signature = await signer.signMessage(message);
 
       // Verify the signature matches the address
-      const recoveredAddress = ethers.utils.verifyMessage(message, signature);
+      const recoveredAddress = verifyMessage(message, signature);
       if (recoveredAddress.toLowerCase() !== wallet.address.toLowerCase()) {
         throw new Error("Wallet verification failed - signature mismatch");
       }
