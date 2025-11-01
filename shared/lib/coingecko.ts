@@ -1,5 +1,5 @@
 const COINGECKO_API =
-  import.meta.env.VITE_COINGECKO_API || "https://api.coingecko.com/api/v3";
+  (typeof import.meta !== "undefined" && import.meta.env?.VITE_COINGECKO_API) || "https://api.coingecko.com/api/v3";
 
 export interface CoinPrice {
   id: string;

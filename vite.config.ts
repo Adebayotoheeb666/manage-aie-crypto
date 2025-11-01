@@ -5,8 +5,7 @@ import { createServer } from "./server";
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
-  const env = loadEnv(mode, process.cwd(), "");
-  const coinGeckoApi = env.VITE_COINGECKO_API;
+  const env = loadEnv(mode, process.cwd(), "VITE_") || {};
 
   return defineConfig({
     server: {
@@ -28,11 +27,8 @@ export default ({ mode }) => {
       },
     },
     define: {
-      "process.env": { ...process.env, ...env },
-      // You can also expose coinGeckoApi if needed:
-      // "process.env.VITE_COINGECKO_API": JSON.stringify(coinGeckoApi),
+      "process.env": env,
     },
-    // If you use coinGeckoApi in config, use the variable here
   });
 };
 
