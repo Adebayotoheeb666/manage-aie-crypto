@@ -37,6 +37,7 @@ const COLORS = ["#2563eb", "#0ea5e9", "#06b6d4", "#0891b2"];
 export default function Dashboard() {
   const navigate = useNavigate();
   const { authUser, signOut } = useAuth();
+  const { address: walletAddress } = useWallet();
   const {
     portfolioValue,
     portfolioChange,
