@@ -7,7 +7,7 @@ interface WalletContextType {
   chainId: number | null;
   isConnected: boolean;
   provider: BrowserProvider | null;
-  walletId: string | null | undefined;
+  walletId?: string | null;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   signMessage: (message: string) => Promise<string | null>;
