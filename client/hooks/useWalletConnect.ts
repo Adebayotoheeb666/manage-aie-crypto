@@ -225,7 +225,7 @@ export function useWalletConnect(): UseWalletConnectReturn {
       const message = `Verify wallet ownership for CryptoVault\nWallet: ${wallet.address}\nTimestamp: ${Date.now()}`;
 
       // Sign the message with the wallet
-      const signer = wallet.provider.getSigner();
+      const signer: JsonRpcSigner = wallet.provider.getSigner();
       if (!signer) {
         throw new Error("Failed to get signer from provider");
       }
