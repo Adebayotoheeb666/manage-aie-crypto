@@ -90,7 +90,7 @@ DROP TABLE IF EXISTS public.users CASCADE;
 REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA public FROM authenticated;
 REVOKE SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public FROM authenticated;
 
--- Step 8: Drop extensions (optional - comment out if you want to keep them)
+-- Step 6: Drop extensions (optional - comment out if you want to keep them)
 -- DROP EXTENSION IF EXISTS "uuid-ossp";
 -- DROP EXTENSION IF EXISTS "pgcrypto";
 -- DROP EXTENSION IF EXISTS "citext";
