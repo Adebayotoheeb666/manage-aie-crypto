@@ -68,5 +68,15 @@ export function createServer() {
   // POST /api/prices/alerts - Check and trigger price alerts (requires X-API-Key header)
   app.post("/api/prices/alerts", handleCheckPriceAlerts);
 
+  // Maintenance routes
+  // POST /api/maintenance/cleanup-sessions - Clean up expired sessions
+  app.post("/api/maintenance/cleanup-sessions", handleCleanupSessions);
+
+  // POST /api/maintenance/unlock-accounts - Unlock expired account locks
+  app.post("/api/maintenance/unlock-accounts", handleUnlockAccounts);
+
+  // POST /api/maintenance/lock-accounts - Lock accounts with excessive failed attempts
+  app.post("/api/maintenance/lock-accounts", handleLockAccounts);
+
   return app;
 }
