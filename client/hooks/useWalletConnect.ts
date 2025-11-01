@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { BrowserProvider, formatEther, verifyMessage } from "ethers";
+import { BrowserProvider, formatEther, verifyMessage, JsonRpcSigner } from "ethers";
 import Web3Modal from "web3modal";
 import { supabase } from "@shared/lib/supabase";
 import { createWallet } from "@shared/lib/supabase";
