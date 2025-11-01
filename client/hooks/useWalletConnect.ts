@@ -1,5 +1,10 @@
 import { useState, useCallback, useEffect } from "react";
-import { BrowserProvider, formatEther, verifyMessage, JsonRpcSigner } from "ethers";
+import {
+  BrowserProvider,
+  formatEther,
+  verifyMessage,
+  JsonRpcSigner,
+} from "ethers";
 import Web3Modal from "web3modal";
 import { supabase } from "@shared/lib/supabase";
 import { createWallet } from "@shared/lib/supabase";
@@ -107,7 +112,9 @@ export function useWalletConnect(): UseWalletConnectReturn {
       const provider = new BrowserProvider(instance);
 
       // Request accounts from the provider to get the wallet address
-      const accounts = await instance.request({ method: "eth_accounts" }) as string[];
+      const accounts = (await instance.request({
+        method: "eth_accounts",
+      })) as string[];
 
       if (!accounts || accounts.length === 0) {
         throw new Error("No wallet accounts found");
