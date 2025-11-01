@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { getLatestPrice } from "@shared/lib/supabase";
+import { getMultipleCoinPrices } from "@shared/lib/coingecko";
 import type { PriceHistory } from "@shared/types/database";
 
 export interface PriceData {
