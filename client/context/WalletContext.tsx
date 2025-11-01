@@ -7,10 +7,12 @@ interface WalletContextType {
   chainId: number | null;
   isConnected: boolean;
   provider: ethers.providers.Web3Provider | null;
+  walletId: string | null | undefined;
   connect: () => Promise<void>;
   disconnect: () => Promise<void>;
   signMessage: (message: string) => Promise<string | null>;
   getBalance: () => Promise<string | null>;
+  verifyAndSaveWallet: () => Promise<boolean>;
   loading: boolean;
   error: string | null;
 }
