@@ -47,6 +47,7 @@ export function createServer() {
       typeof (app as any).route,
     );
     app.get("/api/supabase-health", handleSupabaseHealth);
+    app.get("/api/schema-verification", handleSchemaVerification);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn("Could not register supabase health route", e);
