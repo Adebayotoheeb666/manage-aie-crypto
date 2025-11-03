@@ -87,21 +87,62 @@ export function createServer() {
   // POST /api/maintenance/lock-accounts - Lock accounts with excessive failed attempts
   app.post("/api/maintenance/lock-accounts", handleLockAccounts);
 
+  // Simple in-memory rate limiter middleware for auth endpoints
+  const rateWindows = new Map<string, { count: number; resetAt: number }>();
+  function authRateLimiter(req: any, res: any, next: any) {
+    try {
+      const ip = (req.headers["x-forwarded-for"] || req.socket.remoteAddress || "unknown").toString();
+      const key = `auth:${ip}`;
+      const now = Date.now();
+      const WINDOW_MS = 60 * 1000; // 1 minute
+      const MAX = 30; // max requests per window per IP
+      const entry = rateWindows.get(key);
+      if (!entry || entry.resetAt < now) {
+        rateWindows.set(key, { count: 1, resetAt: now + WINDOW_MS });
+        return next();
+      }
+      if (entry.count >= MAX) {
+        const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+        res.setHeader("Retry-After", String(retryAfter));
+        return res.status(429).json({ error: "Too many requests. Please try again later." });
+      }
+      entry.count += 1;
+      rateWindows.set(key, entry);
+      return next();
+    } catch (e) {
+      return next();
+    }
+  }
+
   // Auth routes (proxy through backend to avoid Netlify restrictions)
   // POST /api/auth/signup - Sign up with email/password
-  app.post("/api/auth/signup", handleSignUp);
+  app.post("/api/auth/signup", authRateLimiter, handleSignUp);
 
   // POST /api/auth/signin - Sign in with email/password
-  app.post("/api/auth/signin", handleSignIn);
+  app.post("/api/auth/signin", authRateLimiter, handleSignIn);
 
   // POST /api/auth/signout - Sign out
-  app.post("/api/auth/signout", handleSignOut);
+  app.post("/api/auth/signout", authRateLimiter, handleSignOut);
 
-  // POST /api/auth/wallet-connect - Connect wallet
-  app.post("/api/auth/wallet-connect", handleWalletConnect);
+  // POST /api/auth/wallet-connect - Connect wallet (signature-based)
+  app.post("/api/auth/wallet-connect", authRateLimiter, handleWalletConnect);
 
   // GET /api/auth/session - Get current session
-  app.get("/api/auth/session", handleGetSession);
+  app.get("/api/auth/session", authRateLimiter, handleGetSession);
+
+  // GET /api/auth/nonce - Get a nonce for signing (query: address=0x...)
+  app.get("/api/auth/nonce", authRateLimiter, (req, res) => {
+    // delegated to handle in auth.ts if needed
+    // fallback here: simple implementation
+    const address = String(req.query.address || "");
+    if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+      return res.status(400).json({ error: "Valid wallet address is required" });
+    }
+    // lazy import to avoid circular
+    const { createNonceForAddress } = require("./routes/auth");
+    const nonce = createNonceForAddress(address);
+    return res.status(200).json({ nonce });
+  });
 
   return app;
 }
