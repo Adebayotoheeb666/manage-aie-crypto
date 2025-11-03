@@ -153,16 +153,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await fetch("/api/auth/signout", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session: authUser }),
       });
 
       setAuthUser(null);
       setDbUser(null);
       localStorage.removeItem("auth_session");
+      toast({ title: "Signed out", description: "You have been signed out", variant: "default" });
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign out failed";
       setError(message);
+      toast({ title: "Sign out failed", description: message, variant: "destructive" });
       throw err;
     }
   }
