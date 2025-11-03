@@ -257,48 +257,55 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 };
 
 export const handleGetSession: RequestHandler = async (req, res) => {
+  // Support Bearer Authorization or sv_session cookie
   const authHeader = req.headers.authorization;
+  let token: string | null = null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else if ((req as any).cookies && (req as any).cookies.sv_session) {
+    token = (req as any).cookies.sv_session;
+  } else if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(";").map((c) => c.trim());
+    for (const c of cookies) {
+      if (c.startsWith("sv_session=")) {
+        token = c.split("=").slice(1).join("=");
+        break;
+      }
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({ error: "No session token provided" });
   }
 
-  const token = authHeader.slice(7);
-
   try {
+    const { verifySession } = require("../lib/session");
+    const SESSION_SECRET = process.env.SESSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+    if (!SESSION_SECRET) return res.status(401).json({ error: "Session secret not configured" });
+
+    const payload = verifySession(token, SESSION_SECRET);
+    if (!payload || !payload.sub) return res.status(401).json({ error: "Invalid session" });
+
+    const walletAddress = payload.sub;
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
       auth: { persistSession: false },
     });
 
-    const { data, error } = await supabase.auth.getUser();
+    const { data: profile, error: profileErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", walletAddress)
+      .single();
 
-    if (error) {
-      return res.status(401).json({ error: error.message });
+    if (profileErr && profileErr.code !== "PGRST116") {
+      return res.status(500).json({ error: profileErr.message });
     }
 
-    if (data.user) {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_id", data.user.id)
-        .single();
-
-      return res.status(200).json({
-        user: data.user,
-        profile: profile || null,
-      });
-    }
-
-    return res.status(401).json({ error: "No user found" });
+    return res.status(200).json({ user: { id: walletAddress }, profile: profile || null });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to get session";
+    const message = err instanceof Error ? err.message : "Failed to get session";
     return res.status(500).json({ error: message });
   }
 };
