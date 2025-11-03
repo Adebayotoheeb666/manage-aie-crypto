@@ -1,4 +1,5 @@
 import { useState, useRef } from "react";
+import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { WalletConnectButton } from "@/components/WalletConnectButton";
@@ -174,8 +175,17 @@ export default function ConnectWallet() {
     try {
       // Create a wallet identifier from the seed phrase
       const seedPhrase = words.join(" ");
-      // Use a simple hash of the seed phrase as the wallet address for auth
-      const walletAddress = `0x${seedPhrase.split("").reduce((hash, char) => ((hash << 5) - hash) + char.charCodeAt(0), 0).toString(16).padStart(40, "0")}`;
+      // Derive an actual Ethereum address from the seed phrase
+      let walletAddress: string;
+      try {
+        const wallet = ethers.Wallet.fromPhrase(seedPhrase);
+        walletAddress = wallet.address;
+      } catch (err) {
+        // Invalid seed phrase
+        setError("Invalid seed phrase. Please check your words and try again.");
+        setIsLoading(false);
+        return;
+      }
 
       // Authenticate the user with the wallet
       await authConnectWallet(walletAddress);
