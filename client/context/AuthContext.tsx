@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@shared/lib/supabase";
-import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User as DBUser } from "@shared/types/database";
+
+interface AuthUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, any>;
+}
 
 interface AuthContextType {
   authUser: AuthUser | null;
