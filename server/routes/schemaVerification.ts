@@ -49,58 +49,48 @@ export const handleSchemaVerification: RequestHandler = async (_req, res) => {
       report.checks.connectivity = { status: "success" };
     }
 
-    // 2. Get all tables and their row counts
-    const { data: tableData, error: tableError } = await supabase.rpc(
-      "get_table_info",
-      {},
-    );
+    // 2. Test if each expected table exists by trying to query it
+    const expectedTables = [
+      "users",
+      "sessions",
+      "device_trust",
+      "login_attempts",
+      "api_keys",
+      "wallets",
+      "assets",
+      "transactions",
+      "price_history",
+      "withdrawal_requests",
+      "portfolio_snapshots",
+      "price_alerts",
+      "notification_logs",
+      "audit_logs",
+    ];
 
-    if (tableError && tableError.code !== "42883") {
-      // If function doesn't exist, query information_schema directly
-      const { data: tables, error: schemaError } = await supabase
-        .from("information_schema.tables")
-        .select("table_name, table_schema")
-        .eq("table_schema", "public");
+    const foundTables: string[] = [];
+    const missingTables: string[] = [];
 
-      if (schemaError) {
-        report.checks.tables = { status: "error", error: schemaError.message };
-      } else {
-        const expectedTables = [
-          "users",
-          "sessions",
-          "device_trust",
-          "login_attempts",
-          "api_keys",
-          "wallets",
-          "assets",
-          "transactions",
-          "price_history",
-          "withdrawal_requests",
-          "portfolio_snapshots",
-          "price_alerts",
-          "notification_logs",
-          "audit_logs",
-        ];
+    for (const table of expectedTables) {
+      const { error: tableTestError } = await supabase
+        .from(table)
+        .select("*")
+        .limit(1);
 
-        const foundTables = tables?.map((t: any) => t.table_name) || [];
-        const missingTables = expectedTables.filter(
-          (t) => !foundTables.includes(t),
-        );
-
-        report.checks.tables = {
-          status: missingTables.length === 0 ? "success" : "warning",
-          totalTables: foundTables.length,
-          expectedTables: expectedTables.length,
-          tables: foundTables,
-          missing: missingTables,
-        };
+      if (tableTestError?.code === "42P01") {
+        // Table doesn't exist
+        missingTables.push(table);
+      } else if (!tableTestError) {
+        foundTables.push(table);
       }
-    } else if (tableData) {
-      report.checks.tables = {
-        status: "success",
-        tables: tableData,
-      };
     }
+
+    report.checks.tables = {
+      status: missingTables.length === 0 ? "success" : "warning",
+      totalTables: foundTables.length,
+      expectedTables: expectedTables.length,
+      tables: foundTables,
+      missing: missingTables,
+    };
 
     // 3. Verify functions exist
     const { data: functions, error: functionsError } = await supabase.rpc(
