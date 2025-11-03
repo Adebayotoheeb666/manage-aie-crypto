@@ -16,6 +16,14 @@ import {
   handleUnlockAccounts,
   handleLockAccounts,
 } from "./routes/maintenance";
+import { handleSchemaVerification } from "./routes/schemaVerification";
+import {
+  handleSignUp,
+  handleSignIn,
+  handleSignOut,
+  handleWalletConnect,
+  handleGetSession,
+} from "./routes/auth";
 
 export function createServer() {
   const app = express();
@@ -46,6 +54,7 @@ export function createServer() {
       typeof (app as any).route,
     );
     app.get("/api/supabase-health", handleSupabaseHealth);
+    app.get("/api/schema-verification", handleSchemaVerification);
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn("Could not register supabase health route", e);
@@ -77,6 +86,22 @@ export function createServer() {
 
   // POST /api/maintenance/lock-accounts - Lock accounts with excessive failed attempts
   app.post("/api/maintenance/lock-accounts", handleLockAccounts);
+
+  // Auth routes (proxy through backend to avoid Netlify restrictions)
+  // POST /api/auth/signup - Sign up with email/password
+  app.post("/api/auth/signup", handleSignUp);
+
+  // POST /api/auth/signin - Sign in with email/password
+  app.post("/api/auth/signin", handleSignIn);
+
+  // POST /api/auth/signout - Sign out
+  app.post("/api/auth/signout", handleSignOut);
+
+  // POST /api/auth/wallet-connect - Connect wallet
+  app.post("/api/auth/wallet-connect", handleWalletConnect);
+
+  // GET /api/auth/session - Get current session
+  app.get("/api/auth/session", handleGetSession);
 
   return app;
 }

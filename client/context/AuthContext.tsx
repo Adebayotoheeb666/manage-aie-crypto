@@ -1,7 +1,11 @@
 import { createContext, useContext, useEffect, useState } from "react";
-import { supabase } from "@shared/lib/supabase";
-import type { User as AuthUser } from "@supabase/supabase-js";
 import type { User as DBUser } from "@shared/types/database";
+
+interface AuthUser {
+  id: string;
+  email?: string;
+  user_metadata?: Record<string, any>;
+}
 
 interface AuthContextType {
   authUser: AuthUser | null;
@@ -23,123 +27,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Check if user is logged in on mount
+  // Load auth from localStorage on mount
   useEffect(() => {
-    let isMounted = true;
-
-    async function checkAuth() {
+    const stored = localStorage.getItem("auth_session");
+    if (stored) {
       try {
-        // Get current session
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
-
-        if (sessionError) throw sessionError;
-
-        if (session?.user && isMounted) {
-          setAuthUser(session.user);
-
-          // Fetch user profile from database
-          const { data: profile, error: profileError } = await supabase
-            .from("users")
-            .select("*")
-            .eq("auth_id", session.user.id)
-            .single();
-
-          if (profileError && profileError.code !== "PGRST116") {
-            throw profileError;
-          }
-
-          if (profile) {
-            setDbUser(profile);
-          }
-        }
-      } catch (err) {
-        if (isMounted) {
-          setError(err instanceof Error ? err.message : "Auth check failed");
-        }
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
+        const { user, profile } = JSON.parse(stored);
+        setAuthUser(user);
+        setDbUser(profile);
+      } catch {
+        localStorage.removeItem("auth_session");
       }
     }
-
-    checkAuth();
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (isMounted) {
-          if (session?.user) {
-            setAuthUser(session.user);
-
-            // Fetch or create user profile
-            const { data: profile } = await supabase
-              .from("users")
-              .select("*")
-              .eq("auth_id", session.user.id)
-              .single();
-
-            if (profile) {
-              setDbUser(profile);
-            } else {
-              // Create profile if doesn't exist
-              const { data: newProfile } = await supabase
-                .from("users")
-                .insert({
-                  auth_id: session.user.id,
-                  email: session.user.email || "",
-                })
-                .select()
-                .single();
-
-              if (newProfile) {
-                setDbUser(newProfile);
-              }
-            }
-          } else {
-            setAuthUser(null);
-            setDbUser(null);
-          }
-          setLoading(false);
-        }
-      },
-    );
-
-    return () => {
-      isMounted = false;
-      authListener?.subscription.unsubscribe();
-    };
+    setLoading(false);
   }, []);
 
   async function signUp(email: string, password: string) {
     setError(null);
     setLoading(true);
     try {
-      const { data, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (signUpError) throw signUpError;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Sign up failed");
+      }
 
       if (data.user) {
         setAuthUser(data.user);
-
-        // Create user profile
-        const { data: profile, error: profileError } = await supabase
-          .from("users")
-          .insert({
-            auth_id: data.user.id,
-            email,
-          })
-          .select()
-          .single();
-
-        if (profileError) throw profileError;
-        if (profile) setDbUser(profile);
+        setDbUser(data.profile);
+        // Store in localStorage
+        localStorage.setItem(
+          "auth_session",
+          JSON.stringify({ user: data.user, profile: data.profile }),
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign up failed";
@@ -154,27 +80,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setLoading(true);
     try {
-      const { data, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
+      const response = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-      if (signInError) throw signInError;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Sign in failed");
+      }
 
       if (data.user) {
         setAuthUser(data.user);
-
-        // Fetch user profile
-        const { data: profile, error: profileError } = await supabase
-          .from("users")
-          .select("*")
-          .eq("auth_id", data.user.id)
-          .single();
-
-        if (profileError && profileError.code !== "PGRST116")
-          throw profileError;
-        if (profile) setDbUser(profile);
+        setDbUser(data.profile);
+        // Store in localStorage
+        localStorage.setItem(
+          "auth_session",
+          JSON.stringify({ user: data.user, profile: data.profile }),
+        );
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign in failed";
@@ -188,11 +113,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   async function signOut() {
     setError(null);
     try {
-      const { error: signOutError } = await supabase.auth.signOut();
-      if (signOutError) throw signOutError;
+      await fetch("/api/auth/signout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session: authUser }),
+      });
 
       setAuthUser(null);
       setDbUser(null);
+      localStorage.removeItem("auth_session");
     } catch (err) {
       const message = err instanceof Error ? err.message : "Sign out failed";
       setError(message);
@@ -204,61 +133,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setLoading(true);
     try {
-      // Generate a unique email based on wallet address
-      const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
+      const response = await fetch("/api/auth/wallet-connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ walletAddress }),
+      });
 
-      // Try to sign in with the wallet
-      const { data: existingSession } = await supabase.auth.getSession();
-      if (existingSession?.session?.user) {
-        setAuthUser(existingSession.session.user);
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Wallet connection failed");
       }
 
-      // Create or sign in to wallet-based account
-      const { data: signUpData, error: signUpError } =
-        await supabase.auth.signUp({
-          email: walletEmail,
-          password: walletAddress,
-        });
-
-      if (signUpError && signUpError.message.includes("already registered")) {
-        // User already exists, sign in
-        const { data: signInData, error: signInError } =
-          await supabase.auth.signInWithPassword({
-            email: walletEmail,
-            password: walletAddress,
-          });
-
-        if (signInError) throw signInError;
-
-        if (signInData.user) {
-          setAuthUser(signInData.user);
-
-          // Fetch user profile
-          const { data: profile } = await supabase
-            .from("users")
-            .select("*")
-            .eq("auth_id", signInData.user.id)
-            .single();
-
-          if (profile) setDbUser(profile);
-        }
-      } else if (signUpError) {
-        throw signUpError;
-      } else if (signUpData.user) {
-        setAuthUser(signUpData.user);
-
-        // Create user profile
-        const { data: profile } = await supabase
-          .from("users")
-          .insert({
-            auth_id: signUpData.user.id,
-            email: walletEmail,
-          })
-          .select()
-          .single();
-
-        if (profile) setDbUser(profile);
+      if (data.user) {
+        setAuthUser(data.user);
+        setDbUser(data.profile);
+        // Store in localStorage
+        localStorage.setItem(
+          "auth_session",
+          JSON.stringify({ user: data.user, profile: data.profile }),
+        );
       }
     } catch (err) {
       const message =
