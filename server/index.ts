@@ -17,6 +17,13 @@ import {
   handleLockAccounts,
 } from "./routes/maintenance";
 import { handleSchemaVerification } from "./routes/schemaVerification";
+import {
+  handleSignUp,
+  handleSignIn,
+  handleSignOut,
+  handleWalletConnect,
+  handleGetSession,
+} from "./routes/auth";
 
 export function createServer() {
   const app = express();
