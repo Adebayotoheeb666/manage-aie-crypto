@@ -105,10 +105,19 @@ export const handleSignIn: RequestHandler = async (req, res) => {
 };
 
 export const handleSignOut: RequestHandler = async (req, res) => {
-  const { session } = req.body;
+  // If client stored sv_session cookie, clear it
+  try {
+    // Attempt to clear cookie via Set-Cookie
+    res.cookie("sv_session", "", { httpOnly: true, maxAge: 0, path: "/" });
+  } catch (e) {
+    // ignore
+  }
 
+  const { session } = req.body || {};
+
+  // If no session provided, just return success after clearing cookie
   if (!session || !session.access_token) {
-    return res.status(400).json({ error: "Session is required" });
+    return res.status(200).json({ message: "Signed out successfully" });
   }
 
   try {
@@ -134,126 +143,217 @@ export const handleSignOut: RequestHandler = async (req, res) => {
   }
 };
 
-export const handleWalletConnect: RequestHandler = async (req, res) => {
-  const { walletAddress } = req.body;
+import {
+  createNonceForAddress,
+  getNonceForAddress,
+  consumeNonceForAddress,
+} from "../lib/nonce";
+import { ethers } from "ethers";
 
-  if (!walletAddress) {
+export function createNonceForAddressProxy(address: string) {
+  return createNonceForAddress(address);
+}
+
+export const handleGetNonce: RequestHandler = async (req, res) => {
+  const address = String(req.query.address || "");
+  if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
+    return res.status(400).json({ error: "Valid wallet address is required" });
+  }
+  const nonce = createNonceForAddress(address);
+  return res.status(200).json({ nonce });
+};
+
+export const handleWalletConnect: RequestHandler = async (req, res) => {
+  const walletAddressRaw =
+    req.body?.walletAddress || req.body?.wallet_address || "";
+  const signature = String(req.body?.signature || "");
+  const nonce = String(req.body?.nonce || "");
+
+  // Basic logging for debugging (avoid logging full PII in production)
+  const remoteIp = (
+    req.headers["x-forwarded-for"] ||
+    req.socket.remoteAddress ||
+    "unknown"
+  ).toString();
+  console.info(
+    `[wallet-connect] request from ${remoteIp}, payload: ${String(walletAddressRaw).slice(0, 64)}`,
+  );
+
+  if (!walletAddressRaw) {
     return res.status(400).json({ error: "Wallet address is required" });
   }
 
+  const walletAddress = String(walletAddressRaw).trim();
+
+  // Validate Ethereum address format (strict)
+  if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {
+    console.warn(`[wallet-connect] invalid address format: ${walletAddress}`);
+    return res.status(400).json({ error: "Valid wallet address is required" });
+  }
+
+  if (!signature || !nonce) {
+    return res.status(400).json({ error: "Signature and nonce are required" });
+  }
+
+  // Verify nonce is valid for address
+  const expectedNonce = getNonceForAddress(walletAddress);
+  if (!expectedNonce || expectedNonce !== nonce) {
+    return res.status(400).json({ error: "Invalid or expired nonce" });
+  }
+
   try {
+    // verify signature
+    const recovered = ethers.verifyMessage(nonce, signature);
+    if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
+      console.warn(`[wallet-connect] signature mismatch for ${walletAddress}`);
+      return res.status(401).json({ error: "Signature verification failed" });
+    }
+
+    // consume the nonce
+    const consumed = consumeNonceForAddress(walletAddress, nonce);
+    if (!consumed) {
+      return res.status(400).json({ error: "Invalid or expired nonce" });
+    }
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false },
     });
 
-    // Generate a unique email based on wallet address
-    const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
+    // Ensure user profile exists in users table. Use auth_id = walletAddress
+    const { data: existing, error: existingErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", walletAddress)
+      .single();
 
-    // Try to sign up first
-    let { data: signUpData, error: signUpError } =
-      await supabase.auth.admin.createUser({
-        email: walletEmail,
-        password: walletAddress,
-        email_confirm: true,
-      });
+    let profile = existing || null;
 
-    // If user already exists, sign in instead
-    if (signUpError && signUpError.message.includes("already registered")) {
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: walletEmail,
-          password: walletAddress,
-        });
-
-      if (signInError) {
-        return res.status(401).json({ error: signInError.message });
-      }
-
-      if (signInData.session && signInData.user) {
-        // Fetch user profile
-        const { data: profile } = await supabase
-          .from("users")
-          .select("*")
-          .eq("auth_id", signInData.user.id)
-          .single();
-
-        return res.status(200).json({
-          session: signInData.session,
-          user: signInData.user,
-          profile: profile || null,
-          isNewWallet: false,
-        });
-      }
-    } else if (signUpError) {
-      return res.status(400).json({ error: signUpError.message });
-    }
-
-    if (signUpData && signUpData.user) {
-      // Create user profile
-      const { data: profile } = await supabase
+    if (!profile) {
+      const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
+      const { data: inserted, error: insertErr } = await supabase
         .from("users")
-        .insert({
-          auth_id: signUpData.user.id,
-          email: walletEmail,
-        })
+        .insert({ auth_id: walletAddress, email: walletEmail })
         .select()
         .single();
 
-      return res.status(200).json({
-        user: signUpData.user,
-        profile: profile || null,
-        isNewWallet: true,
-      });
+      if (insertErr) {
+        console.error(
+          "[wallet-connect] failed to create user profile",
+          insertErr.message,
+        );
+        return res.status(500).json({ error: "Failed to create user profile" });
+      }
+      profile = inserted;
     }
 
-    return res.status(500).json({ error: "Failed to connect wallet" });
+    // Create app session token (signed JWT) and set as httpOnly cookie
+    try {
+      const SESSION_SECRET =
+        process.env.SESSION_JWT_SECRET ||
+        process.env.SUPABASE_SERVICE_ROLE_KEY ||
+        "";
+      if (!SESSION_SECRET) {
+        console.warn(
+          "SESSION_JWT_SECRET not configured; returning without session cookie",
+        );
+        return res
+          .status(200)
+          .json({
+            user: { id: walletAddress },
+            profile,
+            isNewWallet: !existing,
+          });
+      }
+
+      const { signSession } = require("../lib/session");
+      const token = signSession(
+        { sub: walletAddress, uid: profile.id },
+        SESSION_SECRET,
+        60 * 60 * 2,
+      );
+
+      // Set cookie
+      res.cookie("sv_session", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 1000 * 60 * 60 * 2,
+        path: "/",
+      });
+
+      return res
+        .status(200)
+        .json({ user: { id: walletAddress }, profile, isNewWallet: !existing });
+    } catch (err) {
+      console.error("[wallet-connect] session creation failed", err);
+      // fallback to returning user without cookie
+      return res
+        .status(200)
+        .json({ user: { id: walletAddress }, profile, isNewWallet: !existing });
+    }
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Wallet connection failed";
+    console.error(`[wallet-connect] error: ${message}`);
     return res.status(500).json({ error: message });
   }
 };
 
 export const handleGetSession: RequestHandler = async (req, res) => {
+  // Support Bearer Authorization or sv_session cookie
   const authHeader = req.headers.authorization;
+  let token: string | null = null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else if ((req as any).cookies && (req as any).cookies.sv_session) {
+    token = (req as any).cookies.sv_session;
+  } else if (req.headers.cookie) {
+    const cookies = req.headers.cookie.split(";").map((c) => c.trim());
+    for (const c of cookies) {
+      if (c.startsWith("sv_session=")) {
+        token = c.split("=").slice(1).join("=");
+        break;
+      }
+    }
+  }
+
+  if (!token) {
     return res.status(401).json({ error: "No session token provided" });
   }
 
-  const token = authHeader.slice(7);
-
   try {
+    const { verifySession } = require("../lib/session");
+    const SESSION_SECRET =
+      process.env.SESSION_JWT_SECRET ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      "";
+    if (!SESSION_SECRET)
+      return res.status(401).json({ error: "Session secret not configured" });
+
+    const payload = verifySession(token, SESSION_SECRET);
+    if (!payload || !payload.sub)
+      return res.status(401).json({ error: "Invalid session" });
+
+    const walletAddress = payload.sub;
+
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
       auth: { persistSession: false },
     });
 
-    const { data, error } = await supabase.auth.getUser();
+    const { data: profile, error: profileErr } = await supabase
+      .from("users")
+      .select("*")
+      .eq("auth_id", walletAddress)
+      .single();
 
-    if (error) {
-      return res.status(401).json({ error: error.message });
+    if (profileErr && profileErr.code !== "PGRST116") {
+      return res.status(500).json({ error: profileErr.message });
     }
 
-    if (data.user) {
-      // Fetch user profile
-      const { data: profile } = await supabase
-        .from("users")
-        .select("*")
-        .eq("auth_id", data.user.id)
-        .single();
-
-      return res.status(200).json({
-        user: data.user,
-        profile: profile || null,
-      });
-    }
-
-    return res.status(401).json({ error: "No user found" });
+    return res
+      .status(200)
+      .json({ user: { id: walletAddress }, profile: profile || null });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to get session";
