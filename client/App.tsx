@@ -19,6 +19,7 @@ import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DatabaseStatus from "./pages/DatabaseStatus";
+import SchemaVerification from "./pages/SchemaVerification";
 
 const queryClient = new QueryClient();
 
