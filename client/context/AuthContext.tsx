@@ -153,10 +153,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const normalized = match[0].toLowerCase();
 
+      // Request a nonce from the server
+      const nonceResp = await fetch(`/api/auth/nonce?address=${normalized}`);
+      const nonceData = await nonceResp.json();
+      if (!nonceResp.ok) {
+        const msg = nonceData?.error || "Could not obtain nonce";
+        setError(msg);
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        throw new Error(msg);
+      }
+
+      const nonce = String(nonceData.nonce || "");
+      if (!nonce) {
+        const msg = "Invalid nonce received from server";
+        setError(msg);
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        throw new Error(msg);
+      }
+
+      // Ensure provider available
+      const win = window as any;
+      if (!win.ethereum) {
+        const msg = "No web3 provider found (e.g., MetaMask)";
+        setError(msg);
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        throw new Error(msg);
+      }
+
+      const provider = new ethers.BrowserProvider(win.ethereum);
+      // prompt user to connect accounts if needed
+      await provider.send("eth_requestAccounts", []);
+      const signer = await provider.getSigner();
+      const signerAddress = await signer.getAddress();
+
+      if (signerAddress.toLowerCase() !== normalized) {
+        const msg = "Connected wallet address does not match requested address";
+        setError(msg);
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        throw new Error(msg);
+      }
+
+      // Sign the nonce
+      const signature = await signer.signMessage(nonce);
+
+      // Send signature to server for verification
       const response = await fetch("/api/auth/wallet-connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: normalized }),
+        body: JSON.stringify({ walletAddress: normalized, signature, nonce }),
       });
 
       const data = await response.json();
