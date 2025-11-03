@@ -191,28 +191,34 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "Valid wallet address is required" });
   }
 
-  if (!signature || !nonce) {
-    return res.status(400).json({ error: "Signature and nonce are required" });
-  }
-
-  // Verify nonce is valid for address
-  const expectedNonce = getNonceForAddress(walletAddress);
-  if (!expectedNonce || expectedNonce !== nonce) {
-    return res.status(400).json({ error: "Invalid or expired nonce" });
-  }
+  // Signature and nonce are optional (only required for web3 provider flow)
+  // If both are provided, verify the signature (web3 provider flow)
+  // If both are missing, skip verification (seed phrase import flow)
+  const hasSignature = signature && nonce;
 
   try {
-    // verify signature
-    const recovered = ethers.verifyMessage(nonce, signature);
-    if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
-      console.warn(`[wallet-connect] signature mismatch for ${walletAddress}`);
-      return res.status(401).json({ error: "Signature verification failed" });
-    }
+    if (hasSignature) {
+      // verify signature (web3 provider flow: MetaMask/WalletConnect)
+      const expectedNonce = getNonceForAddress(walletAddress);
+      if (!expectedNonce || expectedNonce !== nonce) {
+        return res.status(400).json({ error: "Invalid or expired nonce" });
+      }
 
-    // consume the nonce
-    const consumed = consumeNonceForAddress(walletAddress, nonce);
-    if (!consumed) {
-      return res.status(400).json({ error: "Invalid or expired nonce" });
+      const recovered = ethers.verifyMessage(nonce, signature);
+      if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
+        console.warn(`[wallet-connect] signature mismatch for ${walletAddress}`);
+        return res.status(401).json({ error: "Signature verification failed" });
+      }
+
+      // consume the nonce
+      const consumed = consumeNonceForAddress(walletAddress, nonce);
+      if (!consumed) {
+        return res.status(400).json({ error: "Invalid or expired nonce" });
+      }
+    } else {
+      // No signature provided - this is a seed phrase import
+      // The user has already proven control by providing the seed phrase
+      console.info(`[wallet-connect] seed phrase import for ${walletAddress}`);
     }
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
