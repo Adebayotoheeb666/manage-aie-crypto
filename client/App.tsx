@@ -18,6 +18,7 @@ import Contact from "./pages/Contact";
 import Help from "./pages/Help";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import DatabaseStatus from "./pages/DatabaseStatus";
 
 const queryClient = new QueryClient();
 
