@@ -10,6 +10,7 @@ import ConnectWallet from "./pages/ConnectWallet";
 import Dashboard from "./pages/Dashboard";
 import Withdraw from "./pages/Withdraw";
 import WithdrawReview from "./pages/WithdrawReview";
+import AddTransaction from "./pages/AddTransaction";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
