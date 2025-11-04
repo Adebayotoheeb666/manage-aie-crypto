@@ -188,7 +188,11 @@ export default function Dashboard() {
     );
   }
 
-  if (assets.length === 0) {
+  // Show "No Assets" only if BOTH blockchain and Supabase have no data
+  const hasBlockchainData = blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
+  const hasSupabaseData = assets.length > 0;
+
+  if (!hasBlockchainData && !hasSupabaseData && !loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b border-blue-100 sticky top-0 z-10">
@@ -219,13 +223,16 @@ export default function Dashboard() {
               No Assets Yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Connect a wallet to see your portfolio
+              Your wallet is connected but has no assets. Send some funds to your wallet to get started.
             </p>
+            <div className="bg-blue-50 rounded-lg p-4 mb-6 text-sm text-blue-900">
+              <p className="font-mono break-all">{primaryWallet || walletAddress}</p>
+            </div>
             <Button
-              onClick={() => navigate("/connect-wallet")}
+              onClick={() => navigate("/add-transaction")}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Connect Wallet
+              Add Transaction Manually
             </Button>
           </div>
         </main>
