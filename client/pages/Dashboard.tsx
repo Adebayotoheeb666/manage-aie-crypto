@@ -309,6 +309,23 @@ export default function Dashboard() {
           </div>
         </AnimatedCard>
 
+        {/* Sync Status Banner */}
+        {hasBlockchainData && blockchainBalance.lastUpdated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center justify-between text-sm text-blue-900">
+              <span>
+                ✓ Blockchain data synced{" "}
+                {blockchainBalance.lastUpdated
+                  ? "just now"
+                  : ""}
+              </span>
+              <span className="text-xs text-blue-600">
+                Auto-refresh every 30 seconds
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Total Balance Card */}
