@@ -133,7 +133,11 @@ export default function Dashboard() {
     [assets],
   );
 
-  const totalBalance = portfolioValue?.total_usd || 0;
+  // Use blockchain balance if available, otherwise use Supabase data
+  const displayBalance = hasBlockchainData
+    ? blockchainBalance.balanceUsd
+    : portfolioValue?.total_usd || 0;
+  const totalBalance = displayBalance;
   const btcEquivalent = portfolioValue?.total_btc || 0;
   const change24hAmount = portfolioChange?.change_usd || 0;
   const change24hPercent = portfolioChange?.change_percentage || 0;
