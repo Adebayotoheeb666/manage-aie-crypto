@@ -41,7 +41,7 @@ export function useBlockchainBalance(walletAddress: string | null) {
         let ethPrice = ETH_USD_PRICE;
         try {
           const priceResponse = await fetch(
-            "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd"
+            "https://api.coingecko.com/api/v3/simple/price?ids=ethereum&vs_currencies=usd",
           );
           const priceData = await priceResponse.json();
           if (priceData.ethereum?.usd) {

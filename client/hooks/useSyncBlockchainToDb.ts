@@ -33,7 +33,7 @@ export function useSyncBlockchainToDb(options: SyncOptions) {
             dbUser.id,
             walletAddress,
             "seedphrase",
-            "Primary Wallet"
+            "Primary Wallet",
           );
         }
 

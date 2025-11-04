@@ -57,10 +57,12 @@ export default function AddTransaction() {
       newErrors.amount = "Amount must be greater than 0";
     }
     if (formData.txType === "send" && !formData.toAddress) {
-      newErrors.toAddress = "Recipient address is required for send transactions";
+      newErrors.toAddress =
+        "Recipient address is required for send transactions";
     }
     if (formData.txType === "receive" && !formData.fromAddress) {
-      newErrors.fromAddress = "Sender address is required for receive transactions";
+      newErrors.fromAddress =
+        "Sender address is required for receive transactions";
     }
     if (formData.txType === "swap" && !formData.toAddress) {
       newErrors.toAddress = "Destination required for swap transactions";
@@ -72,7 +74,7 @@ export default function AddTransaction() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm() || !authUser || !dbUser || !primaryWalletId) {
       return;
     }
@@ -102,12 +104,16 @@ export default function AddTransaction() {
         parseFloat(formData.amount),
         amountUsd,
         formData.txHash || undefined,
-        formData.txType === "send" ? undefined : formData.fromAddress || undefined,
-        formData.txType === "receive" ? undefined : formData.toAddress || undefined,
+        formData.txType === "send"
+          ? undefined
+          : formData.fromAddress || undefined,
+        formData.txType === "receive"
+          ? undefined
+          : formData.toAddress || undefined,
         feeAmount,
         feeUsd,
         formData.status,
-        formData.notes || undefined
+        formData.notes || undefined,
       );
 
       toast({
@@ -165,13 +171,17 @@ export default function AddTransaction() {
 
         {/* Info Banner */}
         <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded mb-8 flex gap-3">
-          <AlertCircle className="text-blue-600 flex-shrink-0 mt-0.5" size={20} />
+          <AlertCircle
+            className="text-blue-600 flex-shrink-0 mt-0.5"
+            size={20}
+          />
           <div>
             <p className="font-semibold text-blue-900 mb-1">
               📝 Manual Transaction Entry
             </p>
             <p className="text-blue-800 text-sm">
-              Add historical or manual transactions to track your portfolio. Make sure all details are accurate.
+              Add historical or manual transactions to track your portfolio.
+              Make sure all details are accurate.
             </p>
           </div>
         </div>
@@ -219,7 +229,8 @@ export default function AddTransaction() {
                 <option value="">Select an asset</option>
                 {assets.map((asset) => (
                   <option key={asset.id} value={asset.symbol}>
-                    {asset.name} ({asset.symbol}) - Balance: {asset.balance.toFixed(8)}
+                    {asset.name} ({asset.symbol}) - Balance:{" "}
+                    {asset.balance.toFixed(8)}
                   </option>
                 ))}
               </select>
@@ -258,7 +269,9 @@ export default function AddTransaction() {
                 type="number"
                 step="0.01"
                 value={formData.amountUsd}
-                onChange={(e) => setFormData({ ...formData, amountUsd: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, amountUsd: e.target.value })
+                }
                 placeholder="0.00"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -272,7 +285,9 @@ export default function AddTransaction() {
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
                   {formData.txType === "receive" ? "Sender" : "Source"} Address
-                  {formData.txType === "receive" && <span className="text-red-600">*</span>}
+                  {formData.txType === "receive" && (
+                    <span className="text-red-600">*</span>
+                  )}
                 </label>
                 <input
                   type="text"
@@ -285,7 +300,9 @@ export default function AddTransaction() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {errors.fromAddress && (
-                  <p className="text-red-600 text-sm mt-2">{errors.fromAddress}</p>
+                  <p className="text-red-600 text-sm mt-2">
+                    {errors.fromAddress}
+                  </p>
                 )}
               </div>
             )}
@@ -294,7 +311,8 @@ export default function AddTransaction() {
             {(formData.txType === "send" || formData.txType === "swap") && (
               <div>
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  {formData.txType === "send" ? "Recipient" : "Destination"} Address
+                  {formData.txType === "send" ? "Recipient" : "Destination"}{" "}
+                  Address
                   <span className="text-red-600">*</span>
                 </label>
                 <input
@@ -308,7 +326,9 @@ export default function AddTransaction() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {errors.toAddress && (
-                  <p className="text-red-600 text-sm mt-2">{errors.toAddress}</p>
+                  <p className="text-red-600 text-sm mt-2">
+                    {errors.toAddress}
+                  </p>
                 )}
               </div>
             )}
@@ -321,7 +341,9 @@ export default function AddTransaction() {
               <input
                 type="text"
                 value={formData.txHash}
-                onChange={(e) => setFormData({ ...formData, txHash: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, txHash: e.target.value })
+                }
                 placeholder="0x..."
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -339,7 +361,9 @@ export default function AddTransaction() {
                 type="number"
                 step="0.00000001"
                 value={formData.feeAmount}
-                onChange={(e) => setFormData({ ...formData, feeAmount: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, feeAmount: e.target.value })
+                }
                 placeholder="0.00"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -354,7 +378,9 @@ export default function AddTransaction() {
                 type="number"
                 step="0.01"
                 value={formData.feeUsd}
-                onChange={(e) => setFormData({ ...formData, feeUsd: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, feeUsd: e.target.value })
+                }
                 placeholder="0.00"
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
@@ -389,7 +415,9 @@ export default function AddTransaction() {
               </label>
               <textarea
                 value={formData.notes}
-                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, notes: e.target.value })
+                }
                 placeholder="Add any notes about this transaction..."
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"

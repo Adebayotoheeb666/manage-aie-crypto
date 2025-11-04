@@ -193,7 +193,8 @@ export default function Dashboard() {
   }
 
   // Show "No Assets" only if BOTH blockchain and Supabase have no data
-  const hasBlockchainData = blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
+  const hasBlockchainData =
+    blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
   const hasSupabaseData = assets.length > 0;
 
   if (!hasBlockchainData && !hasSupabaseData && !loading) {
@@ -227,10 +228,13 @@ export default function Dashboard() {
               No Assets Yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Your wallet is connected but has no assets. Send some funds to your wallet to get started.
+              Your wallet is connected but has no assets. Send some funds to
+              your wallet to get started.
             </p>
             <div className="bg-blue-50 rounded-lg p-4 mb-6 text-sm text-blue-900">
-              <p className="font-mono break-all">{primaryWallet || walletAddress}</p>
+              <p className="font-mono break-all">
+                {primaryWallet || walletAddress}
+              </p>
             </div>
             <Button
               onClick={() => navigate("/add-transaction")}
@@ -287,7 +291,10 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex gap-3">
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   onClick={() => navigate("/add-transaction")}
                   className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
@@ -296,7 +303,10 @@ export default function Dashboard() {
                   Add Transaction
                 </Button>
               </motion.div>
-              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
                 <Button
                   onClick={() => navigate("/withdraw")}
                   className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
@@ -315,9 +325,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between text-sm text-blue-900">
               <span>
                 ✓ Blockchain data synced{" "}
-                {blockchainBalance.lastUpdated
-                  ? "just now"
-                  : ""}
+                {blockchainBalance.lastUpdated ? "just now" : ""}
               </span>
               <span className="text-xs text-blue-600">
                 Auto-refresh every 30 seconds
@@ -332,9 +340,7 @@ export default function Dashboard() {
           <AnimatedCard className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm">
             <div className="mb-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-gray-600 text-sm">
-                  Total Portfolio Value
-                </p>
+                <p className="text-gray-600 text-sm">Total Portfolio Value</p>
                 {hasBlockchainData && (
                   <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
                     Live Blockchain Data
@@ -354,7 +360,9 @@ export default function Dashboard() {
                     <>
                       <TrendingUp
                         className={
-                          change24hAmount >= 0 ? "text-green-600" : "text-red-600"
+                          change24hAmount >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
                         }
                         size={18}
                       />

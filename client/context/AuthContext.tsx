@@ -339,7 +339,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 data.profile.id,
                 normalized,
                 "metamask", // or seedphrase, depending on flow
-                "Primary Wallet"
+                "Primary Wallet",
               );
             }
           }
