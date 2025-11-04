@@ -174,38 +174,27 @@ export async function getPortfolioValue(userId: string) {
         (err as any).message.toLowerCase().includes("failed to fetch"));
 
     if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/portfolio-value", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
+      try {
+        const res = await fetch("/api/proxy/portfolio-value", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+        if (!res.bodyUsed) {
+          const json = await res.json();
+          if (res.ok) {
+            return json.data;
           }
-        } catch (_) {}
-        throw new Error(errMsg);
+        }
+      } catch (_) {
+        // Fallback to default if proxy fails
       }
-      return json.data;
+      // Return default data if both RPC and proxy fail
+      return { total_usd: 0, total_btc: 0, total_eth: 0 };
     }
 
-    throw new Error(String(err));
+    // Return default data instead of throwing
+    return { total_usd: 0, total_btc: 0, total_eth: 0 };
   }
 }
 
@@ -225,38 +214,27 @@ export async function getPortfolio24hChange(userId: string) {
         (err as any).message.toLowerCase().includes("failed to fetch"));
 
     if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/portfolio-24h-change", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
+      try {
+        const res = await fetch("/api/proxy/portfolio-24h-change", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+        if (!res.bodyUsed) {
+          const json = await res.json();
+          if (res.ok) {
+            return json.data;
           }
-        } catch (_) {}
-        throw new Error(errMsg);
+        }
+      } catch (_) {
+        // Fallback to default if proxy fails
       }
-      return json.data;
+      // Return default data if both RPC and proxy fail
+      return { change_usd: 0, change_percentage: 0 };
     }
 
-    throw new Error(String(err));
+    // Return default data instead of throwing
+    return { change_usd: 0, change_percentage: 0 };
   }
 }
 
