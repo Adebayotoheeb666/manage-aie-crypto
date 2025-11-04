@@ -39,6 +39,7 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/withdraw" element={<Withdraw />} />
                 <Route path="/withdraw/review" element={<WithdrawReview />} />
+                <Route path="/add-transaction" element={<AddTransaction />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />
