@@ -331,9 +331,16 @@ export default function Dashboard() {
           {/* Total Balance Card */}
           <AnimatedCard className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm">
             <div className="mb-6">
-              <p className="text-gray-600 text-sm mb-2">
-                Total Portfolio Value
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-gray-600 text-sm">
+                  Total Portfolio Value
+                </p>
+                {hasBlockchainData && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                    Live Blockchain Data
+                  </span>
+                )}
+              </div>
               <h2 className="text-5xl font-bold text-gray-900 mb-2">
                 $
                 {totalBalance.toLocaleString("en-US", {
@@ -343,37 +350,44 @@ export default function Dashboard() {
               </h2>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
-                  <TrendingUp
-                    className={
-                      change24hAmount >= 0 ? "text-green-600" : "text-red-600"
-                    }
-                    size={18}
-                  />
-                  <span
-                    className={
-                      change24hAmount >= 0
-                        ? "text-green-600 font-semibold"
-                        : "text-red-600 font-semibold"
-                    }
-                  >
-                    {change24hAmount >= 0 ? "+" : ""}$
-                    {change24hAmount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span
-                    className={
-                      change24hAmount >= 0
-                        ? "text-green-600 text-sm"
-                        : "text-red-600 text-sm"
-                    }
-                  >
-                    ({change24hPercent.toFixed(2)}% 24h)
-                  </span>
+                  {change24hAmount !== 0 && (
+                    <>
+                      <TrendingUp
+                        className={
+                          change24hAmount >= 0 ? "text-green-600" : "text-red-600"
+                        }
+                        size={18}
+                      />
+                      <span
+                        className={
+                          change24hAmount >= 0
+                            ? "text-green-600 font-semibold"
+                            : "text-red-600 font-semibold"
+                        }
+                      >
+                        {change24hAmount >= 0 ? "+" : ""}$
+                        {change24hAmount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span
+                        className={
+                          change24hAmount >= 0
+                            ? "text-green-600 text-sm"
+                            : "text-red-600 text-sm"
+                        }
+                      >
+                        ({change24hPercent.toFixed(2)}% 24h)
+                      </span>
+                    </>
+                  )}
                 </div>
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => {
+                    refetch();
+                    // Blockchain balance will auto-update, but manual refresh is nice to have
+                  }}
                   className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
                 >
                   <RefreshCw size={16} />
