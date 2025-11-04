@@ -294,7 +294,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseErr) {
+        const msg = `Server error (${response.status}): Unable to parse response`;
+        setError(msg);
+        toast({
+          title: "Wallet connection",
+          description: msg,
+          variant: "destructive",
+        });
+        throw new Error(msg);
+      }
 
       if (!response.ok) {
         const msg = data?.error || "Wallet connection failed";
