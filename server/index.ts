@@ -67,25 +67,26 @@ export function createServer() {
     // POST /api/proxy/latest-price
     // Register handlers if available
     try {
-      // Lazy import to avoid circular deps during test runs
-      const proxy = require("./routes/proxy");
-      if (proxy) {
-        app.post("/api/proxy/portfolio-value", proxy.handlePortfolioValue);
-        app.post(
-          "/api/proxy/portfolio-24h-change",
-          proxy.handlePortfolio24hChange,
-        );
-        app.post("/api/proxy/user-assets", proxy.handleUserAssets);
-        app.post(
-          "/api/proxy/transaction-history",
-          proxy.handleTransactionHistory,
-        );
-        app.post(
-          "/api/proxy/portfolio-snapshots",
-          proxy.handlePortfolioSnapshots,
-        );
-        app.post("/api/proxy/latest-price", proxy.handleLatestPrice);
-      }
+      // Dynamic import to avoid requiring CommonJS in ESM environment
+      import("./routes/proxy").then((proxy) => {
+        if (proxy) {
+          app.post("/api/proxy/portfolio-value", proxy.handlePortfolioValue);
+          app.post(
+            "/api/proxy/portfolio-24h-change",
+            proxy.handlePortfolio24hChange,
+          );
+          app.post("/api/proxy/user-assets", proxy.handleUserAssets);
+          app.post(
+            "/api/proxy/transaction-history",
+            proxy.handleTransactionHistory,
+          );
+          app.post(
+            "/api/proxy/portfolio-snapshots",
+            proxy.handlePortfolioSnapshots,
+          );
+          app.post("/api/proxy/latest-price", proxy.handleLatestPrice);
+        }
+      }).catch((e) => console.warn("Could not register proxy routes", e));
     } catch (e) {
       console.warn("Could not register proxy routes", e);
     }
