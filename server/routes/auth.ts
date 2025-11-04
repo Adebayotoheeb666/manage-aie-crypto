@@ -236,6 +236,17 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
     let profile = existing || null;
 
+    // Handle the case where no user exists (PGRST116 is expected for no rows)
+    if (existingErr && existingErr.code !== "PGRST116") {
+      console.error(
+        "[wallet-connect] failed to check user profile",
+        existingErr.message,
+      );
+      return res
+        .status(500)
+        .json({ error: "Failed to check user profile: " + existingErr.message });
+    }
+
     if (!profile) {
       const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
       const { data: inserted, error: insertErr } = await supabase
@@ -249,7 +260,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           "[wallet-connect] failed to create user profile",
           insertErr.message,
         );
-        return res.status(500).json({ error: "Failed to create user profile" });
+        return res
+          .status(500)
+          .json({ error: "Failed to create user profile: " + insertErr.message });
       }
       profile = inserted;
     }
