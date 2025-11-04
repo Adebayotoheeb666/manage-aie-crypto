@@ -26,7 +26,13 @@ export const handlePortfolioValue: RequestHandler = async (req, res) => {
     const { data, error } = await supabase.rpc("calculate_portfolio_value", {
       p_user_id: userId,
     });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      // Return default data if RPC function doesn't exist
+      if (error.message?.includes("could not find") || error.code === "PGRST116") {
+        return res.json({ data: { total_usd: 0, total_btc: 0, total_eth: 0 } });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ data });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -42,7 +48,13 @@ export const handlePortfolio24hChange: RequestHandler = async (req, res) => {
     const { data, error } = await supabase.rpc("get_portfolio_24h_change", {
       p_user_id: userId,
     });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      // Return default data if RPC function doesn't exist
+      if (error.message?.includes("could not find") || error.code === "PGRST116") {
+        return res.json({ data: { change_usd: 0, change_percentage: 0 } });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ data });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
