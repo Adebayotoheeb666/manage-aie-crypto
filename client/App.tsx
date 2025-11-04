@@ -10,6 +10,7 @@ import ConnectWallet from "./pages/ConnectWallet";
 import Dashboard from "./pages/Dashboard";
 import Withdraw from "./pages/Withdraw";
 import WithdrawReview from "./pages/WithdrawReview";
+import AddTransaction from "./pages/AddTransaction";
 import NotFound from "./pages/NotFound";
 import About from "./pages/About";
 import Blog from "./pages/Blog";
@@ -38,6 +39,7 @@ export default function App() {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/withdraw" element={<Withdraw />} />
                 <Route path="/withdraw/review" element={<WithdrawReview />} />
+                <Route path="/add-transaction" element={<AddTransaction />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/blog" element={<Blog />} />
                 <Route path="/blog/:slug" element={<BlogPost />} />

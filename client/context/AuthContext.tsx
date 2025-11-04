@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
 import { ethers } from "ethers";
+import { createWallet, getUserAssets } from "@shared/lib/supabase";
 
 interface AuthUser {
   id: string;
@@ -327,6 +328,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           "auth_session",
           JSON.stringify({ user: data.user, profile: data.profile }),
         );
+
+        // Auto-register wallet in Supabase if not already registered
+        try {
+          if (data.profile?.id) {
+            const existingAssets = await getUserAssets(data.profile.id);
+            if (existingAssets.length === 0) {
+              // No wallet registered yet, create one
+              await createWallet(
+                data.profile.id,
+                normalized,
+                "metamask", // or seedphrase, depending on flow
+                "Primary Wallet",
+              );
+            }
+          }
+        } catch (walletErr) {
+          console.warn("Failed to auto-register wallet:", walletErr);
+          // Don't fail the whole flow if wallet registration fails
+        }
+
         toast({
           title: "Wallet connected",
           description: "Your wallet was connected successfully",

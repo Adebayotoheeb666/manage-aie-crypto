@@ -879,6 +879,9 @@ export default function ConnectWallet() {
       // Clear words from memory
       setWords(Array(wordCount).fill(""));
 
+      // Wait a moment for auth context to update
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       // Navigate to dashboard
       navigate("/dashboard");
     } catch (err) {

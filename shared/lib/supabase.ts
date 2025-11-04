@@ -352,6 +352,46 @@ export async function getTransactionByHash(txHash: string) {
   return data;
 }
 
+export async function createTransaction(
+  userId: string,
+  walletId: string,
+  txType: "send" | "receive" | "swap" | "stake" | "unstake",
+  symbol: string,
+  amount: number,
+  amountUsd?: number,
+  txHash?: string,
+  fromAddress?: string,
+  toAddress?: string,
+  feeAmount?: number,
+  feeUsd?: number,
+  status: "pending" | "confirmed" | "failed" | "cancelled" = "confirmed",
+  notes?: string,
+) {
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert({
+      user_id: userId,
+      wallet_id: walletId,
+      tx_type: txType,
+      symbol,
+      amount,
+      amount_usd: amountUsd,
+      tx_hash: txHash,
+      from_address: fromAddress,
+      to_address: toAddress,
+      fee_amount: feeAmount,
+      fee_usd: feeUsd,
+      status,
+      confirmation_count: status === "confirmed" ? 1 : 0,
+      notes,
+    })
+    .select()
+    .single();
+
+  if (error) throw new Error((error as any)?.message || String(error));
+  return data;
+}
+
 // ==========================================
 // WALLET FUNCTIONS
 // ==========================================

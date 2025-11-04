@@ -5,6 +5,7 @@ import { AnimatedCard } from "@/components/AnimatedCard";
 import { useAuth } from "@/context/AuthContext";
 import { useWallet } from "@/context/WalletContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useBlockchainBalance } from "@/hooks/useBlockchainBalance";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
@@ -17,6 +18,7 @@ import {
   RefreshCw,
   Search,
   Download,
+  Plus,
 } from "lucide-react";
 import {
   LineChart,
@@ -47,6 +49,7 @@ export default function Dashboard() {
     error,
     refetch,
   } = useDashboardData();
+  const blockchainBalance = useBlockchainBalance(walletAddress);
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [portfolioHistory, setPortfolioHistory] = useState<any[]>([]);
@@ -130,7 +133,11 @@ export default function Dashboard() {
     [assets],
   );
 
-  const totalBalance = portfolioValue?.total_usd || 0;
+  // Use blockchain balance if available, otherwise use Supabase data
+  const displayBalance = hasBlockchainData
+    ? blockchainBalance.balanceUsd
+    : portfolioValue?.total_usd || 0;
+  const totalBalance = displayBalance;
   const btcEquivalent = portfolioValue?.total_btc || 0;
   const change24hAmount = portfolioChange?.change_usd || 0;
   const change24hPercent = portfolioChange?.change_percentage || 0;
@@ -185,7 +192,12 @@ export default function Dashboard() {
     );
   }
 
-  if (assets.length === 0) {
+  // Show "No Assets" only if BOTH blockchain and Supabase have no data
+  const hasBlockchainData =
+    blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
+  const hasSupabaseData = assets.length > 0;
+
+  if (!hasBlockchainData && !hasSupabaseData && !loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white border-b border-blue-100 sticky top-0 z-10">
@@ -216,13 +228,19 @@ export default function Dashboard() {
               No Assets Yet
             </h2>
             <p className="text-gray-600 mb-6">
-              Connect a wallet to see your portfolio
+              Your wallet is connected but has no assets. Send some funds to
+              your wallet to get started.
             </p>
+            <div className="bg-blue-50 rounded-lg p-4 mb-6 text-sm text-blue-900">
+              <p className="font-mono break-all">
+                {primaryWallet || walletAddress}
+              </p>
+            </div>
             <Button
-              onClick={() => navigate("/connect-wallet")}
+              onClick={() => navigate("/add-transaction")}
               className="bg-blue-600 hover:bg-blue-700"
             >
-              Connect Wallet
+              Add Transaction Manually
             </Button>
           </div>
         </main>
@@ -272,26 +290,63 @@ export default function Dashboard() {
                 </motion.button>
               </p>
             </div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={() => navigate("/withdraw")}
-                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
+            <div className="flex gap-3">
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
               >
-                <ArrowUpRight size={18} />
-                Withdraw Funds
-              </Button>
-            </motion.div>
+                <Button
+                  onClick={() => navigate("/add-transaction")}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
+                >
+                  <Plus size={18} />
+                  Add Transaction
+                </Button>
+              </motion.div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button
+                  onClick={() => navigate("/withdraw")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
+                >
+                  <ArrowUpRight size={18} />
+                  Withdraw Funds
+                </Button>
+              </motion.div>
+            </div>
           </div>
         </AnimatedCard>
+
+        {/* Sync Status Banner */}
+        {hasBlockchainData && blockchainBalance.lastUpdated && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8">
+            <div className="flex items-center justify-between text-sm text-blue-900">
+              <span>
+                ✓ Blockchain data synced{" "}
+                {blockchainBalance.lastUpdated ? "just now" : ""}
+              </span>
+              <span className="text-xs text-blue-600">
+                Auto-refresh every 30 seconds
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Portfolio Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
           {/* Total Balance Card */}
           <AnimatedCard className="lg:col-span-2 bg-white rounded-xl p-8 border border-blue-100 shadow-sm">
             <div className="mb-6">
-              <p className="text-gray-600 text-sm mb-2">
-                Total Portfolio Value
-              </p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-gray-600 text-sm">Total Portfolio Value</p>
+                {hasBlockchainData && (
+                  <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                    Live Blockchain Data
+                  </span>
+                )}
+              </div>
               <h2 className="text-5xl font-bold text-gray-900 mb-2">
                 $
                 {totalBalance.toLocaleString("en-US", {
@@ -301,37 +356,46 @@ export default function Dashboard() {
               </h2>
               <div className="flex items-center gap-4">
                 <div className="flex items-center gap-1">
-                  <TrendingUp
-                    className={
-                      change24hAmount >= 0 ? "text-green-600" : "text-red-600"
-                    }
-                    size={18}
-                  />
-                  <span
-                    className={
-                      change24hAmount >= 0
-                        ? "text-green-600 font-semibold"
-                        : "text-red-600 font-semibold"
-                    }
-                  >
-                    {change24hAmount >= 0 ? "+" : ""}$
-                    {change24hAmount.toLocaleString("en-US", {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                  </span>
-                  <span
-                    className={
-                      change24hAmount >= 0
-                        ? "text-green-600 text-sm"
-                        : "text-red-600 text-sm"
-                    }
-                  >
-                    ({change24hPercent.toFixed(2)}% 24h)
-                  </span>
+                  {change24hAmount !== 0 && (
+                    <>
+                      <TrendingUp
+                        className={
+                          change24hAmount >= 0
+                            ? "text-green-600"
+                            : "text-red-600"
+                        }
+                        size={18}
+                      />
+                      <span
+                        className={
+                          change24hAmount >= 0
+                            ? "text-green-600 font-semibold"
+                            : "text-red-600 font-semibold"
+                        }
+                      >
+                        {change24hAmount >= 0 ? "+" : ""}$
+                        {change24hAmount.toLocaleString("en-US", {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        })}
+                      </span>
+                      <span
+                        className={
+                          change24hAmount >= 0
+                            ? "text-green-600 text-sm"
+                            : "text-red-600 text-sm"
+                        }
+                      >
+                        ({change24hPercent.toFixed(2)}% 24h)
+                      </span>
+                    </>
+                  )}
                 </div>
                 <button
-                  onClick={() => refetch()}
+                  onClick={() => {
+                    refetch();
+                    // Blockchain balance will auto-update, but manual refresh is nice to have
+                  }}
                   className="text-blue-600 hover:text-blue-700 text-sm flex items-center gap-1"
                 >
                   <RefreshCw size={16} />
