@@ -284,38 +284,27 @@ export async function getTransactionHistory(
         (err as any).message.toLowerCase().includes("failed to fetch"));
 
     if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/transaction-history", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, limit, offset }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
+      try {
+        const res = await fetch("/api/proxy/transaction-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, limit, offset }),
+        });
+        if (!res.bodyUsed) {
+          const json = await res.json();
+          if (res.ok) {
+            return json.data || [];
           }
-        } catch (_) {}
-        throw new Error(errMsg);
+        }
+      } catch (_) {
+        // Fallback to empty array if proxy fails
       }
-      return json.data;
+      // Return empty array if both direct and proxy fail
+      return [];
     }
 
-    throw new Error(String(err));
+    // Return empty array instead of throwing
+    return [];
   }
 }
 
@@ -460,38 +449,27 @@ export async function getUserAssets(userId: string) {
         (err as any).message.toLowerCase().includes("failed to fetch"));
 
     if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/user-assets", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
+      try {
+        const res = await fetch("/api/proxy/user-assets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId }),
+        });
+        if (!res.bodyUsed) {
+          const json = await res.json();
+          if (res.ok) {
+            return json.data || [];
           }
-        } catch (_) {}
-        throw new Error(errMsg);
+        }
+      } catch (_) {
+        // Fallback to empty array if proxy fails
       }
-      return json.data;
+      // Return empty array if both direct and proxy fail
+      return [];
     }
 
-    throw new Error(String(err));
+    // Return empty array instead of throwing
+    return [];
   }
 }
 
