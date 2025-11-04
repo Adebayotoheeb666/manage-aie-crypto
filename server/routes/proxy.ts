@@ -156,3 +156,37 @@ export const handleLatestPrice: RequestHandler = async (req, res) => {
     return res.status(500).json({ error: message });
   }
 };
+
+export const handleUserWallets: RequestHandler = async (req, res) => {
+  const { userId, primaryOnly = false } = req.body || {};
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    const supabase = serverSupabase();
+    let query = supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    if (primaryOnly) {
+      query = query.eq("is_primary", true);
+    }
+
+    const { data, error } = await query.order("is_primary", {
+      ascending: false,
+    });
+
+    if (error) {
+      // Return empty array if table doesn't exist
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json({ data: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json({ data: data || [] });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Return empty array instead of error for network/missing table issues
+    return res.json({ data: [] });
+  }
+};
