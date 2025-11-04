@@ -164,7 +164,7 @@ export async function getPortfolioValue(userId: string) {
       p_user_id: userId,
     });
 
-    if (error) throw error;
+    if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
     const isNetworkError =
@@ -207,7 +207,7 @@ export async function getPortfolio24hChange(userId: string) {
       p_user_id: userId,
     });
 
-    if (error) throw error;
+    if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
     const isNetworkError =
@@ -249,8 +249,8 @@ export async function getPortfolioAllocation(userId: string) {
     p_user_id: userId,
   });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -263,8 +263,8 @@ export async function getTransactionSummary(userId: string, days: number = 30) {
     p_days: days,
   });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getTransactionHistory(
@@ -280,7 +280,7 @@ export async function getTransactionHistory(
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
 
-    if (error) throw error;
+    if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
     const isNetworkError =
@@ -324,8 +324,8 @@ export async function getTransactionByHash(txHash: string) {
     .eq("tx_hash", txHash)
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -340,8 +340,8 @@ export async function getUserWallets(userId: string) {
     .eq("is_active", true)
     .order("is_primary", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getPrimaryWallet(userId: string) {
@@ -376,8 +376,8 @@ export async function createWallet(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function disconnectWallet(walletId: string) {
@@ -391,8 +391,8 @@ export async function disconnectWallet(walletId: string) {
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -408,7 +408,7 @@ export async function getUserAssets(userId: string) {
       .gt("balance", 0)
       .order("balance_usd", { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
     const isNetworkError =
@@ -453,8 +453,8 @@ export async function getWalletAssets(walletId: string) {
     .gt("balance", 0)
     .order("balance_usd", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function updateAssetBalance(
@@ -474,8 +474,8 @@ export async function updateAssetBalance(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -510,8 +510,8 @@ export async function createWithdrawalRequest(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getWithdrawalRequests(userId: string) {
@@ -521,8 +521,8 @@ export async function getWithdrawalRequests(userId: string) {
     .eq("user_id", userId)
     .order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function updateWithdrawalStatus(
@@ -541,8 +541,8 @@ export async function updateWithdrawalStatus(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -565,8 +565,8 @@ export async function getPriceHistory(
     .order("timestamp", { ascending: false })
     .limit(limit);
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getLatestPrice(symbol: string) {
@@ -640,8 +640,8 @@ export async function insertPriceHistory(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -666,8 +666,8 @@ export async function createPriceAlert(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getUserPriceAlerts(
@@ -680,8 +680,8 @@ export async function getUserPriceAlerts(
 
   const { data, error } = await query.order("created_at", { ascending: false });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function deletePriceAlert(alertId: string) {
@@ -719,8 +719,8 @@ export async function createPortfolioSnapshot(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function getPortfolioSnapshots(
@@ -738,7 +738,7 @@ export async function getPortfolioSnapshots(
       )
       .order("snapshot_date", { ascending: false });
 
-    if (error) throw error;
+    if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
     const isNetworkError =
@@ -787,8 +787,8 @@ export async function getAuditLogs(userId: string, limit: number = 50) {
     .order("created_at", { ascending: false })
     .limit(limit);
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function logAuditEvent(
@@ -812,8 +812,8 @@ export async function logAuditEvent(
     p_user_agent: userAgent,
   });
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -827,8 +827,8 @@ export async function getUserProfile(userId: string) {
     .eq("id", userId)
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function updateUserProfile(userId: string, updates: Partial<any>) {
@@ -839,8 +839,8 @@ export async function updateUserProfile(userId: string, updates: Partial<any>) {
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function createUserProfile(
@@ -860,8 +860,8 @@ export async function createUserProfile(
     .select()
     .single();
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 // ==========================================
@@ -871,20 +871,20 @@ export async function createUserProfile(
 export async function updateAssetPrices() {
   const { data, error } = await supabase.rpc("update_asset_prices");
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function checkAndTriggerPriceAlerts() {
   const { data, error } = await supabase.rpc("check_and_trigger_price_alerts");
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
 
 export async function cleanupExpiredSessions() {
   const { data, error } = await supabase.rpc("cleanup_expired_sessions");
 
-  if (error) throw error;
-  return data;
+  if (error) throw new Error((error as any)?.message || String(error));
+    return data;
 }
