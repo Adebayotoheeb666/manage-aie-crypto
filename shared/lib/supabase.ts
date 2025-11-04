@@ -179,7 +179,21 @@ export async function getPortfolioValue(userId: string) {
         body: JSON.stringify({ userId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data;
     }
 
@@ -208,7 +222,21 @@ export async function getPortfolio24hChange(userId: string) {
         body: JSON.stringify({ userId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data;
     }
 
@@ -267,7 +295,21 @@ export async function getTransactionHistory(
         body: JSON.stringify({ userId, limit, offset }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data;
     }
 
@@ -381,7 +423,21 @@ export async function getUserAssets(userId: string) {
         body: JSON.stringify({ userId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data;
     }
 
@@ -538,7 +594,21 @@ export async function getLatestPrice(symbol: string) {
         body: JSON.stringify({ symbol }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data || null;
     }
 
@@ -683,7 +753,21 @@ export async function getPortfolioSnapshots(
         body: JSON.stringify({ userId, daysBack }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Proxy error");
+      if (!res.ok) {
+        let errMsg = "Proxy error";
+        try {
+          if (json?.error) {
+            if (typeof json.error === "string") errMsg = json.error;
+            else if (typeof json.error?.message === "string") errMsg = json.error.message;
+            else errMsg = JSON.stringify(json.error);
+          } else if (json?.message && typeof json.message === "string") {
+            errMsg = json.message;
+          } else if (res.statusText) {
+            errMsg = res.statusText;
+          }
+        } catch (_) {}
+        throw new Error(errMsg);
+      }
       return json.data;
     }
 
