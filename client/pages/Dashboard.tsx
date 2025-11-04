@@ -69,10 +69,10 @@ export default function Dashboard() {
   // Fetch portfolio history for chart
   useEffect(() => {
     async function fetchHistory() {
-      if (!authUser) return;
+      if (!authUser || !dbUser) return;
       try {
-        const { id } = authUser;
-        // Get user ID from auth
+        const { id } = dbUser;
+        // Get user ID from database profile (UUID)
         const snapshots = await getPortfolioSnapshots(id, 30);
 
         // Transform snapshots to chart data

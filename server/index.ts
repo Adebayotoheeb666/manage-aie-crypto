@@ -70,22 +70,35 @@ export function createServer() {
       // Dynamic import to avoid requiring CommonJS in ESM environment
       import("./routes/proxy")
         .then((proxy) => {
-          if (proxy) {
-            app.post("/api/proxy/portfolio-value", proxy.handlePortfolioValue);
-            app.post(
-              "/api/proxy/portfolio-24h-change",
-              proxy.handlePortfolio24hChange,
-            );
-            app.post("/api/proxy/user-assets", proxy.handleUserAssets);
-            app.post(
-              "/api/proxy/transaction-history",
-              proxy.handleTransactionHistory,
-            );
-            app.post(
-              "/api/proxy/portfolio-snapshots",
-              proxy.handlePortfolioSnapshots,
-            );
-            app.post("/api/proxy/latest-price", proxy.handleLatestPrice);
+          try {
+            if (proxy) {
+              // Use an express Router to register proxy routes. This avoids
+              // relying on app.post/app.route which can be incompatible in
+              // certain bundling or middleware contexts.
+              return import("express").then((expressMod) => {
+                const router = expressMod.Router();
+
+                router.post("/portfolio-value", proxy.handlePortfolioValue);
+                router.post(
+                  "/portfolio-24h-change",
+                  proxy.handlePortfolio24hChange,
+                );
+                router.post("/user-assets", proxy.handleUserAssets);
+                router.post(
+                  "/transaction-history",
+                  proxy.handleTransactionHistory,
+                );
+                router.post(
+                  "/portfolio-snapshots",
+                  proxy.handlePortfolioSnapshots,
+                );
+                router.post("/latest-price", proxy.handleLatestPrice);
+
+                app.use("/api/proxy", router);
+              });
+            }
+          } catch (err) {
+            console.warn("Could not register proxy routes (router)", err);
           }
         })
         .catch((e) => console.warn("Could not register proxy routes", e));

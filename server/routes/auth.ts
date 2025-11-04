@@ -223,17 +223,36 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       console.info(`[wallet-connect] seed phrase import for ${walletAddress}`);
     }
 
-    const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
-      auth: { persistSession: false },
-    });
-
+    // Diagnostic: Log Supabase credentials
+    console.info('[wallet-connect] SUPABASE_URL:', SUPABASE_URL);
+    console.info('[wallet-connect] SUPABASE_KEY:', SUPABASE_KEY ? '[set]' : '[empty]');
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      console.error('[wallet-connect] Supabase credentials missing');
+      return res.status(500).json({ error: 'Supabase credentials missing' });
+    }
+    let supabase;
+    try {
+      supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false },
+      });
+    } catch (err) {
+      console.error('[wallet-connect] Supabase client creation failed', err);
+      return res.status(500).json({ error: 'Supabase client creation failed: ' + (err.message || err) });
+    }
     // Ensure user profile exists in users table. Use auth_id = walletAddress
-    const { data: existing, error: existingErr } = await supabase
-      .from("users")
-      .select("*")
-      .eq("auth_id", walletAddress)
-      .single();
-
+    let existing, existingErr;
+    try {
+      const result = await supabase
+        .from('users')
+        .select('*')
+        .eq('auth_id', walletAddress)
+        .single();
+      existing = result.data;
+      existingErr = result.error;
+    } catch (err) {
+      console.error('[wallet-connect] Supabase fetch failed', err);
+      return res.status(500).json({ error: 'Supabase fetch failed: ' + (err.message || err) });
+    }
     let profile = existing || null;
 
     // Handle the case where no user exists (PGRST116 is expected for no rows)
@@ -282,7 +301,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           "SESSION_JWT_SECRET not configured; returning without session cookie",
         );
         return res.status(200).json({
-          user: { id: walletAddress },
+          user: { id: profile.id, address: walletAddress },
           profile,
           isNewWallet: !existing,
         });
@@ -306,13 +325,13 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
       return res
         .status(200)
-        .json({ user: { id: walletAddress }, profile, isNewWallet: !existing });
+        .json({ user: { id: profile.id, address: walletAddress }, profile, isNewWallet: !existing });
     } catch (err) {
       console.error("[wallet-connect] session creation failed", err);
       // fallback to returning user without cookie
       return res
         .status(200)
-        .json({ user: { id: walletAddress }, profile, isNewWallet: !existing });
+        .json({ user: { id: profile.id, address: walletAddress }, profile, isNewWallet: !existing });
     }
   } catch (err) {
     const message =
@@ -376,7 +395,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
 
     return res
       .status(200)
-      .json({ user: { id: walletAddress }, profile: profile || null });
+      .json({ user: { id: (profile && profile.id) || null, address: walletAddress }, profile: profile || null });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to get session";
