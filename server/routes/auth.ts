@@ -244,7 +244,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       );
       return res
         .status(500)
-        .json({ error: "Failed to check user profile: " + existingErr.message });
+        .json({
+          error: "Failed to check user profile: " + existingErr.message,
+        });
     }
 
     if (!profile) {
@@ -262,7 +264,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         );
         return res
           .status(500)
-          .json({ error: "Failed to create user profile: " + insertErr.message });
+          .json({
+            error: "Failed to create user profile: " + insertErr.message,
+          });
       }
       profile = inserted;
     }
