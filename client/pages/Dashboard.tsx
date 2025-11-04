@@ -5,6 +5,7 @@ import { AnimatedCard } from "@/components/AnimatedCard";
 import { useAuth } from "@/context/AuthContext";
 import { useWallet } from "@/context/WalletContext";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useBlockchainBalance } from "@/hooks/useBlockchainBalance";
 import { motion } from "framer-motion";
 import {
   ArrowUpRight,
