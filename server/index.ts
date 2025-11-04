@@ -25,6 +25,14 @@ import {
   handleGetSession,
   handleGetNonce,
 } from "./routes/auth";
+import {
+  handlePortfolioValue,
+  handlePortfolio24hChange,
+  handleUserAssets,
+  handleTransactionHistory,
+  handlePortfolioSnapshots,
+  handleLatestPrice,
+} from "./routes/proxy";
 
 export function createServer() {
   const app = express();
