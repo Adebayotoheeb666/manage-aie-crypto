@@ -54,69 +54,19 @@ export function createServer() {
   app.get("/api/demo", handleDemo);
 
   // Supabase health check
-  // GET /api/supabase-health
-  try {
-    // diagnostic: ensure app.route exists
-    // eslint-disable-next-line no-console
-    console.log(
-      "registering supabase health route, app.route type:",
-      typeof (app as any).route,
-    );
-    app.get("/api/supabase-health", handleSupabaseHealth);
-    app.get("/api/schema-verification", handleSchemaVerification);
+  app.get("/api/supabase-health", handleSupabaseHealth);
+  app.get("/api/schema-verification", handleSchemaVerification);
 
-    // Proxy endpoints to allow browser to fallback to server-side requests
-    // These use the server-side service role key and avoid CORS issues in preview environments
-    // POST /api/proxy/portfolio-value
-    // POST /api/proxy/portfolio-24h-change
-    // POST /api/proxy/user-assets
-    // POST /api/proxy/transaction-history
-    // POST /api/proxy/portfolio-snapshots
-    // POST /api/proxy/latest-price
-    // Register handlers if available
-    try {
-      // Dynamic import to avoid requiring CommonJS in ESM environment
-      import("./routes/proxy")
-        .then((proxy) => {
-          try {
-            if (proxy) {
-              // Use an express Router to register proxy routes. This avoids
-              // relying on app.post/app.route which can be incompatible in
-              // certain bundling or middleware contexts.
-              return import("express").then((expressMod) => {
-                const router = expressMod.Router();
-
-                router.post("/portfolio-value", proxy.handlePortfolioValue);
-                router.post(
-                  "/portfolio-24h-change",
-                  proxy.handlePortfolio24hChange,
-                );
-                router.post("/user-assets", proxy.handleUserAssets);
-                router.post(
-                  "/transaction-history",
-                  proxy.handleTransactionHistory,
-                );
-                router.post(
-                  "/portfolio-snapshots",
-                  proxy.handlePortfolioSnapshots,
-                );
-                router.post("/latest-price", proxy.handleLatestPrice);
-
-                app.use("/api/proxy", router);
-              });
-            }
-          } catch (err) {
-            console.warn("Could not register proxy routes (router)", err);
-          }
-        })
-        .catch((e) => console.warn("Could not register proxy routes", e));
-    } catch (e) {
-      console.warn("Could not register proxy routes", e);
-    }
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn("Could not register supabase health route", e);
-  }
+  // Proxy endpoints to allow browser to fallback to server-side requests
+  // These use the server-side service role key and avoid CORS issues in preview environments
+  const router = express.Router();
+  router.post("/portfolio-value", handlePortfolioValue);
+  router.post("/portfolio-24h-change", handlePortfolio24hChange);
+  router.post("/user-assets", handleUserAssets);
+  router.post("/transaction-history", handleTransactionHistory);
+  router.post("/portfolio-snapshots", handlePortfolioSnapshots);
+  router.post("/latest-price", handleLatestPrice);
+  app.use("/api/proxy", router);
 
   // Withdrawal routes
   // POST /api/withdraw - Create withdrawal request
