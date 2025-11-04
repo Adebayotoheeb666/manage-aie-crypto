@@ -32,6 +32,7 @@ import {
   handleTransactionHistory,
   handlePortfolioSnapshots,
   handleLatestPrice,
+  handleUserWallets,
 } from "./routes/proxy";
 
 export function createServer() {
