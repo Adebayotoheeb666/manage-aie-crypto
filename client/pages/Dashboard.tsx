@@ -49,6 +49,7 @@ export default function Dashboard() {
     error,
     refetch,
   } = useDashboardData();
+  const blockchainBalance = useBlockchainBalance(walletAddress);
   const [filterType, setFilterType] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [portfolioHistory, setPortfolioHistory] = useState<any[]>([]);
