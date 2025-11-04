@@ -183,7 +183,7 @@ export async function getPortfolioValue(userId: string) {
       return json.data;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -212,7 +212,7 @@ export async function getPortfolio24hChange(userId: string) {
       return json.data;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -271,7 +271,7 @@ export async function getTransactionHistory(
       return json.data;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -385,7 +385,7 @@ export async function getUserAssets(userId: string) {
       return json.data;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -542,7 +542,7 @@ export async function getLatestPrice(symbol: string) {
       return json.data || null;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
@@ -687,7 +687,7 @@ export async function getPortfolioSnapshots(
       return json.data;
     }
 
-    throw err;
+    throw new Error(String(err));
   }
 }
 
