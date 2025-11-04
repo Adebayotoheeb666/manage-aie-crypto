@@ -273,15 +273,26 @@ export default function Dashboard() {
                 </motion.button>
               </p>
             </div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button
-                onClick={() => navigate("/withdraw")}
-                className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
-              >
-                <ArrowUpRight size={18} />
-                Withdraw Funds
-              </Button>
-            </motion.div>
+            <div className="flex gap-3">
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => navigate("/add-transaction")}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
+                >
+                  <Plus size={18} />
+                  Add Transaction
+                </Button>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Button
+                  onClick={() => navigate("/withdraw")}
+                  className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2 px-6 py-2 rounded-lg"
+                >
+                  <ArrowUpRight size={18} />
+                  Withdraw Funds
+                </Button>
+              </motion.div>
+            </div>
           </div>
         </AnimatedCard>
 
