@@ -45,9 +45,19 @@ export default function AddTransaction() {
             setPrimaryWalletId(wallet.id);
           }
         })
-        .catch((err) => console.error("Failed to fetch wallet:", err));
+        .catch((err) => {
+          const message =
+            err instanceof Error ? err.message : String(err);
+          console.error("Failed to fetch wallet:", message);
+          toast({
+            title: "Warning",
+            description:
+              "Could not load your primary wallet. You can still add a transaction.",
+            variant: "destructive",
+          });
+        });
     }
-  }, [authUser, dbUser, navigate]);
+  }, [authUser, dbUser, navigate, toast]);
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};

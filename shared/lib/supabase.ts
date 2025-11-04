@@ -376,16 +376,49 @@ export async function getUserWallets(userId: string) {
 }
 
 export async function getPrimaryWallet(userId: string) {
-  const { data, error } = await supabase
-    .from("wallets")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("is_primary", true)
-    .eq("is_active", true)
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_primary", true)
+      .eq("is_active", true)
+      .single();
 
-  if (error && error.code !== "PGRST116") throw error;
-  return data || null;
+    if (error && error.code !== "PGRST116") {
+      throw new Error((error as any)?.message || String(error));
+    }
+    return data || null;
+  } catch (err) {
+    const isNetworkError =
+      err instanceof TypeError ||
+      (err &&
+        typeof (err as any).message === "string" &&
+        (err as any).message.toLowerCase().includes("failed to fetch"));
+
+    if (typeof window !== "undefined" && isNetworkError) {
+      try {
+        const res = await fetch("/api/proxy/user-wallets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, primaryOnly: true }),
+        });
+        if (!res.bodyUsed) {
+          const json = await res.json();
+          if (res.ok) {
+            return (json.data && json.data[0]) || null;
+          }
+        }
+      } catch (_) {
+        // Fallback if proxy fails
+      }
+      // Return null instead of throwing for network errors
+      return null;
+    }
+
+    // Return null instead of throwing
+    return null;
+  }
 }
 
 export async function createWallet(
