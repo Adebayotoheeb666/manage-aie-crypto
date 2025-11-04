@@ -67,6 +67,7 @@ export function createServer() {
   router.post("/transaction-history", handleTransactionHistory);
   router.post("/portfolio-snapshots", handlePortfolioSnapshots);
   router.post("/latest-price", handleLatestPrice);
+  router.post("/user-wallets", handleUserWallets);
   app.use("/api/proxy", router);
 
   // Withdrawal routes
