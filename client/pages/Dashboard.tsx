@@ -17,6 +17,7 @@ import {
   RefreshCw,
   Search,
   Download,
+  Plus,
 } from "lucide-react";
 import {
   LineChart,
