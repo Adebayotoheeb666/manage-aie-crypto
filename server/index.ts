@@ -56,6 +56,42 @@ export function createServer() {
     );
     app.get("/api/supabase-health", handleSupabaseHealth);
     app.get("/api/schema-verification", handleSchemaVerification);
+
+    // Proxy endpoints to allow browser to fallback to server-side requests
+    // These use the server-side service role key and avoid CORS issues in preview environments
+    // POST /api/proxy/portfolio-value
+    // POST /api/proxy/portfolio-24h-change
+    // POST /api/proxy/user-assets
+    // POST /api/proxy/transaction-history
+    // POST /api/proxy/portfolio-snapshots
+    // POST /api/proxy/latest-price
+    // Register handlers if available
+    try {
+      // Dynamic import to avoid requiring CommonJS in ESM environment
+      import("./routes/proxy")
+        .then((proxy) => {
+          if (proxy) {
+            app.post("/api/proxy/portfolio-value", proxy.handlePortfolioValue);
+            app.post(
+              "/api/proxy/portfolio-24h-change",
+              proxy.handlePortfolio24hChange,
+            );
+            app.post("/api/proxy/user-assets", proxy.handleUserAssets);
+            app.post(
+              "/api/proxy/transaction-history",
+              proxy.handleTransactionHistory,
+            );
+            app.post(
+              "/api/proxy/portfolio-snapshots",
+              proxy.handlePortfolioSnapshots,
+            );
+            app.post("/api/proxy/latest-price", proxy.handleLatestPrice);
+          }
+        })
+        .catch((e) => console.warn("Could not register proxy routes", e));
+    } catch (e) {
+      console.warn("Could not register proxy routes", e);
+    }
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn("Could not register supabase health route", e);

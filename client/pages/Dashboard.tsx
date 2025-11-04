@@ -89,7 +89,32 @@ export default function Dashboard() {
 
         setPortfolioHistory(chartData);
       } catch (err) {
-        console.error("Failed to fetch portfolio history:", err);
+        const extractErrorMessage = (e: unknown) => {
+          if (!e) return "Unknown error";
+          if (e instanceof Error) return e.message;
+          if (typeof e === "string") return e;
+          const anyErr = e as any;
+          if (anyErr?.error) {
+            if (typeof anyErr.error === "string") return anyErr.error;
+            if (typeof anyErr.error?.message === "string")
+              return anyErr.error.message;
+          }
+          if (typeof anyErr.message === "string") return anyErr.message;
+          if (
+            typeof anyErr.status === "number" ||
+            typeof anyErr.statusText === "string"
+          ) {
+            return `${anyErr.status || ""} ${anyErr.statusText || ""}`.trim();
+          }
+          try {
+            return String(anyErr);
+          } catch (_) {
+            return "Unknown error";
+          }
+        };
+
+        const msg = extractErrorMessage(err);
+        console.error("Failed to fetch portfolio history:", msg);
       }
     }
 

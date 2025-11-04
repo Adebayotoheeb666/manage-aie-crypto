@@ -46,6 +46,34 @@ export function useDashboardData(): DashboardData {
     setLoading(true);
     setError(null);
 
+    function extractErrorMessage(err: unknown): string {
+      if (!err) return "Unknown error";
+      if (err instanceof Error) return err.message;
+      if (typeof err === "string") return err;
+
+      const anyErr = err as any;
+      // Common shapes
+      if (anyErr?.error) {
+        if (typeof anyErr.error === "string") return anyErr.error;
+        if (typeof anyErr.error?.message === "string")
+          return anyErr.error.message;
+      }
+      if (typeof anyErr.message === "string") return anyErr.message;
+      if (
+        typeof anyErr.status === "number" ||
+        typeof anyErr.statusText === "string"
+      ) {
+        return `${anyErr.status || ""} ${anyErr.statusText || ""}`.trim();
+      }
+
+      // Fallback: avoid JSON.stringify of complex objects (may include Response)
+      try {
+        return String(anyErr);
+      } catch {
+        return "Unknown error";
+      }
+    }
+
     try {
       // Fetch portfolio metrics
       const [valueData, changeData, assetsData, txData] = await Promise.all([
@@ -94,10 +122,9 @@ export function useDashboardData(): DashboardData {
 
       setPrices(priceData);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to fetch dashboard data";
-      setError(message);
-      console.error("Dashboard data fetch error:", err);
+      const message = extractErrorMessage(err);
+      setError(message || "Failed to fetch dashboard data");
+      console.error("Dashboard data fetch error:", message, err);
     } finally {
       setLoading(false);
     }
