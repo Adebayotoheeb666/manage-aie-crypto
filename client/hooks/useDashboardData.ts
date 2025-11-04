@@ -50,15 +50,23 @@ export function useDashboardData(): DashboardData {
     if (!err) return "Unknown error";
     if (err instanceof Error) return err.message;
     if (typeof err === "string") return err;
+
+    const anyErr = err as any;
+    // Common shapes
+    if (anyErr?.error) {
+      if (typeof anyErr.error === "string") return anyErr.error;
+      if (typeof anyErr.error?.message === "string") return anyErr.error.message;
+    }
+    if (typeof anyErr.message === "string") return anyErr.message;
+    if (typeof anyErr.status === "number" || typeof anyErr.statusText === "string") {
+      return `${anyErr.status || ""} ${anyErr.statusText || ""}`.trim();
+    }
+
+    // Fallback: avoid JSON.stringify of complex objects (may include Response)
     try {
-      // Prefer { error: { message } } shapes
-      const anyErr = err as any;
-      if (anyErr?.error && typeof anyErr.error.message === "string")
-        return anyErr.error.message;
-      if (typeof anyErr.message === "string") return anyErr.message;
-      return JSON.stringify(err);
-    } catch (e) {
-      return String(err);
+      return String(anyErr);
+    } catch {
+      return "Unknown error";
     }
   }
 
