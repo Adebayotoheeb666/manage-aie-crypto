@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useWallet } from "@/context/WalletContext";
+import { useAuth } from "@/context/AuthContext";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Wallet, LogOut, Copy, Check } from "lucide-react";
 import { useState } from "react";
@@ -7,10 +9,46 @@ import { useState } from "react";
 export function WalletConnectButton() {
   const { address, isConnected, connect, disconnect, loading, error } =
     useWallet();
+  const { connectWallet: authConnectWallet } = useAuth();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
+  const [connectError, setConnectError] = useState<string | null>(null);
 
   const handleConnect = async () => {
-    await connect();
+    try {
+      setConnectError(null);
+      // Connect to MetaMask
+      await connect();
+      
+      // Get the connected address from wallet context
+      // Note: The address might not be immediately available, so we need to wait
+      const checkAddress = async () => {
+        // Wait a bit for the wallet state to update
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const win = window as any;
+        if (win.ethereum) {
+          const accounts = await win.ethereum.request({ method: 'eth_accounts' });
+          if (accounts && accounts.length > 0) {
+            const walletAddress = accounts[0];
+            // Authenticate with backend
+            await authConnectWallet(walletAddress);
+            // Navigate to dashboard
+            navigate("/dashboard");
+          } else {
+            throw new Error("No wallet accounts found");
+          }
+        } else {
+          throw new Error("MetaMask not available");
+        }
+      };
+      
+      await checkAddress();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to connect wallet";
+      setConnectError(message);
+      console.error("Wallet connection error:", err);
+    }
   };
 
   const handleDisconnect = async () => {
@@ -78,13 +116,13 @@ export function WalletConnectButton() {
         {loading ? "Connecting..." : "Connect MetaMask"}
       </Button>
 
-      {error && (
+      {(error || connectError) && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           className="mt-2 p-3 bg-red-50 border border-red-200 rounded-lg"
         >
-          <p className="text-sm text-red-700">{error}</p>
+          <p className="text-sm text-red-700">{connectError || error}</p>
         </motion.div>
       )}
     </motion.div>

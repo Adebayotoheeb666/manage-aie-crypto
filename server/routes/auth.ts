@@ -225,33 +225,51 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
     // Diagnostic: Log Supabase credentials
     console.info('[wallet-connect] SUPABASE_URL:', SUPABASE_URL);
-    console.info('[wallet-connect] SUPABASE_KEY:', SUPABASE_KEY ? '[set]' : '[empty]');
+    console.info('[wallet-connect] SUPABASE_KEY:', SUPABASE_KEY ? `[set - ${SUPABASE_KEY.substring(0, 20)}...]` : '[empty]');
+    console.info('[wallet-connect] Using key type:', 
+      SUPABASE_KEY === process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE_ROLE' :
+      SUPABASE_KEY === process.env.VITE_SUPABASE_ANON_KEY ? 'ANON' : 'OTHER'
+    );
+    
     if (!SUPABASE_URL || !SUPABASE_KEY) {
       console.error('[wallet-connect] Supabase credentials missing');
       return res.status(500).json({ error: 'Supabase credentials missing' });
     }
+    
     let supabase;
     try {
+      console.info('[wallet-connect] Creating Supabase client...');
       supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: false },
       });
+      console.info('[wallet-connect] Supabase client created successfully');
     } catch (err) {
       console.error('[wallet-connect] Supabase client creation failed', err);
       return res.status(500).json({ error: 'Supabase client creation failed: ' + (err.message || err) });
     }
-    // Ensure user profile exists in users table. Use auth_id = walletAddress
+    // Ensure user profile exists in users table. Use primary_wallet_address for wallet users
     let existing, existingErr;
     try {
       const result = await supabase
         .from('users')
         .select('*')
-        .eq('auth_id', walletAddress)
+        .eq('primary_wallet_address', walletAddress.toLowerCase())
         .single();
       existing = result.data;
       existingErr = result.error;
     } catch (err) {
-      console.error('[wallet-connect] Supabase fetch failed', err);
-      return res.status(500).json({ error: 'Supabase fetch failed: ' + (err.message || err) });
+      console.error('[wallet-connect] Supabase fetch failed - raw error:', err);
+      console.error('[wallet-connect] Error name:', err?.name);
+      console.error('[wallet-connect] Error message:', err?.message);
+      console.error('[wallet-connect] Error cause:', err?.cause);
+      console.error('[wallet-connect] Error stack:', err?.stack);
+      return res.status(500).json({ 
+        error: 'Supabase fetch failed: ' + (err?.message || err),
+        details: {
+          name: err?.name,
+          cause: err?.cause?.message || err?.cause,
+        }
+      });
     }
     let profile = existing || null;
 
@@ -272,7 +290,12 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
       const { data: inserted, error: insertErr } = await supabase
         .from("users")
-        .insert({ auth_id: walletAddress, email: walletEmail })
+        .insert({ 
+          primary_wallet_address: walletAddress.toLowerCase(),
+          email: walletEmail,
+          account_status: 'active',
+          is_verified: true  // Wallet users are verified by controlling the wallet
+        })
         .select()
         .single();
 
@@ -386,7 +409,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     const { data: profile, error: profileErr } = await supabase
       .from("users")
       .select("*")
-      .eq("auth_id", walletAddress)
+      .eq("primary_wallet_address", walletAddress.toLowerCase())
       .single();
 
     if (profileErr && profileErr.code !== "PGRST116") {

@@ -16,7 +16,8 @@ export type Json =
 
 export interface User {
   id: string;
-  auth_id: string;
+  auth_id?: string; // Optional: Only for email/password users
+  primary_wallet_address?: string; // Optional: Only for wallet users
   email: string;
   username?: string;
   full_name?: string;
