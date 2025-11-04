@@ -133,6 +133,10 @@ export default function Dashboard() {
     [assets],
   );
 
+  // Check if blockchain has data
+  const hasBlockchainData =
+    blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
+
   // Use blockchain balance if available, otherwise use Supabase data
   const displayBalance = hasBlockchainData
     ? blockchainBalance.balanceUsd
@@ -193,8 +197,6 @@ export default function Dashboard() {
   }
 
   // Show "No Assets" only if BOTH blockchain and Supabase have no data
-  const hasBlockchainData =
-    blockchainBalance.balance !== "0" && blockchainBalance.balance !== "0.0";
   const hasSupabaseData = assets.length > 0;
 
   if (!hasBlockchainData && !hasSupabaseData && !loading) {
