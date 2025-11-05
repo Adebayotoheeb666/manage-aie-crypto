@@ -99,15 +99,20 @@ export default function Dashboard() {
       const response = await fetch('/api/wallet/assets', {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch assets');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Failed to fetch assets: ${response.status} ${errorData.error || ''}`);
+      }
+
       const data = await response.json();
-      
+
       setAssets(data.assets || []);
-      
+
       // Calculate total balance
       const balance = (data.assets || []).reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
       setTotalBalance(balance);
-      
+
       // Calculate 24h change if we have previous data
       if (data.portfolio_history?.length >= 2) {
         const prev = data.portfolio_history[data.portfolio_history.length - 2].value;
