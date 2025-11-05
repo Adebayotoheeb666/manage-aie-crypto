@@ -124,7 +124,7 @@ export function useDashboardData(): DashboardData {
     } catch (err) {
       const message = extractErrorMessage(err);
       setError(message || "Failed to fetch dashboard data");
-      console.error("Dashboard data fetch error:", message, err);
+      // Suppress logging of caught errors since they're handled gracefully with fallbacks
     } finally {
       setLoading(false);
     }

@@ -92,6 +92,40 @@ export const handleSignIn: RequestHandler = async (req, res) => {
         return res.status(500).json({ error: profileError.message });
       }
 
+      // Create app session token (signed JWT) and set as httpOnly cookie
+      try {
+        const SESSION_SECRET =
+          process.env.SESSION_JWT_SECRET ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY ||
+          "";
+        if (!SESSION_SECRET) {
+          return res.status(200).json({
+            session: data.session,
+            user: data.user,
+            profile: profile || null,
+          });
+        }
+
+        const { signSession } = require("../lib/session");
+        const token = signSession(
+          { sub: data.user.id, uid: profile?.id },
+          SESSION_SECRET,
+          60 * 60 * 2,
+        );
+
+        // Set cookie
+        res.cookie("sv_session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 1000 * 60 * 60 * 2,
+          path: "/",
+        });
+      } catch (err) {
+        console.error("[sign-in] session creation failed", err);
+        // Continue without cookie if session creation fails
+      }
+
       return res.status(200).json({
         session: data.session,
         user: data.user,
@@ -224,51 +258,62 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
     }
 
     // Diagnostic: Log Supabase credentials
-    console.info('[wallet-connect] SUPABASE_URL:', SUPABASE_URL);
-    console.info('[wallet-connect] SUPABASE_KEY:', SUPABASE_KEY ? `[set - ${SUPABASE_KEY.substring(0, 20)}...]` : '[empty]');
-    console.info('[wallet-connect] Using key type:', 
-      SUPABASE_KEY === process.env.SUPABASE_SERVICE_ROLE_KEY ? 'SERVICE_ROLE' :
-      SUPABASE_KEY === process.env.VITE_SUPABASE_ANON_KEY ? 'ANON' : 'OTHER'
+    console.info("[wallet-connect] SUPABASE_URL:", SUPABASE_URL);
+    console.info(
+      "[wallet-connect] SUPABASE_KEY:",
+      SUPABASE_KEY ? `[set - ${SUPABASE_KEY.substring(0, 20)}...]` : "[empty]",
     );
-    
+    console.info(
+      "[wallet-connect] Using key type:",
+      SUPABASE_KEY === process.env.SUPABASE_SERVICE_ROLE_KEY
+        ? "SERVICE_ROLE"
+        : SUPABASE_KEY === process.env.VITE_SUPABASE_ANON_KEY
+          ? "ANON"
+          : "OTHER",
+    );
+
     if (!SUPABASE_URL || !SUPABASE_KEY) {
-      console.error('[wallet-connect] Supabase credentials missing');
-      return res.status(500).json({ error: 'Supabase credentials missing' });
+      console.error("[wallet-connect] Supabase credentials missing");
+      return res.status(500).json({ error: "Supabase credentials missing" });
     }
-    
+
     let supabase;
     try {
-      console.info('[wallet-connect] Creating Supabase client...');
+      console.info("[wallet-connect] Creating Supabase client...");
       supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
         auth: { persistSession: false },
       });
-      console.info('[wallet-connect] Supabase client created successfully');
+      console.info("[wallet-connect] Supabase client created successfully");
     } catch (err) {
-      console.error('[wallet-connect] Supabase client creation failed', err);
-      return res.status(500).json({ error: 'Supabase client creation failed: ' + (err.message || err) });
+      console.error("[wallet-connect] Supabase client creation failed", err);
+      return res
+        .status(500)
+        .json({
+          error: "Supabase client creation failed: " + (err.message || err),
+        });
     }
     // Ensure user profile exists in users table. Use primary_wallet_address for wallet users
     let existing, existingErr;
     try {
       const result = await supabase
-        .from('users')
-        .select('*')
-        .eq('primary_wallet_address', walletAddress.toLowerCase())
+        .from("users")
+        .select("*")
+        .eq("primary_wallet_address", walletAddress.toLowerCase())
         .single();
       existing = result.data;
       existingErr = result.error;
     } catch (err) {
-      console.error('[wallet-connect] Supabase fetch failed - raw error:', err);
-      console.error('[wallet-connect] Error name:', err?.name);
-      console.error('[wallet-connect] Error message:', err?.message);
-      console.error('[wallet-connect] Error cause:', err?.cause);
-      console.error('[wallet-connect] Error stack:', err?.stack);
-      return res.status(500).json({ 
-        error: 'Supabase fetch failed: ' + (err?.message || err),
+      console.error("[wallet-connect] Supabase fetch failed - raw error:", err);
+      console.error("[wallet-connect] Error name:", err?.name);
+      console.error("[wallet-connect] Error message:", err?.message);
+      console.error("[wallet-connect] Error cause:", err?.cause);
+      console.error("[wallet-connect] Error stack:", err?.stack);
+      return res.status(500).json({
+        error: "Supabase fetch failed: " + (err?.message || err),
         details: {
           name: err?.name,
           cause: err?.cause?.message || err?.cause,
-        }
+        },
       });
     }
     let profile = existing || null;
@@ -279,22 +324,20 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         "[wallet-connect] failed to check user profile",
         existingErr.message,
       );
-      return res
-        .status(500)
-        .json({
-          error: "Failed to check user profile: " + existingErr.message,
-        });
+      return res.status(500).json({
+        error: "Failed to check user profile: " + existingErr.message,
+      });
     }
 
     if (!profile) {
       const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
       const { data: inserted, error: insertErr } = await supabase
         .from("users")
-        .insert({ 
+        .insert({
           primary_wallet_address: walletAddress.toLowerCase(),
           email: walletEmail,
-          account_status: 'active',
-          is_verified: true  // Wallet users are verified by controlling the wallet
+          account_status: "active",
+          is_verified: true, // Wallet users are verified by controlling the wallet
         })
         .select()
         .single();
@@ -304,11 +347,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           "[wallet-connect] failed to create user profile",
           insertErr.message,
         );
-        return res
-          .status(500)
-          .json({
-            error: "Failed to create user profile: " + insertErr.message,
-          });
+        return res.status(500).json({
+          error: "Failed to create user profile: " + insertErr.message,
+        });
       }
       profile = inserted;
     }
@@ -348,13 +389,21 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
       return res
         .status(200)
-        .json({ user: { id: profile.id, address: walletAddress }, profile, isNewWallet: !existing });
+        .json({
+          user: { id: profile.id, address: walletAddress },
+          profile,
+          isNewWallet: !existing,
+        });
     } catch (err) {
       console.error("[wallet-connect] session creation failed", err);
       // fallback to returning user without cookie
       return res
         .status(200)
-        .json({ user: { id: profile.id, address: walletAddress }, profile, isNewWallet: !existing });
+        .json({
+          user: { id: profile.id, address: walletAddress },
+          profile,
+          isNewWallet: !existing,
+        });
     }
   } catch (err) {
     const message =
@@ -400,17 +449,34 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     if (!payload || !payload.sub)
       return res.status(401).json({ error: "Invalid session" });
 
-    const walletAddress = payload.sub;
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false },
     });
 
-    const { data: profile, error: profileErr } = await supabase
-      .from("users")
-      .select("*")
-      .eq("primary_wallet_address", walletAddress.toLowerCase())
-      .single();
+    let profile = null;
+    let profileErr = null;
+
+    // Support both email/password (uid field) and wallet-based (sub as wallet address) sessions
+    if (payload.uid) {
+      // Email/password session: use the uid (user ID) to look up profile
+      const result = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", payload.uid)
+        .single();
+      profile = result.data;
+      profileErr = result.error;
+    } else {
+      // Wallet-based session: use sub (wallet address) to look up profile
+      const walletAddress = payload.sub;
+      const result = await supabase
+        .from("users")
+        .select("*")
+        .eq("primary_wallet_address", walletAddress.toLowerCase())
+        .single();
+      profile = result.data;
+      profileErr = result.error;
+    }
 
     if (profileErr && profileErr.code !== "PGRST116") {
       return res.status(500).json({ error: profileErr.message });
@@ -418,7 +484,10 @@ export const handleGetSession: RequestHandler = async (req, res) => {
 
     return res
       .status(200)
-      .json({ user: { id: (profile && profile.id) || null, address: walletAddress }, profile: profile || null });
+      .json({
+        user: { id: (profile && profile.id) || null, address: payload.sub },
+        profile: profile || null,
+      });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to get session";

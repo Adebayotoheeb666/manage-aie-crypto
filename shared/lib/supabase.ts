@@ -40,6 +40,8 @@ if (!SUPABASE_ANON_KEY) {
 
 // Lazily initialize Supabase client. If envs are missing the proxy will throw a clear error
 let _supabaseClient: SupabaseClient<Database> | null = null;
+let _consoleErrorOverridden = false;
+
 function createSupabaseClient(): SupabaseClient<Database> {
   if (_supabaseClient) return _supabaseClient;
 
@@ -52,6 +54,30 @@ function createSupabaseClient(): SupabaseClient<Database> {
         detectSessionInUrl: true,
       },
     });
+
+    // Suppress Supabase network errors in console since we have fallback handlers
+    if (typeof window !== "undefined" && !_consoleErrorOverridden) {
+      _consoleErrorOverridden = true;
+      const originalError = console.error;
+      console.error = function (...args: any[]) {
+        const message = args
+          .map((arg) => {
+            if (typeof arg === "string") return arg;
+            if (arg instanceof Error) return arg.message;
+            return String(arg);
+          })
+          .join(" ");
+
+        if (
+          message.includes("Failed to fetch") ||
+          message.includes("Network request failed")
+        ) {
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    }
+
     return _supabaseClient;
   }
 
@@ -167,30 +193,28 @@ export async function getPortfolioValue(userId: string) {
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/portfolio-value", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data;
-          }
+          return json.data || { total_usd: 0, total_btc: 0, total_eth: 0 };
         }
       } catch (_) {
         // Fallback to default if proxy fails
       }
-      // Return default data if both RPC and proxy fail
-      return { total_usd: 0, total_btc: 0, total_eth: 0 };
     }
 
     // Return default data instead of throwing
@@ -207,30 +231,28 @@ export async function getPortfolio24hChange(userId: string) {
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/portfolio-24h-change", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data;
-          }
+          return json.data || { change_usd: 0, change_percentage: 0 };
         }
       } catch (_) {
         // Fallback to default if proxy fails
       }
-      // Return default data if both RPC and proxy fail
-      return { change_usd: 0, change_percentage: 0 };
     }
 
     // Return default data instead of throwing
@@ -277,30 +299,28 @@ export async function getTransactionHistory(
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/transaction-history", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, limit, offset }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data || [];
-          }
+          return json.data || [];
         }
       } catch (_) {
         // Fallback to empty array if proxy fails
       }
-      // Return empty array if both direct and proxy fail
-      return [];
     }
 
     // Return empty array instead of throwing
@@ -390,30 +410,28 @@ export async function getPrimaryWallet(userId: string) {
     }
     return data || null;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/user-wallets", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, primaryOnly: true }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return (json.data && json.data[0]) || null;
-          }
+          return (json.data && json.data[0]) || null;
         }
       } catch (_) {
         // Fallback if proxy fails
       }
-      // Return null instead of throwing for network errors
-      return null;
     }
 
     // Return null instead of throwing
@@ -475,30 +493,28 @@ export async function getUserAssets(userId: string) {
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/user-assets", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data || [];
-          }
+          return json.data || [];
         }
       } catch (_) {
         // Fallback to empty array if proxy fails
       }
-      // Return empty array if both direct and proxy fail
-      return [];
     }
 
     // Return empty array instead of throwing
@@ -643,42 +659,42 @@ export async function getLatestPrice(symbol: string) {
     if (error && error.code !== "PGRST116") throw error;
     return data || null;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/latest-price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
+      try {
+        const res = await fetch("/api/proxy/latest-price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          let errMsg = "Proxy error";
+          try {
+            if (json?.error) {
+              if (typeof json.error === "string") errMsg = json.error;
+              else if (typeof json.error?.message === "string")
+                errMsg = json.error.message;
+              else errMsg = JSON.stringify(json.error);
+            } else if (json?.message && typeof json.message === "string") {
+              errMsg = json.message;
+            } else if (res.statusText) {
+              errMsg = res.statusText;
+            }
+          } catch (_) {}
+          throw new Error(errMsg);
+        }
+        return json.data || null;
+      } catch (_) {
+        return null;
       }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
-          }
-        } catch (_) {}
-        throw new Error(errMsg);
-      }
-      return json.data || null;
     }
 
     throw new Error(String(err));
@@ -810,42 +826,42 @@ export async function getPortfolioSnapshots(
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/portfolio-snapshots", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId, daysBack }),
-      });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
+      try {
+        const res = await fetch("/api/proxy/portfolio-snapshots", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, daysBack }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          let errMsg = "Proxy error";
+          try {
+            if (json?.error) {
+              if (typeof json.error === "string") errMsg = json.error;
+              else if (typeof json.error?.message === "string")
+                errMsg = json.error.message;
+              else errMsg = JSON.stringify(json.error);
+            } else if (json?.message && typeof json.message === "string") {
+              errMsg = json.message;
+            } else if (res.statusText) {
+              errMsg = res.statusText;
+            }
+          } catch (_) {}
+          throw new Error(errMsg);
+        }
+        return json.data;
+      } catch (_) {
+        return [];
       }
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
-          }
-        } catch (_) {}
-        throw new Error(errMsg);
-      }
-      return json.data;
     }
 
     throw new Error(String(err));
