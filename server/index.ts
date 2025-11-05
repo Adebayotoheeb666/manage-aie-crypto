@@ -213,5 +213,10 @@ export function createServer() {
   // GET /api/auth/nonce - Get a nonce for signing (query: address=0x...)
   app.get("/api/auth/nonce", authRateLimiter, handleGetNonce);
 
+  // Wallet, transaction, and portfolio routes
+  app.use("/api/wallet", walletRoutes);
+  app.use("/api/transactions", transactionRoutes);
+  app.use("/api/portfolio", portfolioRoutes);
+
   return app;
 }
