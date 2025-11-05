@@ -54,7 +54,8 @@ interface PortfolioData {
 }
 
 export default function Dashboard() {
-  const { dbUser } = useAuth();
+  const navigate = useNavigate();
+  const { dbUser, isAuthenticated, loading: authLoading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -67,10 +68,19 @@ export default function Dashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'send' | 'receive' | 'swap'>('all');
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/connect-wallet');
+    }
+  }, [isAuthenticated, authLoading, navigate]);
+
   // Fetch data on component mount
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    if (isAuthenticated && !authLoading) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, authLoading]);
 
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
