@@ -98,32 +98,8 @@ export function createServer() {
   
   // Parse cookies
   app.use(cookieParser());
-  
-  // Parse JSON bodies
-  app.use(express.json());
-  
-  // Raw body parser - must come after express.json()
-  app.use((req, res, next) => {
-    let data = '';
-    req.on('data', chunk => {
-      data += chunk;
-    });
-    req.on('end', () => {
-      if (data) {
-        (req as any).rawBody = data;
-        try {
-          if (req.headers['content-type'] === 'application/json') {
-            req.body = JSON.parse(data);
-          }
-        } catch (e) {
-          console.error('Error parsing JSON body:', e);
-        }
-      }
-      next();
-    });
-  });
-  
-  // JSON and URL-encoded parsers
+
+  // Parse JSON bodies - must be early in the middleware chain
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
