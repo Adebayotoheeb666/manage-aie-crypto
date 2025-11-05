@@ -57,10 +57,13 @@ export function useWalletConnect(): UseWalletConnectReturn {
     setError(null);
   }, []);
 
-  const signMessage = useCallback(async (_message: string): Promise<string | null> => {
-    setError("Signing via browser wallet is disabled.");
-    return null;
-  }, []);
+  const signMessage = useCallback(
+    async (_message: string): Promise<string | null> => {
+      setError("Signing via browser wallet is disabled.");
+      return null;
+    },
+    [],
+  );
 
   const getBalance = useCallback(async (): Promise<string | null> => {
     setError("Wallet not connected");
