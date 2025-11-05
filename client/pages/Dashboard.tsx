@@ -82,30 +82,8 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, loading]);
 
-  // Fetch all dashboard data
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      await Promise.all([
-        fetchAssets(),
-        fetchTransactions(),
-        fetchPortfolioHistory()
-      ]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
-    }
-  };
-
   // Fetch user's assets
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     try {
       const response = await fetch('/api/wallet/assets', {
         credentials: 'include',
@@ -137,10 +115,10 @@ export default function Dashboard() {
       console.error('Error fetching assets:', error);
       throw error;
     }
-  };
+  }, []);
 
   // Fetch transaction history
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
       const response = await fetch('/api/transactions', {
         credentials: 'include',
@@ -157,10 +135,10 @@ export default function Dashboard() {
       console.error('Error fetching transactions:', error);
       throw error;
     }
-  };
+  }, []);
 
   // Fetch portfolio history
-  const fetchPortfolioHistory = async () => {
+  const fetchPortfolioHistory = useCallback(async () => {
     try {
       const response = await fetch('/api/portfolio/history', {
         credentials: 'include',
@@ -177,7 +155,29 @@ export default function Dashboard() {
       console.error('Error fetching portfolio history:', error);
       throw error;
     }
-  };
+  }, []);
+
+  // Fetch all dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchAssets(),
+        fetchTransactions(),
+        fetchPortfolioHistory()
+      ]);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load dashboard data',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
 
   // Handle refresh
   const handleRefresh = () => {
