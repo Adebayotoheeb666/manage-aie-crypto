@@ -31,6 +31,7 @@ This guide explains how to deploy the complete schema and test data to your Supa
 6. You should see ✓ Query succeeded
 
 **Verify:** Go to **Table Editor** and confirm you see these tables:
+
 - users
 - sessions
 - wallets
@@ -52,6 +53,7 @@ This guide explains how to deploy the complete schema and test data to your Supa
 5. You should see output showing data counts
 
 **Verify:** In **Table Editor**, you should see:
+
 - 1 user: `testuser@example.com`
 - 1 wallet with 5 assets (BTC, ETH, USDC, SOL, DOGE)
 - 7 transactions (5 receive, 2 send/swap)
@@ -98,6 +100,7 @@ psql <CONNECTION_STRING> < supabase/migrations/002_test_data.sql
 ### 1. Verify the Connection
 
 Navigate to your dashboard in the app. You should now see:
+
 - Portfolio value: $41,126.25
 - Portfolio allocation chart with 5 assets
 - Transaction history with 7 transactions
@@ -134,61 +137,70 @@ Or, to manually link a user to auth:
 
 ```sql
 -- In SQL Editor, after creating an auth user in Supabase Auth:
-UPDATE users 
-SET auth_id = '<auth_user_id>' 
+UPDATE users
+SET auth_id = '<auth_user_id>'
 WHERE id = '123e4567-e89b-12d3-a456-426614174000'::UUID;
 ```
 
 ## Test Data Summary
 
 ### Test User
+
 - **Email**: testuser@example.com
 - **Username**: testuser
 - **ID**: `123e4567-e89b-12d3-a456-426614174000`
 
 ### Test Wallet
+
 - **Address**: `0xdf12925e53b8638e2ddbf4b0c64d4635609388ab`
 - **Type**: MetaMask
 - **Primary**: Yes
 
 ### Test Assets
-| Symbol | Balance | Value (USD) | Price |
-|--------|---------|-------------|-------|
-| BTC    | 0.5     | $21,625    | $43,250.00 |
-| ETH    | 5.0     | $11,402.50 | $2,280.50 |
-| USDC   | 5,000   | $5,000     | $1.00 |
-| SOL    | 25      | $2,718.75  | $108.75 |
-| DOGE   | 1,000   | $380       | $0.38 |
+
+| Symbol | Balance | Value (USD) | Price      |
+| ------ | ------- | ----------- | ---------- |
+| BTC    | 0.5     | $21,625     | $43,250.00 |
+| ETH    | 5.0     | $11,402.50  | $2,280.50  |
+| USDC   | 5,000   | $5,000      | $1.00      |
+| SOL    | 25      | $2,718.75   | $108.75    |
+| DOGE   | 1,000   | $380        | $0.38      |
 
 **Total Portfolio Value**: $41,126.25
 
 ### Test Transactions
+
 - 5 receive transactions (various cryptocurrencies)
 - 2 send transactions (ETH and USDC)
 - 1 swap transaction (BTC)
 - Status: Mix of confirmed and pending
 
 ### Historical Data
+
 - 7 portfolio snapshots (last 7 days)
 - Used for the portfolio chart showing value trends
 
 ## Troubleshooting
 
 ### "relation 'users' does not exist"
+
 - The schema hasn't been deployed yet
 - Follow Method 1 above to deploy the initial schema
 
 ### "permission denied for table"
+
 - RLS might be interfering with test data insertion
 - Temporarily disable RLS in **Database > RLS** settings
 - Run the test data migration
 - Re-enable RLS if desired
 
 ### "function 'calculate_portfolio_value' does not exist"
+
 - The schema was partially deployed
 - Clear all tables/functions and redeploy from scratch
 
 ### Data doesn't appear in app
+
 - Verify you're authenticated with the correct user
 - Check that RLS isn't blocking your queries
 - Ensure environment variables are set correctly

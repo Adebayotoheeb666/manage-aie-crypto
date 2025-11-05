@@ -46,8 +46,7 @@ export default function AddTransaction() {
           }
         })
         .catch((err) => {
-          const message =
-            err instanceof Error ? err.message : String(err);
+          const message = err instanceof Error ? err.message : String(err);
           console.error("Failed to fetch wallet:", message);
           toast({
             title: "Warning",

@@ -28,7 +28,10 @@ export const handlePortfolioValue: RequestHandler = async (req, res) => {
     });
     if (error) {
       // Return default data if RPC function doesn't exist
-      if (error.message?.includes("could not find") || error.code === "PGRST116") {
+      if (
+        error.message?.includes("could not find") ||
+        error.code === "PGRST116"
+      ) {
         return res.json({ data: { total_usd: 0, total_btc: 0, total_eth: 0 } });
       }
       return res.status(500).json({ error: error.message });
@@ -50,7 +53,10 @@ export const handlePortfolio24hChange: RequestHandler = async (req, res) => {
     });
     if (error) {
       // Return default data if RPC function doesn't exist
-      if (error.message?.includes("could not find") || error.code === "PGRST116") {
+      if (
+        error.message?.includes("could not find") ||
+        error.code === "PGRST116"
+      ) {
         return res.json({ data: { change_usd: 0, change_percentage: 0 } });
       }
       return res.status(500).json({ error: error.message });

@@ -20,6 +20,7 @@
 ## Verify It Works
 
 Visit your dashboard - you should now see:
+
 - **Portfolio Value**: $41,126.25
 - **5 Assets**: BTC, ETH, USDC, SOL, DOGE
 - **7 Transactions**: Receive/Send/Swap
@@ -35,11 +36,13 @@ Wallet: 0xdf12925e53b8638e2ddbf4b0c64d4635609388ab
 ## What Gets Created
 
 **Tables** (10):
+
 - users, sessions, wallets, assets, transactions
 - price_history, withdrawal_requests, portfolio_snapshots
 - price_alerts, audit_logs
 
 **Functions** (7):
+
 - calculate_portfolio_value
 - get_portfolio_24h_change
 - get_portfolio_allocation
@@ -49,10 +52,12 @@ Wallet: 0xdf12925e53b8638e2ddbf4b0c64d4635609388ab
 - cleanup_expired_sessions
 
 **Triggers** (8):
+
 - Auto-update timestamps on all tables
 - Auto-create portfolio snapshots on transactions
 
 **Security** (RLS):
+
 - Users can only see their own data
 - Price history is public
 
