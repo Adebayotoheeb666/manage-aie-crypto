@@ -210,12 +210,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           normalized = signerAddress.toLowerCase();
 
           // Request nonce for the connected wallet
-          const nonceResp = await fetch(`/api/auth/nonce?address=${normalized}`);
+          const nonceResp = await fetch(
+            `/api/auth/nonce?address=${normalized}`,
+          );
           const nonceData = await nonceResp.json();
           if (!nonceResp.ok) {
             const msg = nonceData?.error || "Could not obtain nonce";
             setError(msg);
-            toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+            toast({
+              title: "Wallet connection",
+              description: msg,
+              variant: "destructive",
+            });
             throw new Error(msg);
           }
 
@@ -223,7 +229,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!nonce) {
             const msg = "Invalid nonce received from server";
             setError(msg);
-            toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+            toast({
+              title: "Wallet connection",
+              description: msg,
+              variant: "destructive",
+            });
             throw new Error(msg);
           }
 
@@ -231,9 +241,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           signature = await signer.signMessage(nonce);
         } catch (err) {
           const message =
-            err instanceof Error ? err.message : "Failed to sign with web3 provider";
+            err instanceof Error
+              ? err.message
+              : "Failed to sign with web3 provider";
           setError(message);
-          toast({ title: "Wallet connection", description: message, variant: "destructive" });
+          toast({
+            title: "Wallet connection",
+            description: message,
+            variant: "destructive",
+          });
           throw err;
         }
       } else {
@@ -241,7 +257,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!walletAddress) {
           const msg = "Wallet address is required";
           setError(msg);
-          toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+          toast({
+            title: "Wallet connection",
+            description: msg,
+            variant: "destructive",
+          });
           throw new Error(msg);
         }
 
@@ -249,7 +269,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!match) {
           const msg = "Invalid wallet address";
           setError(msg);
-          toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+          toast({
+            title: "Wallet connection",
+            description: msg,
+            variant: "destructive",
+          });
           throw new Error(msg);
         }
         normalized = match[0].toLowerCase();
@@ -268,14 +292,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (parseErr) {
         const msg = `Server error (${response.status}): Unable to parse response`;
         setError(msg);
-        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        toast({
+          title: "Wallet connection",
+          description: msg,
+          variant: "destructive",
+        });
         throw new Error(msg);
       }
 
       if (!response.ok) {
         const msg = data?.error || "Wallet connection failed";
         setError(msg);
-        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+        toast({
+          title: "Wallet connection",
+          description: msg,
+          variant: "destructive",
+        });
         throw new Error(msg);
       }
 
@@ -311,9 +343,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Wallet connection failed";
+      const message =
+        err instanceof Error ? err.message : "Wallet connection failed";
       setError(message);
-      toast({ title: "Wallet connection", description: message, variant: "destructive" });
+      toast({
+        title: "Wallet connection",
+        description: message,
+        variant: "destructive",
+      });
       throw err;
     } finally {
       setLoading(false);
