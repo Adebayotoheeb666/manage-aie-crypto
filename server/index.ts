@@ -1,7 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import cookieParser from 'cookie-parser';
+import cookieParser from "cookie-parser";
 import { handleDemo } from "./routes/demo";
 import { handleSupabaseHealth } from "./routes/supabaseHealth";
 import { handleEnvJs } from "./routes/env";
@@ -46,63 +46,67 @@ export function createServer() {
 
   // Middleware
   // CORS configuration that works in both development and production
-  const corsOrigin = process.env.CLIENT_URL || 'http://localhost:3000';
-  const isDevelopment = process.env.NODE_ENV !== 'production';
+  const corsOrigin = process.env.CLIENT_URL || "http://localhost:3000";
+  const isDevelopment = process.env.NODE_ENV !== "production";
 
-  app.use(cors({
-    origin: function(origin, callback) {
-      // Allow requests without origin (like mobile apps or curl requests)
-      if (!origin) {
-        return callback(null, true);
-      }
-
-      // In development, allow all origins
-      if (isDevelopment) {
-        return callback(null, true);
-      }
-
-      // In production, verify origin matches deployment domain
-      try {
-        // If CLIENT_URL is explicitly set, use it
-        if (corsOrigin && corsOrigin !== 'http://localhost:3000') {
-          const corsURL = new URL(corsOrigin);
-          const originURL = new URL(origin);
-          if (originURL.host === corsURL.host) {
-            return callback(null, true);
-          }
-        }
-
-        // Allow same-origin and trusted domains
-        const originDomain = new URL(origin).host;
-
-        // Allow localhost, Fly.dev, and Netlify preview domains
-        if (originDomain.includes('localhost') ||
-            originDomain.includes('127.0.0.1') ||
-            originDomain.includes('fly.dev') ||
-            originDomain.includes('netlify.app') ||
-            originDomain.includes('.web.app')) {
+  app.use(
+    cors({
+      origin: function (origin, callback) {
+        // Allow requests without origin (like mobile apps or curl requests)
+        if (!origin) {
           return callback(null, true);
         }
 
-        // If we get here in production, still allow (but could be more restrictive)
-        return callback(null, true);
-      } catch (e) {
-        // If URL parsing fails, still allow the request
-        return callback(null, true);
-      }
-    },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-  }));
-  
+        // In development, allow all origins
+        if (isDevelopment) {
+          return callback(null, true);
+        }
+
+        // In production, verify origin matches deployment domain
+        try {
+          // If CLIENT_URL is explicitly set, use it
+          if (corsOrigin && corsOrigin !== "http://localhost:3000") {
+            const corsURL = new URL(corsOrigin);
+            const originURL = new URL(origin);
+            if (originURL.host === corsURL.host) {
+              return callback(null, true);
+            }
+          }
+
+          // Allow same-origin and trusted domains
+          const originDomain = new URL(origin).host;
+
+          // Allow localhost, Fly.dev, and Netlify preview domains
+          if (
+            originDomain.includes("localhost") ||
+            originDomain.includes("127.0.0.1") ||
+            originDomain.includes("fly.dev") ||
+            originDomain.includes("netlify.app") ||
+            originDomain.includes(".web.app")
+          ) {
+            return callback(null, true);
+          }
+
+          // If we get here in production, still allow (but could be more restrictive)
+          return callback(null, true);
+        } catch (e) {
+          // If URL parsing fails, still allow the request
+          return callback(null, true);
+        }
+      },
+      credentials: true,
+      methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+      allowedHeaders: ["Content-Type", "Authorization", "Accept"],
+    }),
+  );
+
   // Parse cookies
   app.use(cookieParser());
 
   // Parse JSON bodies - must be early in the middleware chain
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
-  
+
   // Example API routes
   app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
