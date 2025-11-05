@@ -96,7 +96,9 @@ export default function Dashboard() {
   // Fetch user's assets
   const fetchAssets = async () => {
     try {
-      const response = await fetch('/api/wallet/assets');
+      const response = await fetch('/api/wallet/assets', {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch assets');
       const data = await response.json();
       
