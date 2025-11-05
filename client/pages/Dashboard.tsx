@@ -55,7 +55,7 @@ interface PortfolioData {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { dbUser, isAuthenticated, loading: authLoading } = useAuth();
+  const { dbUser, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -70,17 +70,17 @@ export default function Dashboard() {
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
+    if (!loading && !isAuthenticated) {
       navigate('/connect-wallet');
     }
-  }, [isAuthenticated, authLoading, navigate]);
+  }, [isAuthenticated, loading, navigate]);
 
   // Fetch data on component mount
   useEffect(() => {
-    if (isAuthenticated && !authLoading) {
+    if (isAuthenticated && !loading) {
       fetchDashboardData();
     }
-  }, [isAuthenticated, authLoading]);
+  }, [isAuthenticated, loading]);
 
   // Fetch all dashboard data
   const fetchDashboardData = async () => {
