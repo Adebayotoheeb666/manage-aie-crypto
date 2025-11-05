@@ -154,7 +154,12 @@ export default function Dashboard() {
       const response = await fetch('/api/portfolio/history', {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch portfolio history');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Failed to fetch portfolio history: ${response.status} ${errorData.error || ''}`);
+      }
+
       const data = await response.json();
       setPortfolioData(data.history || []);
     } catch (error) {
