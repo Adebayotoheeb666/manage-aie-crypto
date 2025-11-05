@@ -410,13 +410,15 @@ export async function getPrimaryWallet(userId: string) {
     }
     return data || null;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/user-wallets", {
           method: "POST",
@@ -430,8 +432,6 @@ export async function getPrimaryWallet(userId: string) {
       } catch (_) {
         // Fallback if proxy fails
       }
-      // Return null instead of throwing for network errors
-      return null;
     }
 
     // Return null instead of throwing
