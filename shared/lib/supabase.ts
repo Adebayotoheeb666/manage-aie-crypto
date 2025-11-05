@@ -180,17 +180,13 @@ export async function getPortfolioValue(userId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data;
-          }
+          return json.data || { total_usd: 0, total_btc: 0, total_eth: 0 };
         }
       } catch (_) {
         // Fallback to default if proxy fails
       }
-      // Return default data if both RPC and proxy fail
-      return { total_usd: 0, total_btc: 0, total_eth: 0 };
     }
 
     // Return default data instead of throwing
@@ -220,17 +216,13 @@ export async function getPortfolio24hChange(userId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data;
-          }
+          return json.data || { change_usd: 0, change_percentage: 0 };
         }
       } catch (_) {
         // Fallback to default if proxy fails
       }
-      // Return default data if both RPC and proxy fail
-      return { change_usd: 0, change_percentage: 0 };
     }
 
     // Return default data instead of throwing
