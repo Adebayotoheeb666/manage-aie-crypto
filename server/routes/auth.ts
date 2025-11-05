@@ -198,10 +198,44 @@ export const handleGetNonce: RequestHandler = async (req, res) => {
 };
 
 export const handleWalletConnect: RequestHandler = async (req, res) => {
-  const walletAddressRaw =
-    req.body?.walletAddress || req.body?.wallet_address || "";
-  const signature = String(req.body?.signature || "");
-  const nonce = String(req.body?.nonce || "");
+  // Log the raw request body and headers for debugging
+  console.log('=== WALLET CONNECT REQUEST ===');
+  console.log('Raw request body:', (req as any).rawBody || req.body);
+  console.log('Request headers:', req.headers);
+  
+  // Parse the request body
+  let requestBody = req.body;
+  
+  // If body is empty, try to parse it from raw body
+  if ((!requestBody || Object.keys(requestBody).length === 0) && (req as any).rawBody) {
+    try {
+      console.log('Attempting to parse raw body...');
+      requestBody = JSON.parse((req as any).rawBody);
+      console.log('Successfully parsed raw body:', requestBody);
+    } catch (e) {
+      console.error('Error parsing raw body:', e);
+      return res.status(400).json({ 
+        error: "Invalid request body",
+        details: e.message 
+      });
+    }
+  }
+
+  // Now try to get the wallet address
+  const walletAddressRaw = requestBody?.walletAddress || requestBody?.wallet_address || "";
+  console.log('Extracted wallet address:', walletAddressRaw);
+
+  if (!walletAddressRaw) {
+    console.error('No wallet address found in request body. Full body:', requestBody);
+    return res.status(400).json({ 
+      error: "Wallet address is required",
+      receivedBody: requestBody
+    });
+  }
+
+  const walletAddress = String(walletAddressRaw).trim();
+  const signature = String(requestBody?.signature || "");
+  const nonce = String(requestBody?.nonce || "");
 
   // Basic logging for debugging (avoid logging full PII in production)
   const remoteIp = (
@@ -210,14 +244,8 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
     "unknown"
   ).toString();
   console.info(
-    `[wallet-connect] request from ${remoteIp}, payload: ${String(walletAddressRaw).slice(0, 64)}`,
+    `[wallet-connect] request from ${remoteIp}, payload: ${String(walletAddress).slice(0, 64)}`,
   );
-
-  if (!walletAddressRaw) {
-    return res.status(400).json({ error: "Wallet address is required" });
-  }
-
-  const walletAddress = String(walletAddressRaw).trim();
 
   // Validate Ethereum address format (strict)
   if (!/^0x[a-fA-F0-9]{40}$/.test(walletAddress)) {

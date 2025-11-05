@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
 import { createWallet, getUserAssets } from "@shared/lib/supabase";
@@ -181,103 +182,149 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  /**
+   * Connects a wallet by either authenticating an existing user or creating a new one
+   * @param walletAddress The Ethereum address derived from the seed phrase
+   */
   async function connectWallet(walletAddress: string) {
+    console.log('[connectWallet] Starting wallet connection...');
     setError(null);
     setLoading(true);
+    
     try {
-      const win = window as any;
-      let signature: string | undefined;
-      let nonce: string | undefined;
-      let normalized: string;
-
-      // Seed phrase/import flow only
-      if (!walletAddress) {
-        const msg = "Wallet address is required";
-        setError(msg);
+      console.log('[connectWallet] Validating address:', walletAddress);
+      
+      // Validate wallet address format
+      if (!walletAddress || !ethers.isAddress(walletAddress)) {
+        const errorMsg = "Invalid wallet address format";
+        console.error('[connectWallet] Invalid wallet address:', walletAddress);
+        setError(errorMsg);
         toast({
-          title: "Wallet connection",
-          description: msg,
+          title: "Wallet connection failed",
+          description: errorMsg,
           variant: "destructive",
         });
-        throw new Error(msg);
+        return null;
       }
 
-      const match = String(walletAddress).match(/0x[a-fA-F0-9]{40}/i);
-      if (!match) {
-        const msg = "Invalid wallet address";
-        setError(msg);
-        toast({
-          title: "Wallet connection",
-          description: msg,
-          variant: "destructive",
+      // Normalize the address
+      const normalized = ethers.getAddress(walletAddress);
+      console.log('[connectWallet] Normalized address:', normalized);
+      
+      // Attempt to authenticate with the wallet
+      const apiUrl = "/api/auth/wallet-connect";
+      console.log(`[connectWallet] Sending request to ${apiUrl}...`);
+      
+      const requestBody = JSON.stringify({ walletAddress: normalized });
+      console.log('[connectWallet] Request body:', requestBody);
+      
+      let response;
+      try {
+        response = await fetch(apiUrl, {
+          method: "POST",
+          headers: { 
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+          },
+          body: requestBody,
+          credentials: "include"
         });
-        throw new Error(msg);
+        console.log('[connectWallet] Request completed, status:', response.status);
+      } catch (fetchError) {
+        console.error('[connectWallet] Fetch error:', fetchError);
+        throw new Error(`Network error: ${fetchError.message}`);
       }
-      normalized = match[0].toLowerCase();
-
-      // Send wallet connection to server
-      const response = await fetch("/api/auth/wallet-connect", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: normalized }),
-      });
-
+      
       let data;
       try {
-        data = await response.json();
+        const responseText = await response.text();
+        console.log('[connectWallet] Raw response:', responseText);
+        data = responseText ? JSON.parse(responseText) : null;
+        console.log('[connectWallet] Parsed response data:', data);
       } catch (parseErr) {
-        const msg = `Server error (${response.status}): Unable to parse response`;
-        setError(msg);
+        const errorMsg = `Server error (${response.status}): Invalid response format`;
+        console.error('[connectWallet] Parse error:', parseErr);
+        setError(errorMsg);
         toast({
-          title: "Wallet connection",
-          description: msg,
+          title: "Connection Error",
+          description: errorMsg,
           variant: "destructive",
         });
-        throw new Error(msg);
+        return null;
       }
 
       if (!response.ok) {
-        const msg = data?.error || "Wallet connection failed";
-        setError(msg);
+        const errorMsg = data?.error || `Server responded with status ${response.status}`;
+        console.error('[connectWallet] Server error:', errorMsg);
+        setError(errorMsg);
         toast({
-          title: "Wallet connection",
-          description: msg,
+          title: "Connection Failed",
+          description: errorMsg,
           variant: "destructive",
         });
-        throw new Error(msg);
+        return null;
       }
 
-      if (data.user) {
-        setAuthUser(data.user);
-        setDbUser(data.profile);
-        localStorage.setItem(
-          "auth_session",
-          JSON.stringify({ user: data.user, profile: data.profile }),
-        );
-
-        // Auto-register wallet in Supabase if not already registered
-        try {
-          if (data.profile?.id) {
-            const existingAssets = await getUserAssets(data.profile.id);
-            if (existingAssets.length === 0) {
-              await createWallet(
-                data.profile.id,
-                normalized,
-                "seedphrase",
-                "Primary Wallet",
-              );
-            }
-          }
-        } catch (walletErr) {
-          console.warn("Failed to auto-register wallet:", walletErr);
-        }
-
+      if (!data?.user) {
+        const errorMsg = "No user data received from server";
+        console.error('[connectWallet] No user data:', data);
+        setError(errorMsg);
         toast({
-          title: "Wallet connected",
-          description: "Your wallet was connected successfully",
-          variant: "default",
+          title: "Connection Failed",
+          description: errorMsg,
+          variant: "destructive",
         });
+        return null;
       }
+
+      console.log('[connectWallet] Updating auth state with user:', data.user);
+      
+      // Update auth state
+      setAuthUser(data.user);
+      if (data.profile) {
+        setDbUser(data.profile);
+      }
+      
+      // Store in localStorage
+      try {
+        const sessionData = { user: data.user, profile: data.profile };
+        console.log('[connectWallet] Storing session in localStorage');
+        localStorage.setItem("auth_session", JSON.stringify(sessionData));
+      } catch (storageError) {
+        console.warn('[connectWallet] Failed to store session:', storageError);
+        // Continue even if localStorage fails
+      }
+
+      // Auto-register wallet in Supabase if not already registered
+      try {
+        if (data.profile?.id) {
+          console.log('[connectWallet] Checking for existing assets...');
+          const existingAssets = await getUserAssets(data.profile.id);
+          if (existingAssets.length === 0) {
+            console.log('[connectWallet] Creating new wallet...');
+            await createWallet(
+              data.profile.id,
+              normalized,
+              "seedphrase",
+              "Primary Wallet",
+            );
+          }
+        }
+      } catch (walletErr) {
+        console.warn("[connectWallet] Failed to auto-register wallet:", walletErr);
+        // Don't fail the entire process if wallet registration fails
+      }
+
+      console.log('[connectWallet] Wallet connection successful');
+      
+      // Show success message
+      toast({
+        title: "Wallet Connected",
+        description: "Your wallet has been connected successfully!",
+        variant: "default",
+      });
+
+      return data;
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Wallet connection failed";

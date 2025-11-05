@@ -136,52 +136,34 @@ export default function Index() {
               }}
               className="relative w-full max-w-md"
             >
-              {/* Dashboard Preview Mock */}
-              <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-2xl p-6 border border-blue-100">
-                {/* Mockup Card */}
+              {/* Wallet Connection Card */}
+              <div className="bg-gradient-to-br from-blue-50 to-white rounded-2xl shadow-2xl p-6 border border-blue-100 relative">
                 <div className="space-y-4">
-                  <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-gray-900">
-                      Portfolio Value
-                    </h3>
-                    <span className="text-green-600 text-sm font-medium">
-                      ↑ 12.5%
-                    </span>
-                  </div>
-                  <div className="text-4xl font-bold text-gray-900">
-                    $42,847.50
-                  </div>
+                  <h3 className="font-semibold text-gray-900">Ready to get started?</h3>
+                  <p className="text-gray-600">Connect your wallet to view your portfolio and start managing your crypto assets.</p>
+                  <Button 
+                    onClick={handleConnectWallet}
+                    className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    Connect Wallet
+                  </Button>
+                </div>
 
-                  {/* Mini Chart */}
-                  <div className="h-32 bg-gradient-to-t from-blue-100 to-transparent rounded-lg flex items-end justify-between px-4 pt-4">
-                    {[40, 50, 45, 60, 55, 70, 65].map((height, i) => (
-                      <div
-                        key={i}
-                        className="w-2 bg-blue-600 rounded-full"
-                        style={{ height: `${(height / 70) * 100}%` }}
-                      />
-                    ))}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3 pt-4">
-                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                      <p className="text-xs text-gray-600">BTC</p>
-                      <p className="font-semibold text-gray-900">0.542</p>
-                    </div>
-                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                      <p className="text-xs text-gray-600">ETH</p>
-                      <p className="font-semibold text-gray-900">2.148</p>
-                    </div>
+                <div className="mt-6">
+                  <div className="flex items-center justify-center space-x-2 h-16">
+                    <div className="text-sm text-gray-500">Secured by</div>
+                    <Zap className="w-5 h-5 text-yellow-500" />
+                    <span className="font-medium text-gray-900">Coinbase Wallet</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Floating Elements */}
-              <div className="absolute -top-6 sm:-right-6 right-0 bg-blue-600 text-white rounded-full p-4 shadow-lg">
-                <TrendingUp size={24} />
-              </div>
-              <div className="absolute -bottom-4 sm:-left-4 left-0 bg-green-500 text-white rounded-full p-4 shadow-lg">
-                <Shield size={24} />
+                {/* Floating Elements */}
+                <div className="absolute -top-6 -right-6 bg-blue-600 text-white rounded-full p-4 shadow-lg">
+                  <TrendingUp size={24} />
+                </div>
+                <div className="absolute -bottom-4 -left-4 bg-green-500 text-white rounded-full p-4 shadow-lg">
+                  <Shield size={24} />
+                </div>
               </div>
             </motion.div>
           </motion.div>

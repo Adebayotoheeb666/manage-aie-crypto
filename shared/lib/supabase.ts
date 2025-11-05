@@ -446,14 +446,11 @@ export async function createWallet(
   label?: string,
 ) {
   const { data, error } = await supabase
-    .from("wallets")
-    .insert({
-      user_id: userId,
-      wallet_address: walletAddress,
-      wallet_type: walletType,
-      label,
-      is_primary: false,
-      is_active: true,
+    .rpc('create_user_wallet', {
+      p_user_id: userId,
+      p_wallet_address: walletAddress,
+      p_wallet_type: walletType,
+      p_label: label
     })
     .select()
     .single();

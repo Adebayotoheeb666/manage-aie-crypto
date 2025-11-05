@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from 'cookie-parser';
 import { handleDemo } from "./routes/demo";
 import { handleSupabaseHealth } from "./routes/supabaseHealth";
 import { handleEnvJs } from "./routes/env";
@@ -35,13 +36,65 @@ import {
   handleUserWallets,
 } from "./routes/proxy";
 
+// Import new routes
+import walletRoutes from "./routes/wallet";
+import transactionRoutes from "./routes/transactions";
+import portfolioRoutes from "./routes/portfolio";
+
 export function createServer() {
   const app = express();
 
   // Middleware
-  app.use(cors());
+  app.use(cors({
+    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    credentials: true
+  }));
+  
+  // Parse cookies
+  app.use(cookieParser());
+  
+  // Parse JSON bodies
+  app.use(express.json());
+  
+  // Raw body parser - must come after express.json()
+  app.use((req, res, next) => {
+    let data = '';
+    req.on('data', chunk => {
+      data += chunk;
+    });
+    req.on('end', () => {
+      if (data) {
+        (req as any).rawBody = data;
+        try {
+          if (req.headers['content-type'] === 'application/json') {
+            req.body = JSON.parse(data);
+          }
+        } catch (e) {
+          console.error('Error parsing JSON body:', e);
+        }
+      }
+      next();
+    });
+  });
+  
+  // JSON and URL-encoded parsers
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  
+  // Add a debug endpoint
+  app.post('/api/debug/wallet-connect', (req, res) => {
+    console.log('=== DEBUG ENDPOINT ===');
+    console.log('Request body:', req.body);
+    console.log('Raw body:', (req as any).rawBody);
+    console.log('Headers:', req.headers);
+    
+    res.json({
+      success: true,
+      body: req.body,
+      rawBody: (req as any).rawBody,
+      headers: req.headers
+    });
+  });
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
