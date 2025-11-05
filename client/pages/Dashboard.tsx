@@ -85,12 +85,6 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      fetchDashboardData();
-    }
-  }, [isAuthenticated, loading, fetchDashboardData]);
 
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
@@ -205,6 +199,13 @@ export default function Dashboard() {
       setIsRefreshing(false);
     }
   }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, loading, fetchDashboardData]);
 
   // Handle refresh
   const handleRefresh = () => {
