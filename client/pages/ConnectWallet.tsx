@@ -911,7 +911,7 @@ export default function ConnectWallet() {
             Connect Your Wallet
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose how you want to connect your wallet
+            Connect using your seed phrase
           </p>
         </div>
 
