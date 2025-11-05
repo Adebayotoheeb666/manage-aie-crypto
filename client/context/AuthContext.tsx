@@ -61,19 +61,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.debug("Session restore failed:", e);
       }
 
-      // Fallback: localStorage
-      try {
-        const stored = localStorage.getItem("auth_session");
-        if (stored) {
-          const { user, profile } = JSON.parse(stored);
-          if (mounted) {
-            setAuthUser(user);
-            setDbUser(profile);
-          }
-        }
-      } catch {
-        localStorage.removeItem("auth_session");
-      }
+      // Do NOT restore from localStorage for authentication. It may be stale or lack server-side session.
+      // Only rely on the server cookie/session returned from /api/auth/session. If that fails,
+      // keep the user unauthenticated and let the app redirect to sign-in/connect flows.
 
       if (mounted) setLoading(false);
     }
