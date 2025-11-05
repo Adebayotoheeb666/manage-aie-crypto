@@ -275,6 +275,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           console.error('[connectWallet] Server session not established, status:', sessionResp.status);
           const errData = await sessionResp.json().catch(() => null);
           const message = errData?.error || 'Server session not established. Ensure cookies are enabled and site is served over HTTPS.';
+
+          // Fetch debug session info from server for diagnostics
+          try {
+            const debugResp = await fetch('/api/debug/session', { credentials: 'include' });
+            const debugJson = await debugResp.json().catch(() => null);
+            console.debug('[connectWallet] /api/debug/session:', debugJson);
+            // Also expose to user via toast if meaningful
+            if (debugJson && debugJson.verification) {
+              console.warn('[connectWallet] Session verification:', debugJson.verification);
+            }
+          } catch (debugErr) {
+            console.warn('[connectWallet] Failed to fetch debug session info', debugErr);
+          }
+
           setError(message);
           toast({
             title: 'Connection Failed',
