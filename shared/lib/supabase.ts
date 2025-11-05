@@ -299,13 +299,15 @@ export async function getTransactionHistory(
     if (error) throw new Error((error as any)?.message || String(error));
     return data;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
       try {
         const res = await fetch("/api/proxy/transaction-history", {
           method: "POST",
