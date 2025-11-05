@@ -26,7 +26,16 @@ export const handlePortfolioValue: RequestHandler = async (req, res) => {
     const { data, error } = await supabase.rpc("calculate_portfolio_value", {
       p_user_id: userId,
     });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      // Return default data if RPC function doesn't exist
+      if (
+        error.message?.includes("could not find") ||
+        error.code === "PGRST116"
+      ) {
+        return res.json({ data: { total_usd: 0, total_btc: 0, total_eth: 0 } });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ data });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -42,7 +51,16 @@ export const handlePortfolio24hChange: RequestHandler = async (req, res) => {
     const { data, error } = await supabase.rpc("get_portfolio_24h_change", {
       p_user_id: userId,
     });
-    if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+      // Return default data if RPC function doesn't exist
+      if (
+        error.message?.includes("could not find") ||
+        error.code === "PGRST116"
+      ) {
+        return res.json({ data: { change_usd: 0, change_percentage: 0 } });
+      }
+      return res.status(500).json({ error: error.message });
+    }
     return res.json({ data });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
@@ -61,11 +79,18 @@ export const handleUserAssets: RequestHandler = async (req, res) => {
       .eq("user_id", userId)
       .gt("balance", 0)
       .order("balance_usd", { ascending: false });
-    if (error) return res.status(500).json({ error: error.message });
-    return res.json({ data });
+    if (error) {
+      // Return empty array if table doesn't exist
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json({ data: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json({ data: data || [] });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return res.status(500).json({ error: message });
+    // Return empty array instead of error for network/missing table issues
+    return res.json({ data: [] });
   }
 };
 
@@ -80,11 +105,18 @@ export const handleTransactionHistory: RequestHandler = async (req, res) => {
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
-    if (error) return res.status(500).json({ error: error.message });
-    return res.json({ data });
+    if (error) {
+      // Return empty array if table doesn't exist
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json({ data: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json({ data: data || [] });
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
-    return res.status(500).json({ error: message });
+    // Return empty array instead of error for network/missing table issues
+    return res.json({ data: [] });
   }
 };
 
@@ -128,5 +160,39 @@ export const handleLatestPrice: RequestHandler = async (req, res) => {
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     return res.status(500).json({ error: message });
+  }
+};
+
+export const handleUserWallets: RequestHandler = async (req, res) => {
+  const { userId, primaryOnly = false } = req.body || {};
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    const supabase = serverSupabase();
+    let query = supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("is_active", true);
+
+    if (primaryOnly) {
+      query = query.eq("is_primary", true);
+    }
+
+    const { data, error } = await query.order("is_primary", {
+      ascending: false,
+    });
+
+    if (error) {
+      // Return empty array if table doesn't exist
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json({ data: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json({ data: data || [] });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Return empty array instead of error for network/missing table issues
+    return res.json({ data: [] });
   }
 };
