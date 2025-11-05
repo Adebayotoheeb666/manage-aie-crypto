@@ -915,33 +915,7 @@ export default function ConnectWallet() {
           </p>
         </div>
 
-        {/* Connection Tabs */}
-        <div className="flex gap-4 justify-center mb-12">
-          <Button
-            onClick={() => setConnectionTab("metamask")}
-            variant={connectionTab === "metamask" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "metamask"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            MetaMask
-          </Button>
-          <Button
-            onClick={() => setConnectionTab("seedphrase")}
-            variant={connectionTab === "seedphrase" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "seedphrase"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            Seed Phrase
-          </Button>
-        </div>
-
-        {/* MetaMask Connection */}
+        {/* Seed Phrase Connection */}
         {connectionTab === "metamask" && (
           <div className="max-w-md mx-auto mb-12">
             <div className="bg-blue-50 rounded-xl p-8 border border-blue-100 text-center">
