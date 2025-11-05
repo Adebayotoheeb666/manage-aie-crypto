@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
@@ -785,9 +784,6 @@ const isValidWord = (word: string): boolean => {
 export default function ConnectWallet() {
   const navigate = useNavigate();
   const { connectWallet: authConnectWallet } = useAuth();
-  const [connectionTab, setConnectionTab] = useState<"metamask" | "seedphrase">(
-    "metamask",
-  );
   const [wordCount, setWordCount] = useState(12);
   const [words, setWords] = useState<string[]>(Array(12).fill(""));
   const [showWords, setShowWords] = useState(false);
@@ -915,55 +911,14 @@ export default function ConnectWallet() {
             Connect Your Wallet
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose how you want to connect your wallet
+            Enter your seed phrase to connect your wallet
           </p>
         </div>
 
-        {/* Connection Tabs */}
-        <div className="flex gap-4 justify-center mb-12">
-          <Button
-            onClick={() => setConnectionTab("metamask")}
-            variant={connectionTab === "metamask" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "metamask"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            MetaMask
-          </Button>
-          <Button
-            onClick={() => setConnectionTab("seedphrase")}
-            variant={connectionTab === "seedphrase" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "seedphrase"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            Seed Phrase
-          </Button>
-        </div>
 
-        {/* MetaMask Connection */}
-        {connectionTab === "metamask" && (
-          <div className="max-w-md mx-auto mb-12">
-            <div className="bg-blue-50 rounded-xl p-8 border border-blue-100 text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Connect MetaMask
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Click the button below to connect your MetaMask wallet. Make
-                sure MetaMask is installed in your browser.
-              </p>
-              <WalletConnectButton />
-            </div>
-          </div>
-        )}
 
         {/* Seed Phrase Connection */}
-        {connectionTab === "seedphrase" && (
-          <>
+        <>
             {/* Security Warning */}
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
               <AlertCircle
@@ -1123,7 +1078,6 @@ export default function ConnectWallet() {
               </a>
             </div>
           </>
-        )}
       </div>
     </div>
   );
