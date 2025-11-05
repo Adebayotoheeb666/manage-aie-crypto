@@ -25,7 +25,7 @@ const FAQ = [
   },
   {
     q: "What wallet types does CryptoVault support?",
-    a: "We support MetaMask, Coinbase Wallet, WalletConnect, Ledger, Trezor, and hardware wallets connected via Web3.",
+    a: "We support seed phrase import only.",
     cat: "wallet",
   },
   {
