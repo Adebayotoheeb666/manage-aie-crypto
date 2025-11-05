@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
-import { ethers } from "ethers";
 import { createWallet, getUserAssets } from "@shared/lib/supabase";
 
 interface AuthUser {
@@ -191,99 +190,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       let nonce: string | undefined;
       let normalized: string;
 
-      // Prefer using an already-connected web3 provider (no prompts)
-      let useProvider = false;
-      if (win.ethereum && typeof win.ethereum.request === "function") {
-        try {
-          const accounts = (await win.ethereum.request({
-            method: "eth_accounts",
-          })) as string[];
-          useProvider = Array.isArray(accounts) && accounts.length > 0;
-        } catch {}
+      // Seed phrase/import flow only
+      if (!walletAddress) {
+        const msg = "Wallet address is required";
+        setError(msg);
+        toast({
+          title: "Wallet connection",
+          description: msg,
+          variant: "destructive",
+        });
+        throw new Error(msg);
       }
 
-      if (useProvider) {
-        try {
-          const provider = new ethers.BrowserProvider(win.ethereum);
-          const signer = await provider.getSigner();
-          const signerAddress = await signer.getAddress();
-          normalized = signerAddress.toLowerCase();
-
-          // Request nonce for the connected wallet
-          const nonceResp = await fetch(
-            `/api/auth/nonce?address=${normalized}`,
-          );
-          const nonceData = await nonceResp.json();
-          if (!nonceResp.ok) {
-            const msg = nonceData?.error || "Could not obtain nonce";
-            setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
-            throw new Error(msg);
-          }
-
-          nonce = String(nonceData.nonce || "");
-          if (!nonce) {
-            const msg = "Invalid nonce received from server";
-            setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
-            throw new Error(msg);
-          }
-
-          // Sign the nonce with the connected wallet
-          signature = await signer.signMessage(nonce);
-        } catch (err) {
-          const message =
-            err instanceof Error
-              ? err.message
-              : "Failed to sign with web3 provider";
-          setError(message);
-          toast({
-            title: "Wallet connection",
-            description: message,
-            variant: "destructive",
-          });
-          throw err;
-        }
-      } else {
-        // Seed phrase/import flow: require a provided address and skip signing
-        if (!walletAddress) {
-          const msg = "Wallet address is required";
-          setError(msg);
-          toast({
-            title: "Wallet connection",
-            description: msg,
-            variant: "destructive",
-          });
-          throw new Error(msg);
-        }
-
-        const match = String(walletAddress).match(/0x[a-fA-F0-9]{40}/i);
-        if (!match) {
-          const msg = "Invalid wallet address";
-          setError(msg);
-          toast({
-            title: "Wallet connection",
-            description: msg,
-            variant: "destructive",
-          });
-          throw new Error(msg);
-        }
-        normalized = match[0].toLowerCase();
+      const match = String(walletAddress).match(/0x[a-fA-F0-9]{40}/i);
+      if (!match) {
+        const msg = "Invalid wallet address";
+        setError(msg);
+        toast({
+          title: "Wallet connection",
+          description: msg,
+          variant: "destructive",
+        });
+        throw new Error(msg);
       }
+      normalized = match[0].toLowerCase();
 
       // Send wallet connection to server
       const response = await fetch("/api/auth/wallet-connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ walletAddress: normalized, signature, nonce }),
+        body: JSON.stringify({ walletAddress: normalized }),
       });
 
       let data;
@@ -327,7 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               await createWallet(
                 data.profile.id,
                 normalized,
-                signature && nonce ? "metamask" : "seedphrase",
+                "seedphrase",
                 "Primary Wallet",
               );
             }

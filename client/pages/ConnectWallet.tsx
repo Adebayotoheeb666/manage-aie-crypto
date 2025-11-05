@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
@@ -785,9 +784,6 @@ const isValidWord = (word: string): boolean => {
 export default function ConnectWallet() {
   const navigate = useNavigate();
   const { connectWallet: authConnectWallet } = useAuth();
-  const [connectionTab, setConnectionTab] = useState<"metamask" | "seedphrase">(
-    "metamask",
-  );
   const [wordCount, setWordCount] = useState(12);
   const [words, setWords] = useState<string[]>(Array(12).fill(""));
   const [showWords, setShowWords] = useState(false);
@@ -915,215 +911,163 @@ export default function ConnectWallet() {
             Connect Your Wallet
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Choose how you want to connect your wallet
+            Enter your seed phrase to connect your wallet
           </p>
         </div>
 
-        {/* Connection Tabs */}
-        <div className="flex gap-4 justify-center mb-12">
-          <Button
-            onClick={() => setConnectionTab("metamask")}
-            variant={connectionTab === "metamask" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "metamask"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            MetaMask
-          </Button>
-          <Button
-            onClick={() => setConnectionTab("seedphrase")}
-            variant={connectionTab === "seedphrase" ? "default" : "outline"}
-            className={`px-6 py-2 ${
-              connectionTab === "seedphrase"
-                ? "bg-blue-600 text-white"
-                : "border-gray-300 text-gray-700"
-            }`}
-          >
-            Seed Phrase
-          </Button>
-        </div>
-
-        {/* MetaMask Connection */}
-        {connectionTab === "metamask" && (
-          <div className="max-w-md mx-auto mb-12">
-            <div className="bg-blue-50 rounded-xl p-8 border border-blue-100 text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Connect MetaMask
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Click the button below to connect your MetaMask wallet. Make
-                sure MetaMask is installed in your browser.
+        {/* Seed Phrase Connection */}
+        <>
+          {/* Security Warning */}
+          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
+            <AlertCircle className="text-yellow-600 flex-shrink-0" size={24} />
+            <div>
+              <h3 className="font-semibold text-yellow-900 mb-1">
+                Keep Your Seed Phrase Safe
+              </h3>
+              <p className="text-yellow-800 text-sm">
+                Never share your seed phrase with anyone. We will never ask for
+                it and it's never stored on our servers.
               </p>
-              <WalletConnectButton />
             </div>
           </div>
-        )}
 
-        {/* Seed Phrase Connection */}
-        {connectionTab === "seedphrase" && (
-          <>
-            {/* Security Warning */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
-              <AlertCircle
-                className="text-yellow-600 flex-shrink-0"
-                size={24}
-              />
-              <div>
-                <h3 className="font-semibold text-yellow-900 mb-1">
-                  Keep Your Seed Phrase Safe
-                </h3>
-                <p className="text-yellow-800 text-sm">
-                  Never share your seed phrase with anyone. We will never ask
-                  for it and it's never stored on our servers.
-                </p>
-              </div>
+          {/* Word Count Selector */}
+          <div className="flex justify-center gap-4 mb-12">
+            <button
+              onClick={() => handleWordCountChange(12)}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                wordCount === 12
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              12 Words
+            </button>
+            <button
+              onClick={() => handleWordCountChange(24)}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                wordCount === 24
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              }`}
+            >
+              24 Words
+            </button>
+          </div>
+
+          {/* Word Input Grid */}
+          <div className="mb-8">
+            <div className="flex justify-between items-center mb-4">
+              <label className="block text-sm font-medium text-gray-900">
+                Enter your {wordCount} recovery words
+              </label>
+              <button
+                onClick={() => setShowWords(!showWords)}
+                className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
+              >
+                {showWords ? (
+                  <>
+                    <EyeOff size={18} />
+                    Hide
+                  </>
+                ) : (
+                  <>
+                    <Eye size={18} />
+                    Show
+                  </>
+                )}
+              </button>
             </div>
 
-            {/* Word Count Selector */}
-            <div className="flex justify-center gap-4 mb-12">
-              <button
-                onClick={() => handleWordCountChange(12)}
-                className={`px-6 py-2 rounded-lg font-medium transition ${
-                  wordCount === 12
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                12 Words
-              </button>
-              <button
-                onClick={() => handleWordCountChange(24)}
-                className={`px-6 py-2 rounded-lg font-medium transition ${
-                  wordCount === 24
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }`}
-              >
-                24 Words
-              </button>
-            </div>
-
-            {/* Word Input Grid */}
-            <div className="mb-8">
-              <div className="flex justify-between items-center mb-4">
-                <label className="block text-sm font-medium text-gray-900">
-                  Enter your {wordCount} recovery words
-                </label>
-                <button
-                  onClick={() => setShowWords(!showWords)}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {showWords ? (
-                    <>
-                      <EyeOff size={18} />
-                      Hide
-                    </>
-                  ) : (
-                    <>
-                      <Eye size={18} />
-                      Show
-                    </>
-                  )}
-                </button>
-              </div>
-
-              <div
-                className={`grid gap-3 ${wordCount === 12 ? "grid-cols-4" : "grid-cols-6"}`}
-              >
-                {words.map((word, index) => (
-                  <div key={index} className="relative">
-                    <label className="block text-xs text-gray-500 mb-1 font-medium">
-                      Word {index + 1}
-                    </label>
-                    <div className="relative">
-                      <input
-                        ref={(el) => {
-                          inputRefs.current[index] = el;
-                        }}
-                        type={showWords ? "text" : "password"}
-                        value={word}
-                        onChange={(e) =>
-                          handleWordChange(index, e.target.value)
-                        }
-                        placeholder={`${index + 1}`}
-                        autoComplete="off"
-                        className="w-full px-3 py-2 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
-                        style={{
-                          borderColor:
-                            word === ""
-                              ? "hsl(220 13% 91%)"
-                              : isValidWord(word)
-                                ? "#10b981"
-                                : "#ef4444",
-                        }}
-                      />
-                      {word && (
-                        <div className="absolute right-3 top-1/2 transform -translate-y-1/2 translate-y-1">
-                          {isValidWord(word) ? (
-                            <CheckCircle2
-                              className="text-green-500"
-                              size={18}
-                            />
-                          ) : (
-                            <div className="w-4 h-4 rounded-full bg-red-500" />
-                          )}
-                        </div>
-                      )}
-                    </div>
+            <div
+              className={`grid gap-3 ${wordCount === 12 ? "grid-cols-4" : "grid-cols-6"}`}
+            >
+              {words.map((word, index) => (
+                <div key={index} className="relative">
+                  <label className="block text-xs text-gray-500 mb-1 font-medium">
+                    Word {index + 1}
+                  </label>
+                  <div className="relative">
+                    <input
+                      ref={(el) => {
+                        inputRefs.current[index] = el;
+                      }}
+                      type={showWords ? "text" : "password"}
+                      value={word}
+                      onChange={(e) => handleWordChange(index, e.target.value)}
+                      placeholder={`${index + 1}`}
+                      autoComplete="off"
+                      className="w-full px-3 py-2 border rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
+                      style={{
+                        borderColor:
+                          word === ""
+                            ? "hsl(220 13% 91%)"
+                            : isValidWord(word)
+                              ? "#10b981"
+                              : "#ef4444",
+                      }}
+                    />
+                    {word && (
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 translate-y-1">
+                        {isValidWord(word) ? (
+                          <CheckCircle2 className="text-green-500" size={18} />
+                        ) : (
+                          <div className="w-4 h-4 rounded-full bg-red-500" />
+                        )}
+                      </div>
+                    )}
                   </div>
-                ))}
-              </div>
-
-              {/* Counter */}
-              <div className="mt-4 text-sm text-gray-600">
-                <span className="font-medium">
-                  {words.filter((w) => w.length > 0).length}
-                </span>
-                {" of "}
-                <span className="font-medium">{wordCount}</span>
-                {" words entered"}
-              </div>
+                </div>
+              ))}
             </div>
 
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 flex gap-3">
-                <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
-                <p className="text-red-800">{error}</p>
-              </div>
-            )}
-
-            {/* Action Buttons */}
-            <div className="flex gap-4">
-              <Button
-                onClick={handleConnect}
-                disabled={!words.every((w) => isValidWord(w) && w !== "")}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition"
-              >
-                {isLoading ? "Connecting..." : "Connect Wallet"}
-              </Button>
-              <Button
-                variant="outline"
-                onClick={() => navigate("/")}
-                className="px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 rounded-lg"
-              >
-                Cancel
-              </Button>
+            {/* Counter */}
+            <div className="mt-4 text-sm text-gray-600">
+              <span className="font-medium">
+                {words.filter((w) => w.length > 0).length}
+              </span>
+              {" of "}
+              <span className="font-medium">{wordCount}</span>
+              {" words entered"}
             </div>
+          </div>
 
-            {/* Help Link */}
-            <div className="text-center mt-8">
-              <a
-                href="#"
-                className="text-blue-600 hover:text-blue-700 font-medium"
-              >
-                Need Help? Contact Support
-              </a>
+          {/* Error Message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-8 flex gap-3">
+              <AlertCircle className="text-red-600 flex-shrink-0" size={20} />
+              <p className="text-red-800">{error}</p>
             </div>
-          </>
-        )}
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex gap-4">
+            <Button
+              onClick={handleConnect}
+              disabled={!words.every((w) => isValidWord(w) && w !== "")}
+              className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition"
+            >
+              {isLoading ? "Connecting..." : "Connect Wallet"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/")}
+              className="px-8 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3 rounded-lg"
+            >
+              Cancel
+            </Button>
+          </div>
+
+          {/* Help Link */}
+          <div className="text-center mt-8">
+            <a
+              href="#"
+              className="text-blue-600 hover:text-blue-700 font-medium"
+            >
+              Need Help? Contact Support
+            </a>
+          </div>
+        </>
       </div>
     </div>
   );
