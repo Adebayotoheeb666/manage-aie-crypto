@@ -211,6 +211,9 @@ export function createServer() {
   // GET /api/auth/session - Get current session
   app.get("/api/auth/session", authRateLimiter, handleGetSession);
 
+  // Debug: session diagnostic (no rate limiter so developer can debug quickly)
+  app.get("/api/debug/session", handleDebugSession);
+
   // GET /api/auth/nonce - Get a nonce for signing (query: address=0x...)
   app.get("/api/auth/nonce", authRateLimiter, handleGetNonce);
 
