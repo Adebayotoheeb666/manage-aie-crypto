@@ -209,8 +209,8 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   }
 
   const walletAddress = String(walletAddressRaw).trim();
-  const signature = String(requestBody?.signature || "");
-  const nonce = String(requestBody?.nonce || "");
+  const signature = String(req.body?.signature || "");
+  const nonce = String(req.body?.nonce || "");
 
   // Basic logging for debugging (avoid logging full PII in production)
   const remoteIp = (
