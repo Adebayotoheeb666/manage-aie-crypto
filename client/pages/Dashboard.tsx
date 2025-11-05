@@ -80,7 +80,7 @@ export default function Dashboard() {
     if (isAuthenticated && !loading) {
       fetchDashboardData();
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, fetchDashboardData]);
 
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
