@@ -94,6 +94,11 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Not authenticated - redirect to wallet connect
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
@@ -138,6 +143,10 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
@@ -162,6 +171,10 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
