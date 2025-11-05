@@ -659,36 +659,42 @@ export async function getLatestPrice(symbol: string) {
     if (error && error.code !== "PGRST116") throw error;
     return data || null;
   } catch (err) {
-    const isNetworkError =
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    const isNetworkOrPermissionError =
       err instanceof TypeError ||
-      (err &&
-        typeof (err as any).message === "string" &&
-        (err as any).message.toLowerCase().includes("failed to fetch"));
+      errorMsg.toLowerCase().includes("failed to fetch") ||
+      errorMsg.toLowerCase().includes("row-level security") ||
+      errorMsg.toLowerCase().includes("insufficient_privilege") ||
+      errorMsg.toLowerCase().includes("permission denied");
 
-    if (typeof window !== "undefined" && isNetworkError) {
-      const res = await fetch("/api/proxy/latest-price", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbol }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        let errMsg = "Proxy error";
-        try {
-          if (json?.error) {
-            if (typeof json.error === "string") errMsg = json.error;
-            else if (typeof json.error?.message === "string")
-              errMsg = json.error.message;
-            else errMsg = JSON.stringify(json.error);
-          } else if (json?.message && typeof json.message === "string") {
-            errMsg = json.message;
-          } else if (res.statusText) {
-            errMsg = res.statusText;
-          }
-        } catch (_) {}
-        throw new Error(errMsg);
+    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
+      try {
+        const res = await fetch("/api/proxy/latest-price", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbol }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          let errMsg = "Proxy error";
+          try {
+            if (json?.error) {
+              if (typeof json.error === "string") errMsg = json.error;
+              else if (typeof json.error?.message === "string")
+                errMsg = json.error.message;
+              else errMsg = JSON.stringify(json.error);
+            } else if (json?.message && typeof json.message === "string") {
+              errMsg = json.message;
+            } else if (res.statusText) {
+              errMsg = res.statusText;
+            }
+          } catch (_) {}
+          throw new Error(errMsg);
+        }
+        return json.data || null;
+      } catch (_) {
+        return null;
       }
-      return json.data || null;
     }
 
     throw new Error(String(err));
