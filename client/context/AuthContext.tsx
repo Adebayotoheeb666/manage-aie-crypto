@@ -234,6 +234,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           "auth_session",
           JSON.stringify({ user: data.user, profile: data.profile }),
         );
+        // persist connected wallet address for the WalletContext
+        try {
+          localStorage.setItem("walletAddress", normalized);
+        } catch {}
 
         // Auto-register wallet in Supabase if not already registered
         try {
