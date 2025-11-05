@@ -103,21 +103,6 @@ export function createServer() {
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
   
-  // Add a debug endpoint
-  app.post('/api/debug/wallet-connect', (req, res) => {
-    console.log('=== DEBUG ENDPOINT ===');
-    console.log('Request body:', req.body);
-    console.log('Raw body:', (req as any).rawBody);
-    console.log('Headers:', req.headers);
-    
-    res.json({
-      success: true,
-      body: req.body,
-      rawBody: (req as any).rawBody,
-      headers: req.headers
-    });
-  });
-
   // Example API routes
   app.get("/api/ping", (_req, res) => {
     const ping = process.env.PING_MESSAGE ?? "ping";
