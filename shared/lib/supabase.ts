@@ -417,11 +417,9 @@ export async function getPrimaryWallet(userId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, primaryOnly: true }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return (json.data && json.data[0]) || null;
-          }
+          return (json.data && json.data[0]) || null;
         }
       } catch (_) {
         // Fallback if proxy fails
@@ -665,12 +663,6 @@ export async function getLatestPrice(symbol: string) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ symbol }),
       });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
       const json = await res.json();
       if (!res.ok) {
         let errMsg = "Proxy error";
@@ -832,12 +824,6 @@ export async function getPortfolioSnapshots(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId, daysBack }),
       });
-      if (res.bodyUsed) {
-        const msg = res.statusText || String(res.status);
-        if (!res.ok)
-          throw new Error(msg || "Proxy response body already consumed");
-        throw new Error("Proxy response body already consumed");
-      }
       const json = await res.json();
       if (!res.ok) {
         let errMsg = "Proxy error";
