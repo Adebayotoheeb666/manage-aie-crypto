@@ -395,14 +395,25 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         60 * 60 * 2,
       );
 
-      // Set cookie
-      res.cookie("sv_session", token, {
+      // Set httpOnly session cookie
+      const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "lax",
         maxAge: 1000 * 60 * 60 * 2,
         path: "/",
-      });
+      };
+      res.cookie("sv_session", token, cookieOptions);
+      // Non-httpOnly flag cookie to detect if browser stored cookies
+      try {
+        res.cookie("sv_session_set", "1", {
+          httpOnly: false,
+          secure: cookieOptions.secure,
+          sameSite: cookieOptions.sameSite,
+          maxAge: cookieOptions.maxAge,
+          path: cookieOptions.path,
+        });
+      } catch (e) {}
 
       return res.status(200).json({
         user: { id: profile.id, address: walletAddress },
