@@ -134,7 +134,12 @@ export default function Dashboard() {
       const response = await fetch('/api/transactions', {
         credentials: 'include',
       });
-      if (!response.ok) throw new Error('Failed to fetch transactions');
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`Failed to fetch transactions: ${response.status} ${errorData.error || ''}`);
+      }
+
       const data = await response.json();
       setTransactions(data.transactions || []);
     } catch (error) {
