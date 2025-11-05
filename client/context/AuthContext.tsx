@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
-import { createWallet, getUserAssets } from "@shared/lib/supabase";
+import { createWallet, getUserAssets, supabase } from "@shared/lib/supabase";
 
 interface AuthUser {
   id: string;
@@ -358,27 +358,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Auto-register wallet in Supabase if not already registered
+      // Check if wallet exists and update last connected time
       try {
         if (data.profile?.id) {
-          console.log("[connectWallet] Checking for existing assets...");
-          const existingAssets = await getUserAssets(data.profile.id);
-          if (existingAssets.length === 0) {
+          console.log("[connectWallet] Checking for existing wallet...");
+          const { data: existingWallets, error: walletError } = await supabase
+            .from('wallets')
+            .select('*')
+            .eq('wallet_address', normalized.toLowerCase())
+            .eq('user_id', data.profile.id);
+
+          if (walletError) throw walletError;
+
+          if (existingWallets && existingWallets.length > 0) {
+            console.log("[connectWallet] Wallet exists, updating last connected time...");
+            // Update last connected time with proper type
+            const updateData = {
+              is_active: true,
+              connected_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            } as const;
+            
+            const { error: updateError } = await supabase
+              .from('wallets')
+              .update(updateData)
+              .eq('wallet_address', normalized.toLowerCase())
+              .eq('user_id', data.profile.id);
+
+            if (updateError) throw updateError;
+          } else {
             console.log("[connectWallet] Creating new wallet...");
+            // Only create if it doesn't exist
             await createWallet(
               data.profile.id,
               normalized,
-              "seedphrase",
-              "Primary Wallet",
+              "metamask",
+              "Primary Wallet"
             );
           }
         }
       } catch (walletErr) {
         console.warn(
-          "[connectWallet] Failed to auto-register wallet:",
+          "[connectWallet] Wallet operation failed:",
           walletErr,
         );
-        // Don't fail the entire process if wallet registration fails
+        // Don't fail the entire process if wallet operation fails
       }
 
       console.log("[connectWallet] Wallet connection successful");

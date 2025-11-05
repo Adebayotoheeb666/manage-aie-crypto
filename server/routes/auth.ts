@@ -117,7 +117,7 @@ export const handleSignIn: RequestHandler = async (req, res) => {
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: "lax",
+          sameSite: 'lax' as const,
           maxAge: 1000 * 60 * 60 * 2,
           path: "/",
         };
@@ -129,7 +129,7 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           res.cookie("sv_session_set", "1", {
             httpOnly: false,
             secure: cookieOptions.secure,
-            sameSite: cookieOptions.sameSite,
+            sameSite: 'lax' as const,
             maxAge: cookieOptions.maxAge,
             path: cookieOptions.path,
           });
@@ -376,6 +376,85 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         });
       }
       profile = inserted;
+      
+      // Create a wallet record for the user
+      try {
+        const { data: wallet, error: walletError } = await supabase
+          .from('wallets')
+          .insert({
+            user_id: profile.id,
+            wallet_address: walletAddress.toLowerCase(),
+            wallet_type: 'metamask',
+            label: 'Primary Wallet',
+            is_primary: true,
+            balance_usd: 0,
+            balance_btc: 0,
+            is_active: true,
+            connected_at: new Date().toISOString(),
+          })
+          .select()
+          .single();
+
+        if (walletError) {
+          console.error('[wallet-connect] Failed to create wallet:', walletError);
+          // Continue anyway as the user is already created
+        } else {
+          console.log('[wallet-connect] Created wallet:', wallet.id);
+          
+          // Initialize default assets for the wallet
+          const defaultAssets = [
+            {
+              wallet_id: wallet.id,
+              user_id: profile.id,
+              symbol: 'ETH',
+              name: 'Ethereum',
+              balance: 0,
+              balance_usd: 0,
+              price_usd: 0,
+              price_change_24h: 0,
+              chain: 'ethereum',
+              contract_address: null,
+            },
+            {
+              wallet_id: wallet.id,
+              user_id: profile.id,
+              symbol: 'BTC',
+              name: 'Bitcoin',
+              balance: 0,
+              balance_usd: 0,
+              price_usd: 0,
+              price_change_24h: 0,
+              chain: 'bitcoin',
+              contract_address: null,
+            },
+            {
+              wallet_id: wallet.id,
+              user_id: profile.id,
+              symbol: 'USDT',
+              name: 'Tether',
+              balance: 0,
+              balance_usd: 0,
+              price_usd: 1,
+              price_change_24h: 0,
+              chain: 'ethereum',
+              contract_address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+            },
+          ];
+
+          const { error: assetsError } = await supabase
+            .from('assets')
+            .insert(defaultAssets);
+
+          if (assetsError) {
+            console.error('[wallet-connect] Failed to initialize default assets:', assetsError);
+          } else {
+            console.log('[wallet-connect] Initialized default assets');
+          }
+        }
+      } catch (walletErr) {
+        console.error('[wallet-connect] Error in wallet/asset initialization:', walletErr);
+        // Continue with the response even if wallet/asset initialization fails
+      }
     }
 
     // Create app session token (signed JWT) and set as httpOnly cookie
@@ -406,7 +485,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "lax",
+        sameSite: 'lax' as const,
         maxAge: 1000 * 60 * 60 * 2,
         path: "/",
       };
@@ -416,7 +495,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         res.cookie("sv_session_set", "1", {
           httpOnly: false,
           secure: cookieOptions.secure,
-          sameSite: cookieOptions.sameSite,
+          sameSite: 'strict' as const,
           maxAge: cookieOptions.maxAge,
           path: cookieOptions.path,
         });

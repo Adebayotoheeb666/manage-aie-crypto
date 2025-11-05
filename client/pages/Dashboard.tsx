@@ -28,6 +28,7 @@ import {
 } from "recharts";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
+import { SyncButton } from "@/components/wallet/SyncButton";
 
 // Types
 interface Asset {
@@ -77,6 +78,7 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<
     "all" | "send" | "receive" | "swap"
   >("all");
+  const [wallets, setWallets] = useState<Array<{ id: string; wallet_address: string; is_primary: boolean }>>([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -212,12 +214,34 @@ export default function Dashboard() {
     }
   }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
 
+  // Fetch user's wallets
+  const fetchWallets = useCallback(async () => {
+    try {
+      const response = await fetch("/api/wallets", {
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        const { data } = await response.json();
+        setWallets(data || []);
+      }
+    } catch (error) {
+      console.error("Error fetching wallets:", error);
+    }
+  }, []);
+
   // Fetch data on component mount
   useEffect(() => {
     if (isAuthenticated && !loading) {
-      fetchDashboardData();
+      const loadData = async () => {
+        await Promise.all([
+          fetchDashboardData(),
+          fetchWallets()
+        ]);
+      };
+      loadData();
     }
-  }, [isAuthenticated, loading, fetchDashboardData]);
+  }, [isAuthenticated, loading, fetchDashboardData, fetchWallets]);
 
   // Handle refresh
   const handleRefresh = () => {
@@ -311,16 +335,25 @@ export default function Dashboard() {
             Welcome back, {dbUser?.email?.split("@")[0] || "User"}
           </p>
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={isRefreshing}
-          className="mt-4 md:mt-0 flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          <RefreshCw
-            className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-          />
-          {isRefreshing ? "Refreshing..." : "Refresh"}
-        </button>
+        <div className="flex gap-2 mt-4 md:mt-0">
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <RefreshCw
+              className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+            />
+            {isRefreshing ? "Refreshing..." : "Refresh"}
+          </button>
+          {wallets.length > 0 && (
+            <SyncButton
+              walletId={wallets[0].id}
+              variant="outline"
+              className="border-gray-200"
+            />
+          )}
+        </div>
       </div>
 
       {/* Balance Overview */}
