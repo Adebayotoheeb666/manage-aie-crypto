@@ -255,17 +255,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const signer = await provider.getSigner();
           const signerAddress = await signer.getAddress();
 
-          if (signerAddress.toLowerCase() !== normalized) {
-            const msg =
-              "Connected wallet address does not match requested address";
-            setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
-            throw new Error(msg);
-          }
+          // Use the actual connected address (may differ from requested address)
+          normalized = signerAddress.toLowerCase();
 
           // Sign the nonce
           signature = await signer.signMessage(nonce);
