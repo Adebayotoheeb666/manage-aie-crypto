@@ -35,6 +35,7 @@ import {
   handleLatestPrice,
   handleUserWallets,
 } from "./routes/proxy";
+import { handleDebugSession } from "./routes/debug";
 
 // Import new routes
 import walletRoutes from "./routes/wallet";
