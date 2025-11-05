@@ -282,17 +282,13 @@ export async function getTransactionHistory(
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId, limit, offset }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data || [];
-          }
+          return json.data || [];
         }
       } catch (_) {
         // Fallback to empty array if proxy fails
       }
-      // Return empty array if both direct and proxy fail
-      return [];
     }
 
     // Return empty array instead of throwing
@@ -480,17 +476,13 @@ export async function getUserAssets(userId: string) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId }),
         });
-        if (!res.bodyUsed) {
+        if (res.ok) {
           const json = await res.json();
-          if (res.ok) {
-            return json.data || [];
-          }
+          return json.data || [];
         }
       } catch (_) {
         // Fallback to empty array if proxy fails
       }
-      // Return empty array if both direct and proxy fail
-      return [];
     }
 
     // Return empty array instead of throwing
