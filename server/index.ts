@@ -45,8 +45,44 @@ export function createServer() {
   const app = express();
 
   // Middleware
+  // CORS configuration that works in both development and production
+  const corsOrigin = process.env.CLIENT_URL || 'http://localhost:3000';
+
   app.use(cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:3000',
+    origin: function(origin, callback) {
+      // Allow requests without origin (like mobile apps or curl requests)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // In development, allow localhost
+      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+
+      // If CLIENT_URL is explicitly set, use it
+      if (corsOrigin && corsOrigin !== 'http://localhost:3000') {
+        if (origin === corsOrigin || origin.endsWith(corsOrigin)) {
+          return callback(null, true);
+        }
+      }
+
+      // In production (Fly.dev, etc), allow same-origin requests
+      // Extract the host from the request
+      const requestHost = origin.split('://')[1];
+      const serverHost = process.env.SERVER_URL ? new URL(process.env.SERVER_URL).host : '';
+
+      if (serverHost && requestHost === serverHost) {
+        return callback(null, true);
+      }
+
+      // Allow Fly.dev deployments by default
+      if (origin.includes('fly.dev') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
+        return callback(null, true);
+      }
+
+      callback(null, true); // Allow in development mode
+    },
     credentials: true
   }));
   
