@@ -45,6 +45,11 @@ function createSupabaseClient(): SupabaseClient<Database> {
 
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    // Suppress console errors from Supabase during network failures
+    // since we handle them gracefully with fallbacks
+    const originalError = console.error;
+    const suppressedErrors = new Set<string>();
+
     _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
@@ -52,6 +57,24 @@ function createSupabaseClient(): SupabaseClient<Database> {
         detectSessionInUrl: true,
       },
     });
+
+    // Override console.error to suppress "Failed to fetch" errors from Supabase
+    // since we have fallback handlers for these
+    if (typeof window !== "undefined") {
+      console.error = function (...args: any[]) {
+        const message = String(args[0] || "");
+        if (
+          message.includes("Failed to fetch") ||
+          message.includes("Network request failed") ||
+          message.includes("CORS")
+        ) {
+          // Suppress error
+          return;
+        }
+        originalError.apply(console, args);
+      };
+    }
+
     return _supabaseClient;
   }
 
