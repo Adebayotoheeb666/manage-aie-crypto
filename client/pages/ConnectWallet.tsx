@@ -916,20 +916,6 @@ export default function ConnectWallet() {
         </div>
 
         {/* Seed Phrase Connection */}
-        {connectionTab === "metamask" && (
-          <div className="max-w-md mx-auto mb-12">
-            <div className="bg-blue-50 rounded-xl p-8 border border-blue-100 text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">
-                Connect MetaMask
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Click the button below to connect your MetaMask wallet. Make
-                sure MetaMask is installed in your browser.
-              </p>
-              <WalletConnectButton />
-            </div>
-          </div>
-        )}
 
         {/* Seed Phrase Connection */}
         {connectionTab === "seedphrase" && (
