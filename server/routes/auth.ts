@@ -113,14 +113,29 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           60 * 60 * 2,
         );
 
-        // Set cookie
-        res.cookie("sv_session", token, {
+        // Set httpOnly session cookie
+        const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
           sameSite: "lax",
           maxAge: 1000 * 60 * 60 * 2,
           path: "/",
-        });
+        };
+        res.cookie("sv_session", token, cookieOptions);
+        // Also set a non-httpOnly debug cookie to help clients detect whether the
+        // browser accepted cookies (useful in debug/preview environments).
+        // This is safe because it only indicates presence; do NOT store secrets here.
+        try {
+          res.cookie("sv_session_set", "1", {
+            httpOnly: false,
+            secure: cookieOptions.secure,
+            sameSite: cookieOptions.sameSite,
+            maxAge: cookieOptions.maxAge,
+            path: cookieOptions.path,
+          });
+        } catch (e) {
+          // ignore
+        }
       } catch (err) {
         console.error("[sign-in] session creation failed", err);
         // Continue without cookie if session creation fails
