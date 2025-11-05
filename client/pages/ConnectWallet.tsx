@@ -918,8 +918,7 @@ export default function ConnectWallet() {
         {/* Seed Phrase Connection */}
 
         {/* Seed Phrase Connection */}
-        {connectionTab === "seedphrase" && (
-          <>
+        <>
             {/* Security Warning */}
             <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded mb-8 flex gap-3">
               <AlertCircle
@@ -1079,7 +1078,6 @@ export default function ConnectWallet() {
               </a>
             </div>
           </>
-        )}
       </div>
     </div>
   );
