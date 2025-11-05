@@ -434,17 +434,34 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     if (!payload || !payload.sub)
       return res.status(401).json({ error: "Invalid session" });
 
-    const walletAddress = payload.sub;
-
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false },
     });
 
-    const { data: profile, error: profileErr } = await supabase
-      .from("users")
-      .select("*")
-      .eq("primary_wallet_address", walletAddress.toLowerCase())
-      .single();
+    let profile = null;
+    let profileErr = null;
+
+    // Support both email/password (uid field) and wallet-based (sub as wallet address) sessions
+    if (payload.uid) {
+      // Email/password session: use the uid (user ID) to look up profile
+      const result = await supabase
+        .from("users")
+        .select("*")
+        .eq("id", payload.uid)
+        .single();
+      profile = result.data;
+      profileErr = result.error;
+    } else {
+      // Wallet-based session: use sub (wallet address) to look up profile
+      const walletAddress = payload.sub;
+      const result = await supabase
+        .from("users")
+        .select("*")
+        .eq("primary_wallet_address", walletAddress.toLowerCase())
+        .single();
+      profile = result.data;
+      profileErr = result.error;
+    }
 
     if (profileErr && profileErr.code !== "PGRST116") {
       return res.status(500).json({ error: profileErr.message });
@@ -452,7 +469,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
 
     return res
       .status(200)
-      .json({ user: { id: (profile && profile.id) || null, address: walletAddress }, profile: profile || null });
+      .json({ user: { id: (profile && profile.id) || null, address: payload.sub }, profile: profile || null });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to get session";
