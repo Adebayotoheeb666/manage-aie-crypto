@@ -186,54 +186,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setError(null);
     setLoading(true);
     try {
-      if (!walletAddress) {
-        const msg = "Wallet address is required";
-        setError(msg);
-        toast({
-          title: "Wallet connection",
-          description: msg,
-          variant: "destructive",
-        });
-        throw new Error(msg);
-      }
-
-      // Normalize wallet address: extract a 0x + 40 hex char substring
-      const match = String(walletAddress).match(/0x[a-fA-F0-9]{40}/i);
-      if (!match) {
-        const msg = "Invalid wallet address";
-        setError(msg);
-        toast({
-          title: "Wallet connection",
-          description: msg,
-          variant: "destructive",
-        });
-        throw new Error(msg);
-      }
-
-      const normalized = match[0].toLowerCase();
-
-      // Try to sign with a web3 provider (MetaMask/WalletConnect)
-      // If not available, skip signing (for seed phrase imports)
       const win = window as any;
       let signature: string | undefined;
       let nonce: string | undefined;
+      let normalized: string;
 
-      if (win.ethereum) {
-        // Web3 provider available (MetaMask/WalletConnect flow)
+      // Prefer using an already-connected web3 provider (no prompts)
+      let useProvider = false;
+      if (win.ethereum && typeof win.ethereum.request === "function") {
         try {
-          // Request a nonce from the server
-          const nonceResp = await fetch(
-            `/api/auth/nonce?address=${normalized}`,
-          );
+          const accounts = (await win.ethereum.request({
+            method: "eth_accounts",
+          })) as string[];
+          useProvider = Array.isArray(accounts) && accounts.length > 0;
+        } catch {}
+      }
+
+      if (useProvider) {
+        try {
+          const provider = new ethers.BrowserProvider(win.ethereum);
+          const signer = await provider.getSigner();
+          const signerAddress = await signer.getAddress();
+          normalized = signerAddress.toLowerCase();
+
+          // Request nonce for the connected wallet
+          const nonceResp = await fetch(`/api/auth/nonce?address=${normalized}`);
           const nonceData = await nonceResp.json();
           if (!nonceResp.ok) {
             const msg = nonceData?.error || "Could not obtain nonce";
             setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
+            toast({ title: "Wallet connection", description: msg, variant: "destructive" });
             throw new Error(msg);
           }
 
@@ -241,58 +223,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (!nonce) {
             const msg = "Invalid nonce received from server";
             setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
+            toast({ title: "Wallet connection", description: msg, variant: "destructive" });
             throw new Error(msg);
           }
 
-          const provider = new ethers.BrowserProvider(win.ethereum);
-          // prompt user to connect accounts if needed
-          await provider.send("eth_requestAccounts", []);
-          const signer = await provider.getSigner();
-          const signerAddress = await signer.getAddress();
-
-          if (signerAddress.toLowerCase() !== normalized) {
-            const msg =
-              "Connected wallet address does not match requested address";
-            setError(msg);
-            toast({
-              title: "Wallet connection",
-              description: msg,
-              variant: "destructive",
-            });
-            throw new Error(msg);
-          }
-
-          // Sign the nonce
+          // Sign the nonce with the connected wallet
           signature = await signer.signMessage(nonce);
         } catch (err) {
           const message =
-            err instanceof Error
-              ? err.message
-              : "Failed to sign with web3 provider";
+            err instanceof Error ? err.message : "Failed to sign with web3 provider";
           setError(message);
-          toast({
-            title: "Wallet connection",
-            description: message,
-            variant: "destructive",
-          });
+          toast({ title: "Wallet connection", description: message, variant: "destructive" });
           throw err;
         }
+      } else {
+        // Seed phrase/import flow: require a provided address and skip signing
+        if (!walletAddress) {
+          const msg = "Wallet address is required";
+          setError(msg);
+          toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+          throw new Error(msg);
+        }
+
+        const match = String(walletAddress).match(/0x[a-fA-F0-9]{40}/i);
+        if (!match) {
+          const msg = "Invalid wallet address";
+          setError(msg);
+          toast({ title: "Wallet connection", description: msg, variant: "destructive" });
+          throw new Error(msg);
+        }
+        normalized = match[0].toLowerCase();
       }
 
       // Send wallet connection to server
       const response = await fetch("/api/auth/wallet-connect", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          walletAddress: normalized,
-          signature,
-          nonce,
-        }),
+        body: JSON.stringify({ walletAddress: normalized, signature, nonce }),
       });
 
       let data;
@@ -301,29 +268,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       } catch (parseErr) {
         const msg = `Server error (${response.status}): Unable to parse response`;
         setError(msg);
-        toast({
-          title: "Wallet connection",
-          description: msg,
-          variant: "destructive",
-        });
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
         throw new Error(msg);
       }
 
       if (!response.ok) {
         const msg = data?.error || "Wallet connection failed";
         setError(msg);
-        toast({
-          title: "Wallet connection",
-          description: msg,
-          variant: "destructive",
-        });
+        toast({ title: "Wallet connection", description: msg, variant: "destructive" });
         throw new Error(msg);
       }
 
       if (data.user) {
         setAuthUser(data.user);
         setDbUser(data.profile);
-        // Store in localStorage
         localStorage.setItem(
           "auth_session",
           JSON.stringify({ user: data.user, profile: data.profile }),
@@ -334,18 +292,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           if (data.profile?.id) {
             const existingAssets = await getUserAssets(data.profile.id);
             if (existingAssets.length === 0) {
-              // No wallet registered yet, create one
               await createWallet(
                 data.profile.id,
                 normalized,
-                "metamask", // or seedphrase, depending on flow
+                signature && nonce ? "metamask" : "seedphrase",
                 "Primary Wallet",
               );
             }
           }
         } catch (walletErr) {
           console.warn("Failed to auto-register wallet:", walletErr);
-          // Don't fail the whole flow if wallet registration fails
         }
 
         toast({
@@ -355,15 +311,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         });
       }
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Wallet connection failed";
+      const message = err instanceof Error ? err.message : "Wallet connection failed";
       setError(message);
-      // show toast for unexpected errors as well
-      toast({
-        title: "Wallet connection",
-        description: message,
-        variant: "destructive",
-      });
+      toast({ title: "Wallet connection", description: message, variant: "destructive" });
       throw err;
     } finally {
       setLoading(false);
