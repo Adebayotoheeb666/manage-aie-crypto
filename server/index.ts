@@ -47,6 +47,7 @@ export function createServer() {
   // Middleware
   // CORS configuration that works in both development and production
   const corsOrigin = process.env.CLIENT_URL || 'http://localhost:3000';
+  const isDevelopment = process.env.NODE_ENV !== 'production';
 
   app.use(cors({
     origin: function(origin, callback) {
@@ -55,35 +56,44 @@ export function createServer() {
         return callback(null, true);
       }
 
-      // In development, allow localhost
-      if (origin.includes('localhost') || origin.includes('127.0.0.1')) {
+      // In development, allow all origins
+      if (isDevelopment) {
         return callback(null, true);
       }
 
-      // If CLIENT_URL is explicitly set, use it
-      if (corsOrigin && corsOrigin !== 'http://localhost:3000') {
-        if (origin === corsOrigin || origin.endsWith(corsOrigin)) {
+      // In production, verify origin matches deployment domain
+      try {
+        // If CLIENT_URL is explicitly set, use it
+        if (corsOrigin && corsOrigin !== 'http://localhost:3000') {
+          const corsURL = new URL(corsOrigin);
+          const originURL = new URL(origin);
+          if (originURL.host === corsURL.host) {
+            return callback(null, true);
+          }
+        }
+
+        // Allow same-origin and trusted domains
+        const originDomain = new URL(origin).host;
+
+        // Allow localhost, Fly.dev, and Netlify preview domains
+        if (originDomain.includes('localhost') ||
+            originDomain.includes('127.0.0.1') ||
+            originDomain.includes('fly.dev') ||
+            originDomain.includes('netlify.app') ||
+            originDomain.includes('.web.app')) {
           return callback(null, true);
         }
-      }
 
-      // In production (Fly.dev, etc), allow same-origin requests
-      // Extract the host from the request
-      const requestHost = origin.split('://')[1];
-      const serverHost = process.env.SERVER_URL ? new URL(process.env.SERVER_URL).host : '';
-
-      if (serverHost && requestHost === serverHost) {
+        // If we get here in production, still allow (but could be more restrictive)
+        return callback(null, true);
+      } catch (e) {
+        // If URL parsing fails, still allow the request
         return callback(null, true);
       }
-
-      // Allow Fly.dev deployments by default
-      if (origin.includes('fly.dev') || origin.includes('localhost') || origin.includes('127.0.0.1')) {
-        return callback(null, true);
-      }
-
-      callback(null, true); // Allow in development mode
     },
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
   }));
   
   // Parse cookies
