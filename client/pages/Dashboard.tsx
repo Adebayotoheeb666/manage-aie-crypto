@@ -85,13 +85,6 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-  // Fetch data on component mount
-  useEffect(() => {
-    if (isAuthenticated && !loading) {
-      fetchDashboardData();
-    }
-  }, [isAuthenticated, loading, fetchDashboardData]);
-
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
     try {
@@ -100,6 +93,11 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          // Not authenticated - redirect to wallet connect
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
@@ -144,6 +142,10 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
@@ -168,6 +170,10 @@ export default function Dashboard() {
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          navigate("/connect-wallet");
+          throw new Error(`Unauthorized`);
+        }
         const errorData = await response
           .json()
           .catch(() => ({ error: response.statusText }));
@@ -205,6 +211,13 @@ export default function Dashboard() {
       setIsRefreshing(false);
     }
   }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
+
+  // Fetch data on component mount
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      fetchDashboardData();
+    }
+  }, [isAuthenticated, loading, fetchDashboardData]);
 
   // Handle refresh
   const handleRefresh = () => {
