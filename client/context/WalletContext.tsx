@@ -1,5 +1,4 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { BrowserProvider } from "ethers";
 
 interface WalletContextType {
   address: string | null;
