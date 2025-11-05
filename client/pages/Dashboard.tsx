@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
-import { ethers } from 'ethers';
-import { 
-  ArrowUpRight, 
-  ArrowDownLeft, 
-  ArrowLeftRight, 
+import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { ethers } from "ethers";
+import {
+  ArrowUpRight,
+  ArrowDownLeft,
+  ArrowLeftRight,
   Plus,
   ChevronDown,
   Search,
@@ -14,11 +15,19 @@ import {
   TrendingUp,
   ExternalLink,
   Copy,
-  Loader2
-} from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { useAuth } from '@/context/AuthContext';
-import { toast } from '@/hooks/use-toast';
+  Loader2,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
+import { useAuth } from "@/context/AuthContext";
+import { toast } from "@/hooks/use-toast";
 
 // Types
 interface Asset {
@@ -35,11 +44,11 @@ interface Asset {
 interface Transaction {
   id: string;
   tx_hash: string;
-  tx_type: 'send' | 'receive' | 'swap' | 'deposit' | 'withdrawal';
+  tx_type: "send" | "receive" | "swap" | "deposit" | "withdrawal";
   amount: number;
   symbol: string;
   amount_usd: number;
-  status: 'pending' | 'confirmed' | 'failed' | 'completed';
+  status: "pending" | "confirmed" | "failed" | "completed";
   created_at: string;
   from?: string;
   to?: string;
@@ -53,7 +62,8 @@ interface PortfolioData {
 }
 
 export default function Dashboard() {
-  const { dbUser } = useAuth();
+  const navigate = useNavigate();
+  const { dbUser, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -63,89 +73,138 @@ export default function Dashboard() {
   const [previousBalance, setPreviousBalance] = useState(0);
   const [change24h, setChange24h] = useState(0);
   const [change24hPercent, setChange24hPercent] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'send' | 'receive' | 'swap'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterType, setFilterType] = useState<
+    "all" | "send" | "receive" | "swap"
+  >("all");
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      navigate("/connect-wallet");
+    }
+  }, [isAuthenticated, loading, navigate]);
 
   // Fetch data on component mount
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  // Fetch all dashboard data
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      await Promise.all([
-        fetchAssets(),
-        fetchTransactions(),
-        fetchPortfolioHistory()
-      ]);
-    } catch (error) {
-      console.error('Error fetching dashboard data:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to load dashboard data',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+    if (isAuthenticated && !loading) {
+      fetchDashboardData();
     }
-  };
+  }, [isAuthenticated, loading, fetchDashboardData]);
 
   // Fetch user's assets
-  const fetchAssets = async () => {
+  const fetchAssets = useCallback(async () => {
     try {
-      const response = await fetch('/api/wallet/assets');
-      if (!response.ok) throw new Error('Failed to fetch assets');
+      const response = await fetch("/api/wallet/assets", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
+        throw new Error(
+          `Failed to fetch assets: ${response.status} ${errorData.error || ""}`,
+        );
+      }
+
       const data = await response.json();
-      
+
       setAssets(data.assets || []);
-      
+
       // Calculate total balance
-      const balance = (data.assets || []).reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+      const balance = (data.assets || []).reduce(
+        (sum: number, asset: Asset) => sum + (asset.value_usd || 0),
+        0,
+      );
       setTotalBalance(balance);
-      
+
       // Calculate 24h change if we have previous data
       if (data.portfolio_history?.length >= 2) {
-        const prev = data.portfolio_history[data.portfolio_history.length - 2].value;
-        const current = data.portfolio_history[data.portfolio_history.length - 1].value;
+        const prev =
+          data.portfolio_history[data.portfolio_history.length - 2].value;
+        const current =
+          data.portfolio_history[data.portfolio_history.length - 1].value;
         const change = current - prev;
         setPreviousBalance(prev);
         setChange24h(change);
         setChange24hPercent((change / prev) * 100);
       }
     } catch (error) {
-      console.error('Error fetching assets:', error);
+      console.error("Error fetching assets:", error);
       throw error;
     }
-  };
+  }, []);
 
   // Fetch transaction history
-  const fetchTransactions = async () => {
+  const fetchTransactions = useCallback(async () => {
     try {
-      const response = await fetch('/api/transactions');
-      if (!response.ok) throw new Error('Failed to fetch transactions');
+      const response = await fetch("/api/transactions", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
+        throw new Error(
+          `Failed to fetch transactions: ${response.status} ${errorData.error || ""}`,
+        );
+      }
+
       const data = await response.json();
       setTransactions(data.transactions || []);
     } catch (error) {
-      console.error('Error fetching transactions:', error);
+      console.error("Error fetching transactions:", error);
       throw error;
     }
-  };
+  }, []);
 
   // Fetch portfolio history
-  const fetchPortfolioHistory = async () => {
+  const fetchPortfolioHistory = useCallback(async () => {
     try {
-      const response = await fetch('/api/portfolio/history');
-      if (!response.ok) throw new Error('Failed to fetch portfolio history');
+      const response = await fetch("/api/portfolio/history", {
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        const errorData = await response
+          .json()
+          .catch(() => ({ error: response.statusText }));
+        throw new Error(
+          `Failed to fetch portfolio history: ${response.status} ${errorData.error || ""}`,
+        );
+      }
+
       const data = await response.json();
       setPortfolioData(data.history || []);
     } catch (error) {
-      console.error('Error fetching portfolio history:', error);
+      console.error("Error fetching portfolio history:", error);
       throw error;
     }
-  };
+  }, []);
+
+  // Fetch all dashboard data
+  const fetchDashboardData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      await Promise.all([
+        fetchAssets(),
+        fetchTransactions(),
+        fetchPortfolioHistory(),
+      ]);
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load dashboard data",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
 
   // Handle refresh
   const handleRefresh = () => {
@@ -155,9 +214,9 @@ export default function Dashboard() {
 
   // Format currency
   const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     }).format(value);
@@ -165,42 +224,42 @@ export default function Dashboard() {
 
   // Format date
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
   // Get transaction status color
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'completed':
-      case 'confirmed':
-        return 'text-green-500';
-      case 'pending':
-        return 'text-yellow-500';
-      case 'failed':
-        return 'text-red-500';
+      case "completed":
+      case "confirmed":
+        return "text-green-500";
+      case "pending":
+        return "text-yellow-500";
+      case "failed":
+        return "text-red-500";
       default:
-        return 'text-gray-500';
+        return "text-gray-500";
     }
   };
 
   // Get transaction icon
   const getTransactionIcon = (type: string) => {
     switch (type) {
-      case 'send':
+      case "send":
         return <ArrowUpRight className="w-5 h-5 text-red-500" />;
-      case 'receive':
+      case "receive":
         return <ArrowDownLeft className="w-5 h-5 text-green-500" />;
-      case 'swap':
+      case "swap":
         return <ArrowLeftRight className="w-5 h-5 text-blue-500" />;
-      case 'deposit':
+      case "deposit":
         return <Download className="w-5 h-5 text-purple-500" />;
-      case 'withdrawal':
+      case "withdrawal":
         return <ArrowUpRight className="w-5 h-5 text-orange-500" />;
       default:
         return <ArrowLeftRight className="w-5 h-5 text-gray-500" />;
@@ -208,19 +267,19 @@ export default function Dashboard() {
   };
 
   // Filter transactions based on search and filter
-  const filteredTransactions = transactions.filter(tx => {
-    const matchesSearch = 
+  const filteredTransactions = transactions.filter((tx) => {
+    const matchesSearch =
       tx.tx_hash?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tx.symbol?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       tx.amount?.toString().includes(searchTerm) ||
       tx.amount_usd?.toString().includes(searchTerm);
-      
-    const matchesType = filterType === 'all' || tx.tx_type === filterType;
+
+    const matchesType = filterType === "all" || tx.tx_type === filterType;
     return matchesSearch && matchesType;
   });
 
   // Loading state
-  if (isLoading) {
+  if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
@@ -235,15 +294,19 @@ export default function Dashboard() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-600">Welcome back, {dbUser?.email?.split('@')[0] || 'User'}</p>
+          <p className="text-gray-600">
+            Welcome back, {dbUser?.email?.split("@")[0] || "User"}
+          </p>
         </div>
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
           className="mt-4 md:mt-0 flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <RefreshCw className={`w-4 h-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
-          {isRefreshing ? 'Refreshing...' : 'Refresh'}
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
+          />
+          {isRefreshing ? "Refreshing..." : "Refresh"}
         </button>
       </div>
 
@@ -253,11 +316,18 @@ export default function Dashboard() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-500">Total Balance</p>
-              <p className="text-3xl font-bold mt-1">{formatCurrency(totalBalance)}</p>
+              <p className="text-3xl font-bold mt-1">
+                {formatCurrency(totalBalance)}
+              </p>
               <div className="flex items-center mt-2">
-                <TrendingUp className={`w-4 h-4 ${change24h >= 0 ? 'text-green-500' : 'text-red-500'} mr-1`} />
-                <span className={`text-sm ${change24h >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                  {change24h >= 0 ? '+' : ''}{change24hPercent.toFixed(2)}% ({formatCurrency(change24h)})
+                <TrendingUp
+                  className={`w-4 h-4 ${change24h >= 0 ? "text-green-500" : "text-red-500"} mr-1`}
+                />
+                <span
+                  className={`text-sm ${change24h >= 0 ? "text-green-500" : "text-red-500"}`}
+                >
+                  {change24h >= 0 ? "+" : ""}
+                  {change24hPercent.toFixed(2)}% ({formatCurrency(change24h)})
                 </span>
                 <span className="text-xs text-gray-500 ml-2">24h</span>
               </div>
@@ -284,9 +354,11 @@ export default function Dashboard() {
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-500">Recent Transactions</p>
+              <p className="text-sm font-medium text-gray-500">
+                Recent Transactions
+              </p>
               <p className="text-3xl font-bold mt-1">
-                {transactions.filter(tx => tx.status === 'pending').length}
+                {transactions.filter((tx) => tx.status === "pending").length}
               </p>
               <p className="text-sm text-gray-500 mt-2">Pending transactions</p>
             </div>
@@ -304,27 +376,44 @@ export default function Dashboard() {
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="text-lg font-semibold">Your Assets</h2>
-                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+                <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                  View All
+                </button>
               </div>
             </div>
-            
+
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Asset
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Balance
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Price
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       24h
                     </th>
-                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
                       Value
                     </th>
                   </tr>
@@ -336,26 +425,41 @@ export default function Dashboard() {
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center">
                             {asset.logo_url ? (
-                              <img className="w-8 h-8 rounded-full mr-3" src={asset.logo_url} alt={asset.symbol} />
+                              <img
+                                className="w-8 h-8 rounded-full mr-3"
+                                src={asset.logo_url}
+                                alt={asset.symbol}
+                              />
                             ) : (
                               <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                                <span className="text-xs font-medium text-gray-500">{asset.symbol.substring(0, 2)}</span>
+                                <span className="text-xs font-medium text-gray-500">
+                                  {asset.symbol.substring(0, 2)}
+                                </span>
                               </div>
                             )}
                             <div>
-                              <div className="text-sm font-medium text-gray-900">{asset.name}</div>
-                              <div className="text-sm text-gray-500">{asset.symbol}</div>
+                              <div className="text-sm font-medium text-gray-900">
+                                {asset.name}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                {asset.symbol}
+                              </div>
                             </div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                          {asset.balance.toLocaleString(undefined, { maximumFractionDigits: 8 })}
+                          {asset.balance.toLocaleString(undefined, {
+                            maximumFractionDigits: 8,
+                          })}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
                           {formatCurrency(asset.price_usd)}
                         </td>
-                        <td className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${asset.change_24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {asset.change_24h >= 0 ? '+' : ''}{asset.change_24h.toFixed(2)}%
+                        <td
+                          className={`px-6 py-4 whitespace-nowrap text-right text-sm font-medium ${asset.change_24h >= 0 ? "text-green-600" : "text-red-600"}`}
+                        >
+                          {asset.change_24h >= 0 ? "+" : ""}
+                          {asset.change_24h.toFixed(2)}%
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
                           {formatCurrency(asset.value_usd)}
@@ -364,7 +468,10 @@ export default function Dashboard() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                      <td
+                        colSpan={5}
+                        className="px-6 py-8 text-center text-gray-500"
+                      >
                         No assets found. Connect a wallet to get started.
                       </td>
                     </tr>
@@ -381,7 +488,7 @@ export default function Dashboard() {
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-lg font-semibold">Portfolio Value</h2>
               <div className="flex items-center space-x-2">
-                <select 
+                <select
                   className="text-sm border border-gray-200 rounded-lg px-3 py-1 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   defaultValue="7d"
                 >
@@ -394,38 +501,50 @@ export default function Dashboard() {
                 </select>
               </div>
             </div>
-            
+
             <div className="h-64">
               {portfolioData.length > 0 ? (
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={portfolioData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis 
-                      dataKey="timestamp" 
-                      axisLine={false} 
-                      tickLine={false} 
+                    <XAxis
+                      dataKey="timestamp"
+                      axisLine={false}
+                      tickLine={false}
                       tickFormatter={(value) => {
                         const date = new Date(value);
                         return `${date.getMonth() + 1}/${date.getDate()}`;
                       }}
                     />
-                    <YAxis 
-                      axisLine={false} 
-                      tickLine={false} 
-                      tickFormatter={(value) => `$${(value / 1000).toFixed(0)}K`}
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tickFormatter={(value) =>
+                        `$${(value / 1000).toFixed(0)}K`
+                      }
                       width={40}
                     />
-                    <Tooltip 
-                      formatter={(value: number) => [formatCurrency(Number(value)), 'Portfolio Value']}
-                      labelFormatter={(label) => `Date: ${new Date(label).toLocaleDateString()}`}
+                    <Tooltip
+                      formatter={(value: number) => [
+                        formatCurrency(Number(value)),
+                        "Portfolio Value",
+                      ]}
+                      labelFormatter={(label) =>
+                        `Date: ${new Date(label).toLocaleDateString()}`
+                      }
                     />
-                    <Line 
-                      type="monotone" 
-                      dataKey="value" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2} 
+                    <Line
+                      type="monotone"
+                      dataKey="value"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
                       dot={false}
-                      activeDot={{ r: 6, stroke: '#2563eb', strokeWidth: 2, fill: '#fff' }}
+                      activeDot={{
+                        r: 6,
+                        stroke: "#2563eb",
+                        strokeWidth: 2,
+                        fill: "#fff",
+                      }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -435,22 +554,27 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-            
+
             <div className="mt-6 pt-6 border-t border-gray-100">
               <div className="flex justify-between items-center">
                 <div>
                   <p className="text-sm text-gray-500">24h Change</p>
-                  <p className={`text-lg font-semibold ${change24h >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                    {change24h >= 0 ? '+' : ''}{formatCurrency(change24h)} ({change24h >= 0 ? '+' : ''}{change24hPercent.toFixed(2)}%)
+                  <p
+                    className={`text-lg font-semibold ${change24h >= 0 ? "text-green-600" : "text-red-600"}`}
+                  >
+                    {change24h >= 0 ? "+" : ""}
+                    {formatCurrency(change24h)} ({change24h >= 0 ? "+" : ""}
+                    {change24hPercent.toFixed(2)}%)
                   </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm text-gray-500">All Time High</p>
                   <p className="text-lg font-semibold text-gray-900">
-                    {portfolioData.length > 0 
-                      ? formatCurrency(Math.max(...portfolioData.map(p => p.value)))
-                      : formatCurrency(0)
-                    }
+                    {portfolioData.length > 0
+                      ? formatCurrency(
+                          Math.max(...portfolioData.map((p) => p.value)),
+                        )
+                      : formatCurrency(0)}
                   </p>
                 </div>
               </div>
@@ -463,7 +587,9 @@ export default function Dashboard() {
       <div className="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
         <div className="p-6 border-b border-gray-100">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-center">
-            <h2 className="text-lg font-semibold mb-4 md:mb-0">Recent Transactions</h2>
+            <h2 className="text-lg font-semibold mb-4 md:mb-0">
+              Recent Transactions
+            </h2>
             <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full md:w-auto">
               <div className="relative flex-1 md:w-64">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -490,27 +616,45 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        
+
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Transaction
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Type
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Amount
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Value
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Status
                 </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Time
                 </th>
               </tr>
@@ -526,36 +670,54 @@ export default function Dashboard() {
                         </div>
                         <div className="ml-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {tx.tx_type.charAt(0).toUpperCase() + tx.tx_type.slice(1)}
+                            {tx.tx_type.charAt(0).toUpperCase() +
+                              tx.tx_type.slice(1)}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {tx.tx_hash ? `${tx.tx_hash.substring(0, 6)}...${tx.tx_hash.substring(tx.tx_hash.length - 4)}` : 'N/A'}
+                            {tx.tx_hash
+                              ? `${tx.tx_hash.substring(0, 6)}...${tx.tx_hash.substring(tx.tx_hash.length - 4)}`
+                              : "N/A"}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        tx.tx_type === 'receive' 
-                          ? 'bg-green-100 text-green-800' 
-                          : tx.tx_type === 'send' 
-                            ? 'bg-red-100 text-red-800' 
-                            : 'bg-blue-100 text-blue-800'
-                      }`}>
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          tx.tx_type === "receive"
+                            ? "bg-green-100 text-green-800"
+                            : tx.tx_type === "send"
+                              ? "bg-red-100 text-red-800"
+                              : "bg-blue-100 text-blue-800"
+                        }`}
+                      >
                         {tx.tx_type}
                       </span>
                     </td>
-                    <td className={`px-6 py-4 whitespace-nowrap text-right text-sm ${
-                      tx.tx_type === 'receive' ? 'text-green-600' : 'text-gray-900'
-                    }`}>
-                      {tx.tx_type === 'receive' ? '+' : tx.tx_type === 'send' ? '-' : ''}
-                      {tx.amount.toLocaleString(undefined, { maximumFractionDigits: 8 })} {tx.symbol}
+                    <td
+                      className={`px-6 py-4 whitespace-nowrap text-right text-sm ${
+                        tx.tx_type === "receive"
+                          ? "text-green-600"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {tx.tx_type === "receive"
+                        ? "+"
+                        : tx.tx_type === "send"
+                          ? "-"
+                          : ""}
+                      {tx.amount.toLocaleString(undefined, {
+                        maximumFractionDigits: 8,
+                      })}{" "}
+                      {tx.symbol}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
                       {formatCurrency(tx.amount_usd)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span className={`text-xs font-medium ${getStatusColor(tx.status)}`}>
+                      <span
+                        className={`text-xs font-medium ${getStatusColor(tx.status)}`}
+                      >
                         {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
                       </span>
                     </td>
@@ -566,22 +728,27 @@ export default function Dashboard() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-gray-500">
-                    {searchTerm || filterType !== 'all' 
-                      ? 'No transactions match your search criteria.' 
-                      : 'No transactions found. Your transactions will appear here.'}
+                  <td
+                    colSpan={6}
+                    className="px-6 py-8 text-center text-gray-500"
+                  >
+                    {searchTerm || filterType !== "all"
+                      ? "No transactions match your search criteria."
+                      : "No transactions found. Your transactions will appear here."}
                   </td>
                 </tr>
               )}
             </tbody>
           </table>
         </div>
-        
+
         {filteredTransactions.length > 0 && (
           <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
             <div className="text-sm text-gray-500">
-              Showing <span className="font-medium">1</span> to <span className="font-medium">{filteredTransactions.length}</span> of{' '}
-              <span className="font-medium">{transactions.length}</span> transactions
+              Showing <span className="font-medium">1</span> to{" "}
+              <span className="font-medium">{filteredTransactions.length}</span>{" "}
+              of <span className="font-medium">{transactions.length}</span>{" "}
+              transactions
             </div>
             <div className="flex space-x-2">
               <button
@@ -600,7 +767,7 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-      
+
       {/* Quick Actions */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
