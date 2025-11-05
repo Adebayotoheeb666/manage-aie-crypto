@@ -156,8 +156,11 @@ export const handleSignIn: RequestHandler = async (req, res) => {
 export const handleSignOut: RequestHandler = async (req, res) => {
   // If client stored sv_session cookie, clear it
   try {
-    // Attempt to clear cookie via Set-Cookie
+    // Attempt to clear cookies via Set-Cookie
     res.cookie("sv_session", "", { httpOnly: true, maxAge: 0, path: "/" });
+    try {
+      res.cookie("sv_session_set", "", { httpOnly: false, maxAge: 0, path: "/" });
+    } catch (e) {}
   } catch (e) {
     // ignore
   }
