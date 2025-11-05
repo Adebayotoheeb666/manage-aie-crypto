@@ -784,9 +784,6 @@ const isValidWord = (word: string): boolean => {
 export default function ConnectWallet() {
   const navigate = useNavigate();
   const { connectWallet: authConnectWallet } = useAuth();
-  const [connectionTab, setConnectionTab] = useState<"metamask" | "seedphrase">(
-    "metamask",
-  );
   const [wordCount, setWordCount] = useState(12);
   const [words, setWords] = useState<string[]>(Array(12).fill(""));
   const [showWords, setShowWords] = useState(false);
