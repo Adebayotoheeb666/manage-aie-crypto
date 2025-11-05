@@ -126,7 +126,9 @@ export default function Dashboard() {
   // Fetch transaction history
   const fetchTransactions = async () => {
     try {
-      const response = await fetch('/api/transactions');
+      const response = await fetch('/api/transactions', {
+        credentials: 'include',
+      });
       if (!response.ok) throw new Error('Failed to fetch transactions');
       const data = await response.json();
       setTransactions(data.transactions || []);
