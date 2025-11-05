@@ -252,7 +252,7 @@ export default function Dashboard() {
   });
 
   // Loading state
-  if (isLoading || authLoading) {
+  if (isLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
