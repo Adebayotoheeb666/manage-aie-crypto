@@ -198,44 +198,20 @@ export const handleGetNonce: RequestHandler = async (req, res) => {
 };
 
 export const handleWalletConnect: RequestHandler = async (req, res) => {
-  // Log the raw request body and headers for debugging
-  console.log('=== WALLET CONNECT REQUEST ===');
-  console.log('Raw request body:', (req as any).rawBody || req.body);
-  console.log('Request headers:', req.headers);
-  
-  // Parse the request body
-  let requestBody = req.body;
-  
-  // If body is empty, try to parse it from raw body
-  if ((!requestBody || Object.keys(requestBody).length === 0) && (req as any).rawBody) {
-    try {
-      console.log('Attempting to parse raw body...');
-      requestBody = JSON.parse((req as any).rawBody);
-      console.log('Successfully parsed raw body:', requestBody);
-    } catch (e) {
-      console.error('Error parsing raw body:', e);
-      return res.status(400).json({ 
-        error: "Invalid request body",
-        details: e.message 
-      });
-    }
-  }
-
-  // Now try to get the wallet address
-  const walletAddressRaw = requestBody?.walletAddress || requestBody?.wallet_address || "";
-  console.log('Extracted wallet address:', walletAddressRaw);
+  // Extract wallet address from request body
+  const walletAddressRaw =
+    req.body?.walletAddress || req.body?.wallet_address || "";
 
   if (!walletAddressRaw) {
-    console.error('No wallet address found in request body. Full body:', requestBody);
-    return res.status(400).json({ 
+    console.error("[wallet-connect] No wallet address in request body");
+    return res.status(400).json({
       error: "Wallet address is required",
-      receivedBody: requestBody
     });
   }
 
   const walletAddress = String(walletAddressRaw).trim();
-  const signature = String(requestBody?.signature || "");
-  const nonce = String(requestBody?.nonce || "");
+  const signature = String(req.body?.signature || "");
+  const nonce = String(req.body?.nonce || "");
 
   // Basic logging for debugging (avoid logging full PII in production)
   const remoteIp = (
@@ -314,11 +290,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       console.info("[wallet-connect] Supabase client created successfully");
     } catch (err) {
       console.error("[wallet-connect] Supabase client creation failed", err);
-      return res
-        .status(500)
-        .json({
-          error: "Supabase client creation failed: " + (err.message || err),
-        });
+      return res.status(500).json({
+        error: "Supabase client creation failed: " + (err.message || err),
+      });
     }
     // Ensure user profile exists in users table. Use primary_wallet_address for wallet users
     let existing, existingErr;
@@ -415,23 +389,19 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         path: "/",
       });
 
-      return res
-        .status(200)
-        .json({
-          user: { id: profile.id, address: walletAddress },
-          profile,
-          isNewWallet: !existing,
-        });
+      return res.status(200).json({
+        user: { id: profile.id, address: walletAddress },
+        profile,
+        isNewWallet: !existing,
+      });
     } catch (err) {
       console.error("[wallet-connect] session creation failed", err);
       // fallback to returning user without cookie
-      return res
-        .status(200)
-        .json({
-          user: { id: profile.id, address: walletAddress },
-          profile,
-          isNewWallet: !existing,
-        });
+      return res.status(200).json({
+        user: { id: profile.id, address: walletAddress },
+        profile,
+        isNewWallet: !existing,
+      });
     }
   } catch (err) {
     const message =
@@ -510,12 +480,10 @@ export const handleGetSession: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: profileErr.message });
     }
 
-    return res
-      .status(200)
-      .json({
-        user: { id: (profile && profile.id) || null, address: payload.sub },
-        profile: profile || null,
-      });
+    return res.status(200).json({
+      user: { id: (profile && profile.id) || null, address: payload.sub },
+      profile: profile || null,
+    });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : "Failed to get session";
