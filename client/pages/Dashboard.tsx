@@ -85,7 +85,6 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, loading, navigate]);
 
-
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
     try {

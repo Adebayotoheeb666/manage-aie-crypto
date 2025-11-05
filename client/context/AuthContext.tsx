@@ -177,17 +177,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
    * @param walletAddress The Ethereum address derived from the seed phrase
    */
   async function connectWallet(walletAddress: string) {
-    console.log('[connectWallet] Starting wallet connection...');
+    console.log("[connectWallet] Starting wallet connection...");
     setError(null);
     setLoading(true);
-    
+
     try {
-      console.log('[connectWallet] Validating address:', walletAddress);
-      
+      console.log("[connectWallet] Validating address:", walletAddress);
+
       // Validate wallet address format
       if (!walletAddress || !ethers.isAddress(walletAddress)) {
         const errorMsg = "Invalid wallet address format";
-        console.error('[connectWallet] Invalid wallet address:', walletAddress);
+        console.error("[connectWallet] Invalid wallet address:", walletAddress);
         setError(errorMsg);
         toast({
           title: "Wallet connection failed",
@@ -199,41 +199,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Normalize the address
       const normalized = ethers.getAddress(walletAddress);
-      console.log('[connectWallet] Normalized address:', normalized);
-      
+      console.log("[connectWallet] Normalized address:", normalized);
+
       // Attempt to authenticate with the wallet
       const apiUrl = "/api/auth/wallet-connect";
       console.log(`[connectWallet] Sending request to ${apiUrl}...`);
-      
+
       const requestBody = JSON.stringify({ walletAddress: normalized });
-      console.log('[connectWallet] Request body:', requestBody);
-      
+      console.log("[connectWallet] Request body:", requestBody);
+
       let response;
       try {
         response = await fetch(apiUrl, {
           method: "POST",
-          headers: { 
+          headers: {
             "Content-Type": "application/json",
-            "Accept": "application/json"
+            Accept: "application/json",
           },
           body: requestBody,
-          credentials: "include"
+          credentials: "include",
         });
-        console.log('[connectWallet] Request completed, status:', response.status);
+        console.log(
+          "[connectWallet] Request completed, status:",
+          response.status,
+        );
       } catch (fetchError) {
-        console.error('[connectWallet] Fetch error:', fetchError);
+        console.error("[connectWallet] Fetch error:", fetchError);
         throw new Error(`Network error: ${fetchError.message}`);
       }
-      
+
       let data;
       try {
         const responseText = await response.text();
-        console.log('[connectWallet] Raw response:', responseText);
+        console.log("[connectWallet] Raw response:", responseText);
         data = responseText ? JSON.parse(responseText) : null;
-        console.log('[connectWallet] Parsed response data:', data);
+        console.log("[connectWallet] Parsed response data:", data);
       } catch (parseErr) {
         const errorMsg = `Server error (${response.status}): Invalid response format`;
-        console.error('[connectWallet] Parse error:', parseErr);
+        console.error("[connectWallet] Parse error:", parseErr);
         setError(errorMsg);
         toast({
           title: "Connection Error",
@@ -244,8 +247,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (!response.ok) {
-        const errorMsg = data?.error || `Server responded with status ${response.status}`;
-        console.error('[connectWallet] Server error:', errorMsg);
+        const errorMsg =
+          data?.error || `Server responded with status ${response.status}`;
+        console.error("[connectWallet] Server error:", errorMsg);
         setError(errorMsg);
         toast({
           title: "Connection Failed",
@@ -257,7 +261,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (!data?.user) {
         const errorMsg = "No user data received from server";
-        console.error('[connectWallet] No user data:', data);
+        console.error("[connectWallet] No user data:", data);
         setError(errorMsg);
         toast({
           title: "Connection Failed",
@@ -269,40 +273,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Verify server-side session is established by calling /api/auth/session
       try {
-        const sessionResp = await fetch('/api/auth/session', { credentials: 'include' });
+        const sessionResp = await fetch("/api/auth/session", {
+          credentials: "include",
+        });
         if (!sessionResp.ok) {
           // If server did not set cookie/session, treat as failure to authenticate for API requests
-          console.error('[connectWallet] Server session not established, status:', sessionResp.status);
+          console.error(
+            "[connectWallet] Server session not established, status:",
+            sessionResp.status,
+          );
           const errData = await sessionResp.json().catch(() => null);
-          const message = errData?.error || 'Server session not established. Ensure cookies are enabled and site is served over HTTPS.';
+          const message =
+            errData?.error ||
+            "Server session not established. Ensure cookies are enabled and site is served over HTTPS.";
 
           // Fetch debug session info from server for diagnostics
           try {
-            const debugResp = await fetch('/api/debug/session', { credentials: 'include' });
+            const debugResp = await fetch("/api/debug/session", {
+              credentials: "include",
+            });
             const debugJson = await debugResp.json().catch(() => null);
-            console.debug('[connectWallet] /api/debug/session:', debugJson);
+            console.debug("[connectWallet] /api/debug/session:", debugJson);
             // Also expose to user via toast if meaningful
             if (debugJson && debugJson.verification) {
-              console.warn('[connectWallet] Session verification:', debugJson.verification);
+              console.warn(
+                "[connectWallet] Session verification:",
+                debugJson.verification,
+              );
             }
           } catch (debugErr) {
-            console.warn('[connectWallet] Failed to fetch debug session info', debugErr);
+            console.warn(
+              "[connectWallet] Failed to fetch debug session info",
+              debugErr,
+            );
           }
 
           setError(message);
           toast({
-            title: 'Connection Failed',
+            title: "Connection Failed",
             description: message,
-            variant: 'destructive',
+            variant: "destructive",
           });
           return null;
         }
 
         const sessionData = await sessionResp.json();
         if (!sessionData?.user) {
-          const message = 'Server session returned no user';
+          const message = "Server session returned no user";
           setError(message);
-          toast({ title: 'Connection Failed', description: message, variant: 'destructive' });
+          toast({
+            title: "Connection Failed",
+            description: message,
+            variant: "destructive",
+          });
           return null;
         }
 
@@ -312,23 +335,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         // Store in localStorage for quick restore (not used as primary auth source)
         try {
-          localStorage.setItem('auth_session', JSON.stringify({ user: sessionData.user, profile: sessionData.profile || data.profile }));
+          localStorage.setItem(
+            "auth_session",
+            JSON.stringify({
+              user: sessionData.user,
+              profile: sessionData.profile || data.profile,
+            }),
+          );
         } catch {}
       } catch (err) {
-        console.error('[connectWallet] Failed to verify server session', err);
-        const message = err instanceof Error ? err.message : 'Failed to verify server session';
+        console.error("[connectWallet] Failed to verify server session", err);
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to verify server session";
         setError(message);
-        toast({ title: 'Connection Failed', description: message, variant: 'destructive' });
+        toast({
+          title: "Connection Failed",
+          description: message,
+          variant: "destructive",
+        });
         return null;
       }
 
       // Auto-register wallet in Supabase if not already registered
       try {
         if (data.profile?.id) {
-          console.log('[connectWallet] Checking for existing assets...');
+          console.log("[connectWallet] Checking for existing assets...");
           const existingAssets = await getUserAssets(data.profile.id);
           if (existingAssets.length === 0) {
-            console.log('[connectWallet] Creating new wallet...');
+            console.log("[connectWallet] Creating new wallet...");
             await createWallet(
               data.profile.id,
               normalized,
@@ -338,12 +374,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       } catch (walletErr) {
-        console.warn("[connectWallet] Failed to auto-register wallet:", walletErr);
+        console.warn(
+          "[connectWallet] Failed to auto-register wallet:",
+          walletErr,
+        );
         // Don't fail the entire process if wallet registration fails
       }
 
-      console.log('[connectWallet] Wallet connection successful');
-      
+      console.log("[connectWallet] Wallet connection successful");
+
       // Show success message
       toast({
         title: "Wallet Connected",

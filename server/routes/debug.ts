@@ -30,7 +30,8 @@ export const handleDebugSession: RequestHandler = async (req, res) => {
       token: token ? "(redacted)" : null,
       tokenPayload: null,
       userProfile: null,
-      message: "Diagnostic information - do not share sensitive tokens publicly",
+      message:
+        "Diagnostic information - do not share sensitive tokens publicly",
     };
 
     if (!token) {
@@ -38,7 +39,9 @@ export const handleDebugSession: RequestHandler = async (req, res) => {
     }
 
     const SESSION_SECRET =
-      process.env.SESSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+      process.env.SESSION_JWT_SECRET ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      "";
     if (!SESSION_SECRET) {
       result.verification = "SESSION_JWT_SECRET not configured on server";
       return res.status(200).json(result);
@@ -57,7 +60,11 @@ export const handleDebugSession: RequestHandler = async (req, res) => {
     try {
       let profile = null;
       if (payload.uid) {
-        const { data } = await supabase.from("users").select("*").eq("id", payload.uid).single();
+        const { data } = await supabase
+          .from("users")
+          .select("*")
+          .eq("id", payload.uid)
+          .single();
         profile = data || null;
       } else if (payload.sub) {
         const walletAddress = String(payload.sub).toLowerCase();
@@ -76,6 +83,8 @@ export const handleDebugSession: RequestHandler = async (req, res) => {
     return res.status(200).json(result);
   } catch (err) {
     console.error("[debug-session] error:", err);
-    return res.status(500).json({ ok: false, error: String(err?.message || err) });
+    return res
+      .status(500)
+      .json({ ok: false, error: String(err?.message || err) });
   }
 };
