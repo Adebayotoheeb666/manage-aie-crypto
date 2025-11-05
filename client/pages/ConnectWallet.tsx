@@ -2,7 +2,6 @@ import { useState, useRef } from "react";
 import { ethers } from "ethers";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { WalletConnectButton } from "@/components/WalletConnectButton";
 import { useAuth } from "@/context/AuthContext";
 import {
   AlertCircle,
