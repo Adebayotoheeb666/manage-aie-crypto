@@ -40,16 +40,13 @@ if (!SUPABASE_ANON_KEY) {
 
 // Lazily initialize Supabase client. If envs are missing the proxy will throw a clear error
 let _supabaseClient: SupabaseClient<Database> | null = null;
+let _consoleErrorOverridden = false;
+
 function createSupabaseClient(): SupabaseClient<Database> {
   if (_supabaseClient) return _supabaseClient;
 
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
-    // Suppress console errors from Supabase during network failures
-    // since we handle them gracefully with fallbacks
-    const originalError = console.error;
-    const suppressedErrors = new Set<string>();
-
     _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
@@ -58,17 +55,23 @@ function createSupabaseClient(): SupabaseClient<Database> {
       },
     });
 
-    // Override console.error to suppress "Failed to fetch" errors from Supabase
-    // since we have fallback handlers for these
-    if (typeof window !== "undefined") {
+    // Suppress Supabase network errors in console since we have fallback handlers
+    if (typeof window !== "undefined" && !_consoleErrorOverridden) {
+      _consoleErrorOverridden = true;
+      const originalError = console.error;
       console.error = function (...args: any[]) {
-        const message = String(args[0] || "");
+        const message = args
+          .map((arg) => {
+            if (typeof arg === "string") return arg;
+            if (arg instanceof Error) return arg.message;
+            return String(arg);
+          })
+          .join(" ");
+
         if (
           message.includes("Failed to fetch") ||
-          message.includes("Network request failed") ||
-          message.includes("CORS")
+          message.includes("Network request failed")
         ) {
-          // Suppress error
           return;
         }
         originalError.apply(console, args);
