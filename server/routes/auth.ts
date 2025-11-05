@@ -92,6 +92,40 @@ export const handleSignIn: RequestHandler = async (req, res) => {
         return res.status(500).json({ error: profileError.message });
       }
 
+      // Create app session token (signed JWT) and set as httpOnly cookie
+      try {
+        const SESSION_SECRET =
+          process.env.SESSION_JWT_SECRET ||
+          process.env.SUPABASE_SERVICE_ROLE_KEY ||
+          "";
+        if (!SESSION_SECRET) {
+          return res.status(200).json({
+            session: data.session,
+            user: data.user,
+            profile: profile || null,
+          });
+        }
+
+        const { signSession } = require("../lib/session");
+        const token = signSession(
+          { sub: data.user.id, uid: profile?.id },
+          SESSION_SECRET,
+          60 * 60 * 2,
+        );
+
+        // Set cookie
+        res.cookie("sv_session", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === "production",
+          sameSite: "lax",
+          maxAge: 1000 * 60 * 60 * 2,
+          path: "/",
+        });
+      } catch (err) {
+        console.error("[sign-in] session creation failed", err);
+        // Continue without cookie if session creation fails
+      }
+
       return res.status(200).json({
         session: data.session,
         user: data.user,
