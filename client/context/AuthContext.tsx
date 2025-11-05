@@ -267,22 +267,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      console.log('[connectWallet] Updating auth state with user:', data.user);
-      
-      // Update auth state
-      setAuthUser(data.user);
-      if (data.profile) {
-        setDbUser(data.profile);
-      }
-      
-      // Store in localStorage
+      // Verify server-side session is established by calling /api/auth/session
       try {
-        const sessionData = { user: data.user, profile: data.profile };
-        console.log('[connectWallet] Storing session in localStorage');
-        localStorage.setItem("auth_session", JSON.stringify(sessionData));
-      } catch (storageError) {
-        console.warn('[connectWallet] Failed to store session:', storageError);
-        // Continue even if localStorage fails
+        const sessionResp = await fetch('/api/auth/session', { credentials: 'include' });
+        if (!sessionResp.ok) {
+          // If server did not set cookie/session, treat as failure to authenticate for API requests
+          console.error('[connectWallet] Server session not established, status:', sessionResp.status);
+          const errData = await sessionResp.json().catch(() => null);
+          const message = errData?.error || 'Server session not established. Ensure cookies are enabled and site is served over HTTPS.';
+          setError(message);
+          toast({
+            title: 'Connection Failed',
+            description: message,
+            variant: 'destructive',
+          });
+          return null;
+        }
+
+        const sessionData = await sessionResp.json();
+        if (!sessionData?.user) {
+          const message = 'Server session returned no user';
+          setError(message);
+          toast({ title: 'Connection Failed', description: message, variant: 'destructive' });
+          return null;
+        }
+
+        // Update auth state from authoritative server session
+        setAuthUser(sessionData.user);
+        setDbUser(sessionData.profile || data.profile || null);
+
+        // Store in localStorage for quick restore (not used as primary auth source)
+        try {
+          localStorage.setItem('auth_session', JSON.stringify({ user: sessionData.user, profile: sessionData.profile || data.profile }));
+        } catch {}
+      } catch (err) {
+        console.error('[connectWallet] Failed to verify server session', err);
+        const message = err instanceof Error ? err.message : 'Failed to verify server session';
+        setError(message);
+        toast({ title: 'Connection Failed', description: message, variant: 'destructive' });
+        return null;
       }
 
       // Auto-register wallet in Supabase if not already registered
