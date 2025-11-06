@@ -2,7 +2,22 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
-import { createWallet, getUserAssets, supabase } from "@shared/lib/supabase";
+// Import the supabase client and its types
+import { supabase } from '@shared/lib/supabase';
+import type { Database } from '@shared/types/database';
+
+type Wallet = Database['public']['Tables']['wallets']['Row'];
+
+// Mock functions for testing in test environment
+let mockCreateWallet: any;
+let mockGetUserAssets: any;
+
+if (process.env.NODE_ENV === 'test') {
+  // In test environment, use the mock implementation
+  const mockSupabase = await import('@shared/lib/__mocks__/supabase');
+  mockCreateWallet = mockSupabase.createWallet;
+  mockGetUserAssets = mockSupabase.getUserAssets;
+}
 
 interface AuthUser {
   id: string;
@@ -10,7 +25,7 @@ interface AuthUser {
   user_metadata?: Record<string, any>;
 }
 
-interface AuthContextType {
+export interface AuthContextType {
   authUser: AuthUser | null;
   dbUser: DBUser | null;
   loading: boolean;
@@ -22,7 +37,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -342,7 +357,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               profile: sessionData.profile || data.profile,
             }),
           );
-        } catch {}
+        } catch (storageError) {
+          console.warn("[connectWallet] Failed to store session in localStorage", storageError);
+          // Continue even if localStorage fails
+        }
       } catch (err) {
         console.error("[connectWallet] Failed to verify server session", err);
         const message =
@@ -353,56 +371,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         toast({
           title: "Connection Failed",
           description: message,
-          variant: "destructive",
         });
-        return null;
-      }
-
-      // Check if wallet exists and update last connected time
-      try {
-        if (data.profile?.id) {
-          console.log("[connectWallet] Checking for existing wallet...");
-          const { data: existingWallets, error: walletError } = await supabase
-            .from('wallets')
-            .select('*')
-            .eq('wallet_address', normalized.toLowerCase())
-            .eq('user_id', data.profile.id);
-
-          if (walletError) throw walletError;
-
-          if (existingWallets && existingWallets.length > 0) {
-            console.log("[connectWallet] Wallet exists, updating last connected time...");
-            // Update last connected time with proper type
-            const updateData = {
-              is_active: true,
-              connected_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            } as const;
-            
-            const { error: updateError } = await supabase
-              .from('wallets')
-              .update(updateData)
-              .eq('wallet_address', normalized.toLowerCase())
-              .eq('user_id', data.profile.id);
-
-            if (updateError) throw updateError;
-          } else {
-            console.log("[connectWallet] Creating new wallet...");
-            // Only create if it doesn't exist
-            await createWallet(
-              data.profile.id,
-              normalized,
-              "metamask",
-              "Primary Wallet"
-            );
-          }
-        }
-      } catch (walletErr) {
-        console.warn(
-          "[connectWallet] Wallet operation failed:",
-          walletErr,
-        );
-        // Don't fail the entire process if wallet operation fails
+        throw err; // Re-throw to be caught by the outer catch
       }
 
       console.log("[connectWallet] Wallet connection successful");

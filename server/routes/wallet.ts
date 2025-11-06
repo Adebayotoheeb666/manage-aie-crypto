@@ -1,12 +1,23 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../lib/supabase";
-import { authMiddleware } from "../middleware/auth";
+import { sessionAuth } from "../middleware/auth";
 import { ethers } from "ethers";
+import { verifyMessage } from 'ethers';
+
+interface WalletConnectRequest {
+  walletData: {
+    address: string;
+    chainId: number;
+    isConnected: boolean;
+    signature?: string;
+    message?: string;
+  };
+}
 
 const router = Router();
 
 // Get user's assets
-router.get("/assets", authMiddleware, async (req: any, res: Response) => {
+router.get("/assets", sessionAuth, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
 
@@ -104,7 +115,7 @@ router.get("/assets", authMiddleware, async (req: any, res: Response) => {
 });
 
 // Sync wallet balances with blockchain
-router.post("/sync-balances", authMiddleware, async (req: any, res: Response) => {
+router.post("/sync-balances", sessionAuth, async (req: any, res: Response) => {
   try {
     const userId = req.user.id;
     const { walletId } = req.body;
@@ -222,6 +233,131 @@ router.post("/sync-balances", authMiddleware, async (req: any, res: Response) =>
       error: "Failed to sync wallet balances",
       details: error.message,
     });
+  }
+});
+
+// Connect a wallet to the user's account
+router.post("/connect", sessionAuth, async (req: Request & { user?: any }, res: Response) => {
+  try {
+    console.log('Wallet connect request received:', {
+      user: req.user,
+      body: req.body,
+      headers: req.headers,
+      cookies: req.cookies
+    });
+
+    const userId = req.user?.id;
+    const { walletData } = req.body as WalletConnectRequest;
+
+    console.log('Extracted userId and walletData:', { userId, walletData });
+
+    if (!userId) {
+      console.error('No user ID found in request');
+      return res.status(401).json({ 
+        success: false, 
+        error: 'Unauthorized: No user ID found' 
+      });
+    }
+
+    if (!walletData || !walletData.address) {
+      return res.status(400).json({ success: false, error: 'Invalid wallet data' });
+    }
+
+    // Verify the wallet address is valid
+    if (!ethers.isAddress(walletData.address)) {
+      return res.status(400).json({ success: false, error: 'Invalid Ethereum address' });
+    }
+
+    // If signature is provided, verify it
+    if (walletData.signature && walletData.message) {
+      try {
+        const signerAddress = verifyMessage(walletData.message, walletData.signature);
+        if (signerAddress.toLowerCase() !== walletData.address.toLowerCase()) {
+          return res.status(400).json({ success: false, error: 'Invalid signature' });
+        }
+      } catch (error) {
+        console.error('Signature verification failed:', error);
+        return res.status(400).json({ success: false, error: 'Invalid signature' });
+      }
+    }
+
+    // Check if wallet already exists for this user
+    const { data: existingWallet, error: walletError } = await supabase
+      .from('wallets')
+      .select('*')
+      .eq('address', walletData.address.toLowerCase())
+      .single();
+
+    if (walletError && walletError.code !== 'PGRST116') { // PGRST116 = not found
+      console.error('Error checking wallet:', walletError);
+      return res.status(500).json({ success: false, error: 'Error checking wallet' });
+    }
+
+    // If wallet exists but is not associated with this user
+    if (existingWallet && existingWallet.user_id !== userId) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'This wallet is already connected to another account' 
+      });
+    }
+
+    // If wallet exists and is already connected to this user
+    if (existingWallet) {
+      return res.json({ 
+        success: true, 
+        message: 'Wallet already connected',
+        wallet: existingWallet
+      });
+    }
+
+    // Create new wallet record
+    const { data: newWallet, error: createError } = await supabase
+      .from('wallets')
+      .insert([
+        {
+          user_id: userId,
+          address: walletData.address.toLowerCase(),
+          chain_id: walletData.chainId || 1, // Default to mainnet
+          is_active: true,
+          is_primary: false, // Don't set as primary by default
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+      ])
+      .select()
+      .single();
+
+    if (createError) {
+      console.error('Error creating wallet:', createError);
+      return res.status(500).json({ success: false, error: 'Failed to connect wallet' });
+    }
+
+    // If this is the user's first wallet, set it as primary
+    const { count, error: countError } = await supabase
+      .from('wallets')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId);
+
+    if (countError) {
+      console.error('Error counting wallets:', countError);
+    } else if (count === 1) {
+      // This is the first wallet, set as primary
+      await supabase
+        .from('wallets')
+        .update({ is_primary: true })
+        .eq('id', newWallet.id);
+      
+      newWallet.is_primary = true;
+    }
+
+    res.json({
+      success: true,
+      message: 'Wallet connected successfully',
+      wallet: newWallet
+    });
+  } catch (error) {
+    console.error('Error connecting wallet:', error);
+    res.status(500).json({ success: false, error: 'Internal server error' });
   }
 });
 

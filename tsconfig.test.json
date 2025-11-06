@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "client/**/*.test.ts",
+    "client/**/*.test.tsx",
+    "test/**/*.ts",
+    "test/**/*.tsx"
+  ]
+}

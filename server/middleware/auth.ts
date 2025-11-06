@@ -120,38 +120,90 @@ export const sessionAuth = async (
   res: Response,
   next: NextFunction,
 ) => {
+  // Get session from cookies or authorization header
+  let sessionToken = req.cookies?.sv_session;
+  
+  if (!sessionToken && req.headers.authorization?.startsWith('Bearer ')) {
+    sessionToken = req.headers.authorization.split(' ')[1];
+  }
+
+  console.log('Session token found:', !!sessionToken);
+  
+  if (!sessionToken) {
+    console.log('No session token found in request');
+    return res.status(401).json({
+      success: false,
+      error: "Session expired. Please log in again.",
+    });
+  }
+
+  // Verify session with Supabase
+  console.log('Verifying session with Supabase...');
+  
   try {
-    // Get session from cookies
-    const sessionToken = req.cookies?.sb_access_token;
-
-    if (!sessionToken) {
+    // Remove 'Bearer ' prefix if present
+    const token = sessionToken.replace(/^Bearer\s+/, '');
+    
+    // Use Supabase's getUser method to verify the token
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
+    
+    console.log('Supabase auth response:', { 
+      hasUser: !!user, 
+      error: userError ? userError.message : 'No error',
+      userId: user?.id
+    });
+    
+    if (userError || !user) {
+      console.error('Authentication failed:', {
+        error: userError ? userError.message : 'No user returned',
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 10) + '...'
+      });
       return res.status(401).json({
         success: false,
-        error: "Session expired. Please log in again.",
+        error: userError?.message || 'Authentication failed',
+        details: 'Please log in again'
       });
     }
 
-    // Verify session with Supabase
-    const {
-      data: { user },
-      error,
-    } = await supabase.auth.getUser(sessionToken);
-
-    if (error || !user) {
+    // Get the full user from the database
+    console.log('Fetching user...', { userId: user.id });
+    const { data: userData, error: dbUserError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_id', user.id)
+      .single();
+      
+    console.log('User fetch result:', {
+      hasUser: !!userData,
+      error: dbUserError ? dbUserError.message : 'No error',
+      userId: userData?.id
+    });
+    
+    if (dbUserError || !userData) {
+      console.error('Failed to fetch user:', {
+        error: dbUserError,
+        userId: user.id,
+        query: `SELECT * FROM users WHERE auth_id = '${user.id}'`
+      });
       return res.status(401).json({
         success: false,
-        error: "Invalid session. Please log in again.",
+        error: 'User not found',
+        details: dbUserError?.message || 'No user found with the provided ID'
       });
     }
 
+    console.log('User authenticated successfully:', { userId: user.id, email: user.email });
+    
     // Attach user to request object
-    req.user = user;
+    req.user = { ...user, ...userData };
     next();
   } catch (error) {
     console.error("Session auth error:", error);
-    return res.status(401).json({
+    return res.status(500).json({
       success: false,
       error: "Authentication failed",
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 };
