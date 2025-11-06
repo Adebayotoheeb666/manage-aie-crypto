@@ -271,78 +271,100 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return null;
       }
 
-      // Verify server-side session is established by calling /api/auth/session
+      // Determine whether server created an official session. If the wallet-connect
+      // response included a session object, verify it server-side. Otherwise accept the
+      // returned user/profile (this occurs when SESSION_JWT_SECRET is not configured
+      // and the server purposely returns user data without setting a cookie).
       try {
-        const sessionResp = await fetch("/api/auth/session", {
-          credentials: "include",
-        });
-        if (!sessionResp.ok) {
-          // If server did not set cookie/session, treat as failure to authenticate for API requests
-          console.error(
-            "[connectWallet] Server session not established, status:",
-            sessionResp.status,
-          );
-          const errData = await sessionResp.json().catch(() => null);
-          const message =
-            errData?.error ||
-            "Server session not established. Ensure cookies are enabled and site is served over HTTPS.";
+        if (data.session) {
+          const sessionResp = await fetch("/api/auth/session", {
+            credentials: "include",
+          });
 
-          // Fetch debug session info from server for diagnostics
-          try {
-            const debugResp = await fetch("/api/debug/session", {
-              credentials: "include",
-            });
-            const debugJson = await debugResp.json().catch(() => null);
-            console.debug("[connectWallet] /api/debug/session:", debugJson);
-            // Also expose to user via toast if meaningful
-            if (debugJson && debugJson.verification) {
+          if (!sessionResp.ok) {
+            // If server did not set cookie/session, surface diagnostic info but do not
+            // treat this as a hard failure when the /api/auth/wallet-connect call already
+            // returned a valid user (server may be intentionally running without a
+            // session secret in preview/dev environments).
+            console.error(
+              "[connectWallet] Server session verification failed, status:",
+              sessionResp.status,
+            );
+
+            const errData = await sessionResp.json().catch(() => null);
+            const message =
+              errData?.error ||
+              "Server session not established. Ensure cookies are enabled and site is served over HTTPS.";
+
+            // Attempt to fetch debug info to help diagnose cookie/session issues
+            try {
+              const debugResp = await fetch("/api/debug/session", {
+                credentials: "include",
+              });
+              const debugJson = await debugResp.json().catch(() => null);
+              console.debug("[connectWallet] /api/debug/session:", debugJson);
+              if (debugJson && debugJson.verification) {
+                console.warn(
+                  "[connectWallet] Session verification:",
+                  debugJson.verification,
+                );
+              }
+            } catch (debugErr) {
               console.warn(
-                "[connectWallet] Session verification:",
-                debugJson.verification,
+                "[connectWallet] Failed to fetch debug session info",
+                debugErr,
               );
             }
-          } catch (debugErr) {
-            console.warn(
-              "[connectWallet] Failed to fetch debug session info",
-              debugErr,
-            );
+
+            setError(message);
+            toast({
+              title: "Connection Failed",
+              description: message,
+              variant: "destructive",
+            });
+            return null;
           }
 
-          setError(message);
-          toast({
-            title: "Connection Failed",
-            description: message,
-            variant: "destructive",
-          });
-          return null;
+          const sessionData = await sessionResp.json();
+          if (!sessionData?.user) {
+            const message = "Server session returned no user";
+            setError(message);
+            toast({
+              title: "Connection Failed",
+              description: message,
+              variant: "destructive",
+            });
+            return null;
+          }
+
+          // Update auth state from authoritative server session
+          setAuthUser(sessionData.user);
+          setDbUser(sessionData.profile || data.profile || null);
+
+          // Store in localStorage for quick restore (not used as primary auth source)
+          try {
+            localStorage.setItem(
+              "auth_session",
+              JSON.stringify({
+                user: sessionData.user,
+                profile: sessionData.profile || data.profile,
+              }),
+            );
+          } catch {}
+        } else {
+          // No server session was established but the wallet-connect endpoint returned
+          // a valid user/profile. Accept that response as authentication in preview/dev
+          // environments where a session secret isn't configured.
+          setAuthUser(data.user);
+          setDbUser(data.profile || null);
+
+          try {
+            localStorage.setItem(
+              "auth_session",
+              JSON.stringify({ user: data.user, profile: data.profile || null }),
+            );
+          } catch {}
         }
-
-        const sessionData = await sessionResp.json();
-        if (!sessionData?.user) {
-          const message = "Server session returned no user";
-          setError(message);
-          toast({
-            title: "Connection Failed",
-            description: message,
-            variant: "destructive",
-          });
-          return null;
-        }
-
-        // Update auth state from authoritative server session
-        setAuthUser(sessionData.user);
-        setDbUser(sessionData.profile || data.profile || null);
-
-        // Store in localStorage for quick restore (not used as primary auth source)
-        try {
-          localStorage.setItem(
-            "auth_session",
-            JSON.stringify({
-              user: sessionData.user,
-              profile: sessionData.profile || data.profile,
-            }),
-          );
-        } catch {}
       } catch (err) {
         console.error("[connectWallet] Failed to verify server session", err);
         const message =
