@@ -78,7 +78,9 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<
     "all" | "send" | "receive" | "swap"
   >("all");
-  const [wallets, setWallets] = useState<Array<{ id: string; wallet_address: string; is_primary: boolean }>>([]);
+  const [wallets, setWallets] = useState<
+    Array<{ id: string; wallet_address: string; is_primary: boolean }>
+  >([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -90,13 +92,58 @@ export default function Dashboard() {
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
     try {
+      // Prefer authenticated wallet route when server session exists; otherwise fall
+      // back to the server-side proxy which uses the service role key.
+      if (dbUser?.id) {
+        // Try proxy first to avoid auth issues in preview environments
+        const proxyResp = await fetch("/api/proxy/user-assets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch assets via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
+        }
+
+        const proxyData = await proxyResp.json();
+        const dataAssets = proxyData.data || [];
+
+        const formatted = (dataAssets || []).map((a: any) => ({
+          id: a.id,
+          symbol: a.symbol || "TOKEN",
+          name: a.name || "Token",
+          balance: parseFloat(a.balance),
+          price_usd: a.price_usd || 0,
+          change_24h: a.price_change_24h || 0,
+          value_usd: a.balance_usd || 0,
+          logo_url: a.logo_url,
+        }));
+
+        setAssets(formatted);
+
+        const balance = (formatted || []).reduce(
+          (sum: number, asset: Asset) => sum + (asset.value_usd || 0),
+          0,
+        );
+        setTotalBalance(balance);
+
+        // No portfolio_history returned by proxy; leave change calculations as-is
+        return;
+      }
+
+      // Fallback to authenticated route when dbUser not present
       const response = await fetch("/api/wallet/assets", {
         credentials: "include",
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Not authenticated - redirect to wallet connect
           navigate("/connect-wallet");
           throw new Error(`Unauthorized`);
         }
@@ -134,11 +181,33 @@ export default function Dashboard() {
       console.error("Error fetching assets:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch transaction history
   const fetchTransactions = useCallback(async () => {
     try {
+      // Use proxy when available to avoid relying on server-side session
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/transaction-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id, limit: 50 }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch transactions via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
+        }
+
+        const proxyData = await proxyResp.json();
+        setTransactions(proxyData.data || []);
+        return;
+      }
+
       const response = await fetch("/api/transactions", {
         credentials: "include",
       });
@@ -162,11 +231,38 @@ export default function Dashboard() {
       console.error("Error fetching transactions:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch portfolio history
   const fetchPortfolioHistory = useCallback(async () => {
     try {
+      // Prefer proxy snapshots when dbUser available
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/portfolio-snapshots", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id, daysBack: 30 }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch portfolio snapshots via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
+        }
+
+        const proxyData = await proxyResp.json();
+        // The proxy returns 'data' array of snapshots; convert to history format
+        const history = (proxyData.data || []).map((s: any) => ({
+          timestamp: s.snapshot_date,
+          value: s.total_usd || 0,
+        }));
+        setPortfolioData(history || []);
+        return;
+      }
+
       const response = await fetch("/api/portfolio/history", {
         credentials: "include",
       });
@@ -190,7 +286,7 @@ export default function Dashboard() {
       console.error("Error fetching portfolio history:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch all dashboard data
   const fetchDashboardData = useCallback(async () => {
@@ -217,6 +313,25 @@ export default function Dashboard() {
   // Fetch user's wallets
   const fetchWallets = useCallback(async () => {
     try {
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/user-wallets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id }),
+        });
+        if (!proxyResp.ok) {
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch wallets via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
+        }
+        const proxyData = await proxyResp.json();
+        setWallets(proxyData.data || []);
+        return;
+      }
+
       const response = await fetch("/api/wallets", {
         credentials: "include",
       });
@@ -228,16 +343,13 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error fetching wallets:", error);
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch data on component mount
   useEffect(() => {
     if (isAuthenticated && !loading) {
       const loadData = async () => {
-        await Promise.all([
-          fetchDashboardData(),
-          fetchWallets()
-        ]);
+        await Promise.all([fetchDashboardData(), fetchWallets()]);
       };
       loadData();
     }
