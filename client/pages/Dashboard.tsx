@@ -90,13 +90,54 @@ export default function Dashboard() {
   // Fetch user's assets
   const fetchAssets = useCallback(async () => {
     try {
+      // Prefer authenticated wallet route when server session exists; otherwise fall
+      // back to the server-side proxy which uses the service role key.
+      if (dbUser?.id) {
+        // Try proxy first to avoid auth issues in preview environments
+        const proxyResp = await fetch("/api/proxy/user-assets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(`Failed to fetch assets via proxy: ${proxyResp.status} ${err.error || ""}`);
+        }
+
+        const proxyData = await proxyResp.json();
+        const dataAssets = proxyData.data || [];
+
+        const formatted = (dataAssets || []).map((a: any) => ({
+          id: a.id,
+          symbol: a.symbol || "TOKEN",
+          name: a.name || "Token",
+          balance: parseFloat(a.balance),
+          price_usd: a.price_usd || 0,
+          change_24h: a.price_change_24h || 0,
+          value_usd: a.balance_usd || 0,
+          logo_url: a.logo_url,
+        }));
+
+        setAssets(formatted);
+
+        const balance = (formatted || []).reduce(
+          (sum: number, asset: Asset) => sum + (asset.value_usd || 0),
+          0,
+        );
+        setTotalBalance(balance);
+
+        // No portfolio_history returned by proxy; leave change calculations as-is
+        return;
+      }
+
+      // Fallback to authenticated route when dbUser not present
       const response = await fetch("/api/wallet/assets", {
         credentials: "include",
       });
 
       if (!response.ok) {
         if (response.status === 401) {
-          // Not authenticated - redirect to wallet connect
           navigate("/connect-wallet");
           throw new Error(`Unauthorized`);
         }
@@ -134,7 +175,7 @@ export default function Dashboard() {
       console.error("Error fetching assets:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch transaction history
   const fetchTransactions = useCallback(async () => {
