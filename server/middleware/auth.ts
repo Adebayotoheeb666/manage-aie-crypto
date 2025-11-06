@@ -48,11 +48,44 @@ export const authMiddleware = async (
       process.env.SESSION_JWT_SECRET ||
       process.env.SUPABASE_SERVICE_ROLE_KEY ||
       "";
+
+    // If a session secret is not configured, attempt to verify using Supabase
+    // access token (sb_access_token) as a fallback. This supports preview/dev
+    // environments where the server does not sign its own JWTs but the client
+    // still has a Supabase session cookie or bearer token.
     if (!SESSION_SECRET) {
-      return res.status(401).json({
-        success: false,
-        error: "Session secret not configured",
-      });
+      try {
+        // Try sb_access_token cookie first, then Authorization Bearer token
+        const supabaseToken = (req as any).cookies?.sb_access_token ||
+          (authHeader && authHeader.startsWith("Bearer ")
+            ? authHeader.split(" ")[1]
+            : null);
+
+        if (!supabaseToken) {
+          return res.status(401).json({
+            success: false,
+            error: "Session secret not configured and no Supabase token provided",
+          });
+        }
+
+        const { data, error } = await supabase.auth.getUser(supabaseToken);
+        if (error || !data.user) {
+          return res.status(401).json({
+            success: false,
+            error: "Invalid Supabase session",
+          });
+        }
+
+        // Attach Supabase user object
+        req.user = data.user;
+        return next();
+      } catch (err) {
+        console.error("Supabase fallback auth error:", err);
+        return res.status(401).json({
+          success: false,
+          error: "Authentication failed",
+        });
+      }
     }
 
     const decoded = jwt.verify(token, SESSION_SECRET) as {
