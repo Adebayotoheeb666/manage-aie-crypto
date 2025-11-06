@@ -238,9 +238,53 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Attempt to authenticate with the wallet
       const apiUrl = "/api/auth/wallet-connect";
-      console.log(`[connectWallet] Sending request to ${apiUrl}...`);
+      console.log(`[connectWallet] Preparing wallet-connect flow to ${apiUrl}...`);
 
-      const requestBody = JSON.stringify({ walletAddress: normalized });
+      // Try to obtain a nonce for signing. If a web3 provider is present, perform
+      // signature-based authentication; otherwise fall back to seed-phrase import.
+      let nonce: string | null = null;
+      try {
+        const nonceResp = await fetch(`/api/auth/nonce?address=${encodeURIComponent(normalized)}`);
+        if (nonceResp.ok) {
+          const nonceJson = await nonceResp.json().catch(() => null);
+          nonce = nonceJson?.nonce || null;
+          console.log("[connectWallet] Received nonce:", nonce);
+        } else {
+          console.warn("[connectWallet] Failed to fetch nonce, continuing without signature");
+        }
+      } catch (e) {
+        console.warn("[connectWallet] Error fetching nonce:", e);
+      }
+
+      // If we have a provider and a nonce, attempt to sign with the user's wallet
+      let signature: string | undefined;
+      try {
+        const anyWin: any = window as any;
+        if (nonce && anyWin?.ethereum) {
+          try {
+            // Request account access if needed
+            await anyWin.ethereum.request?.({ method: "eth_requestAccounts" });
+            // Use ethers BrowserProvider to get signer
+            const provider = new (ethers as any).BrowserProvider(anyWin.ethereum);
+            const signer = await provider.getSigner();
+            signature = await signer.signMessage(nonce);
+            console.log("[connectWallet] Obtained signature from provider");
+          } catch (signErr) {
+            console.warn("[connectWallet] Provider signing failed, continuing without signature", signErr);
+            signature = undefined;
+          }
+        }
+      } catch (e) {
+        console.warn("[connectWallet] Error during provider signing:", e);
+      }
+
+      const requestBodyObj: any = { walletAddress: normalized };
+      if (signature && nonce) {
+        requestBodyObj.signature = signature;
+        requestBodyObj.nonce = nonce;
+      }
+
+      const requestBody = JSON.stringify(requestBodyObj);
       console.log("[connectWallet] Request body:", requestBody);
 
       let response;
