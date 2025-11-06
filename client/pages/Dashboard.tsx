@@ -296,6 +296,21 @@ export default function Dashboard() {
   // Fetch user's wallets
   const fetchWallets = useCallback(async () => {
     try {
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/user-wallets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id }),
+        });
+        if (!proxyResp.ok) {
+          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(`Failed to fetch wallets via proxy: ${proxyResp.status} ${err.error || ""}`);
+        }
+        const proxyData = await proxyResp.json();
+        setWallets(proxyData.data || []);
+        return;
+      }
+
       const response = await fetch("/api/wallets", {
         credentials: "include",
       });
@@ -307,7 +322,7 @@ export default function Dashboard() {
     } catch (error) {
       console.error("Error fetching wallets:", error);
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch data on component mount
   useEffect(() => {
