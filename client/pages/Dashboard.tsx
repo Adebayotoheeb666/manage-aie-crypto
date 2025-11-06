@@ -180,6 +180,24 @@ export default function Dashboard() {
   // Fetch transaction history
   const fetchTransactions = useCallback(async () => {
     try {
+      // Use proxy when available to avoid relying on server-side session
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/transaction-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id, limit: 50 }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(`Failed to fetch transactions via proxy: ${proxyResp.status} ${err.error || ""}`);
+        }
+
+        const proxyData = await proxyResp.json();
+        setTransactions(proxyData.data || []);
+        return;
+      }
+
       const response = await fetch("/api/transactions", {
         credentials: "include",
       });
@@ -203,7 +221,7 @@ export default function Dashboard() {
       console.error("Error fetching transactions:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch portfolio history
   const fetchPortfolioHistory = useCallback(async () => {
