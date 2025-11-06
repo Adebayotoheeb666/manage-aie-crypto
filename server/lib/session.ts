@@ -29,23 +29,69 @@ export function signSession(
 
 export function verifySession(token: string, secret: string) {
   try {
+    if (!token) {
+      console.error('No token provided to verifySession');
+      return null;
+    }
+
+    if (!secret) {
+      console.error('No secret provided to verifySession');
+      return null;
+    }
+
     const parts = token.split(".");
-    if (parts.length !== 3) return null;
+    if (parts.length !== 3) {
+      console.error('Invalid token format: expected 3 parts');
+      return null;
+    }
+
     const [headerB, bodyB, sigB] = parts;
+    
+    // Log the token parts for debugging
+    console.log('Token parts:', { headerB, bodyB, sigB });
+    
+    // Verify signature
     const toSign = `${headerB}.${bodyB}`;
-    const expectedSig = crypto
-      .createHmac("sha256", secret)
+    console.log('To sign:', toSign);
+    
+    const signature = crypto
+      .createHmac('sha256', secret)
       .update(toSign)
       .digest();
-    const expectedSigB = base64UrlEncode(expectedSig);
-    if (!crypto.timingSafeEqual(Buffer.from(sigB), Buffer.from(expectedSigB)))
+    const sigB2 = base64UrlEncode(signature);
+    
+    console.log('Expected signature:', sigB2);
+    console.log('Actual signature:', sigB);
+
+    if (sigB !== sigB2) {
+      console.error('Invalid token signature');
+      console.error('Expected:', sigB2);
+      console.error('Actual:', sigB);
       return null;
-    const payloadJson = Buffer.from(bodyB, "base64").toString();
-    const payload = JSON.parse(payloadJson);
+    }
+
+    // Parse payload
+    const payload = JSON.parse(Buffer.from(bodyB, 'base64').toString('utf-8'));
+    console.log('Token payload:', payload);
+
+    // Check expiration
     const now = Math.floor(Date.now() / 1000);
-    if (payload.exp && payload.exp < now) return null;
+    if (payload.exp && payload.exp < now) {
+      console.error('Token expired');
+      console.error('Expiration:', new Date(payload.exp * 1000).toISOString());
+      console.error('Current time:', new Date(now * 1000).toISOString());
+      return null;
+    }
+
+    // Ensure required fields
+    if (!payload.sub && !payload.uid) {
+      console.error('Token missing required sub/uid field');
+      return null;
+    }
+
     return payload;
   } catch (e) {
+    console.error('Error in verifySession:', e);
     return null;
   }
 }

@@ -1,5 +1,6 @@
 import { RequestHandler } from "express";
 import { createClient } from "@supabase/supabase-js";
+import { signSession } from "../lib/session";
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
@@ -98,6 +99,7 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           process.env.SESSION_JWT_SECRET ||
           process.env.SUPABASE_SERVICE_ROLE_KEY ||
           "";
+        console.log('Using SESSION_SECRET for signing:', SESSION_SECRET ? '***' : 'NOT SET');
         if (!SESSION_SECRET) {
           return res.status(200).json({
             session: data.session,
@@ -106,7 +108,6 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           });
         }
 
-        const { signSession } = require("../lib/session");
         const token = signSession(
           { sub: data.user.id, uid: profile?.id },
           SESSION_SECRET,
@@ -474,7 +475,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         });
       }
 
-      const { signSession } = require("../lib/session");
+      // Import signSession at the top of the file is already done
       const token = signSession(
         { sub: walletAddress, uid: profile.id },
         SESSION_SECRET,
@@ -524,81 +525,49 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 };
 
 export const handleGetSession: RequestHandler = async (req, res) => {
-  // Support Bearer Authorization or sv_session cookie
+  // Get token from Authorization header
   const authHeader = req.headers.authorization;
-  let token: string | null = null;
-
-  if (authHeader && authHeader.startsWith("Bearer ")) {
-    token = authHeader.slice(7);
-  } else if ((req as any).cookies && (req as any).cookies.sv_session) {
-    token = (req as any).cookies.sv_session;
-  } else if (req.headers.cookie) {
-    const cookies = req.headers.cookie.split(";").map((c) => c.trim());
-    for (const c of cookies) {
-      if (c.startsWith("sv_session=")) {
-        token = c.split("=").slice(1).join("=");
-        break;
-      }
-    }
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ error: 'No authorization token provided' });
   }
-
+  
+  const token = authHeader.split(' ')[1];
   if (!token) {
-    return res.status(401).json({ error: "No session token provided" });
+    return res.status(401).json({ error: 'No token provided' });
   }
 
   try {
-    const { verifySession } = require("../lib/session");
-    const SESSION_SECRET =
-      process.env.SESSION_JWT_SECRET ||
-      process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      "";
-    if (!SESSION_SECRET)
-      return res.status(401).json({ error: "Session secret not configured" });
-
-    const payload = verifySession(token, SESSION_SECRET);
-    if (!payload || !payload.sub)
-      return res.status(401).json({ error: "Invalid session" });
-
+    // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false },
     });
 
-    let profile = null;
-    let profileErr = null;
-
-    // Support both email/password (uid field) and wallet-based (sub as wallet address) sessions
-    if (payload.uid) {
-      // Email/password session: use the uid (user ID) to look up profile
-      const result = await supabase
-        .from("users")
-        .select("*")
-        .eq("id", payload.uid)
-        .single();
-      profile = result.data;
-      profileErr = result.error;
-    } else {
-      // Wallet-based session: use sub (wallet address) to look up profile
-      const walletAddress = payload.sub;
-      const result = await supabase
-        .from("users")
-        .select("*")
-        .eq("primary_wallet_address", walletAddress.toLowerCase())
-        .single();
-      profile = result.data;
-      profileErr = result.error;
+    // Verify the token with Supabase
+    const { data: { user }, error } = await supabase.auth.getUser(token);
+    
+    if (error || !user) {
+      console.error('Error verifying token with Supabase:', error);
+      return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    if (profileErr && profileErr.code !== "PGRST116") {
-      return res.status(500).json({ error: profileErr.message });
+    // Get user profile
+    const { data: profile, error: profileError } = await supabase
+      .from('users')
+      .select('*')
+      .eq('auth_id', user.id)
+      .single();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('Error getting user profile:', profileError);
+      return res.status(500).json({ error: 'Error fetching user profile' });
     }
 
-    return res.status(200).json({
-      user: { id: (profile && profile.id) || null, address: payload.sub },
+    return res.json({
+      user,
       profile: profile || null,
     });
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to get session";
-    return res.status(500).json({ error: message });
+    console.error('Error in handleGetSession:', err);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };

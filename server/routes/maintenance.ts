@@ -1,5 +1,13 @@
 import { RequestHandler } from "express";
-import { supabase } from "../../shared/lib/supabase";
+import { createClient } from "@supabase/supabase-js";
+
+// Initialize Supabase with service role key for admin operations
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+  auth: { persistSession: false },
+});
 
 interface MaintenanceResponse {
   success: boolean;
@@ -33,6 +41,7 @@ export const handleCleanupSessions: RequestHandler<
 
     // Call database function to cleanup expired sessions
     const { data, error } = await supabase.rpc("cleanup_expired_sessions");
+    const cleanedCount = typeof data === 'number' ? data : 0;
 
     if (error) {
       throw error;
@@ -40,8 +49,8 @@ export const handleCleanupSessions: RequestHandler<
 
     res.json({
       success: true,
-      cleaned: data || 0,
-      message: `Cleaned up ${data || 0} expired sessions`,
+      cleaned: cleanedCount,
+      message: `Cleaned up ${cleanedCount} expired sessions`,
     });
   } catch (err) {
     console.error("Cleanup sessions error:", err);
@@ -78,6 +87,7 @@ export const handleUnlockAccounts: RequestHandler<
 
     // Call database function to unlock expired account locks
     const { data, error } = await supabase.rpc("unlock_expired_account_locks");
+    const unlockedCount = typeof data === 'number' ? data : 0;
 
     if (error) {
       throw error;
@@ -85,8 +95,8 @@ export const handleUnlockAccounts: RequestHandler<
 
     res.json({
       success: true,
-      cleaned: data || 0,
-      message: `Unlocked ${data || 0} accounts`,
+      cleaned: unlockedCount,
+      message: `Unlocked ${unlockedCount} accounts`,
     });
   } catch (err) {
     console.error("Unlock accounts error:", err);

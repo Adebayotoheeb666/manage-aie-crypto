@@ -1,6 +1,38 @@
 import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@shared/types/database";
 
+// Table types
+type Tables = Database['public']['Tables'];
+type WalletAssets = Tables['wallets']['Row'] & { assets: Tables['assets']['Row'][] };
+type WithdrawalRequests = Tables['withdrawal_requests']['Row'];
+type PriceHistory = Tables['price_history']['Row'];
+
+// Function types
+type Functions = Database['public']['Functions'];
+type CalculatePortfolioValue = Functions['calculate_portfolio_value'];
+type GetPortfolio24hChange = Functions['get_portfolio_24h_change'];
+type GetTransactionSummary = Functions['get_transaction_summary'];
+type GetPortfolioAllocation = Functions['get_portfolio_allocation'];
+type UpdateAssetPrices = Functions['update_asset_prices'];
+type CheckAndTriggerPriceAlerts = Functions['check_and_trigger_price_alerts'];
+type CleanupExpiredSessions = Functions['cleanup_expired_sessions'];
+type LogAuditEvent = Functions['log_audit_event'];
+
+// Extend the SupabaseClient with our custom RPC methods
+type CustomSupabaseClient = SupabaseClient<Database> & {
+  rpc: {
+    calculate_portfolio_value: (params: { p_user_id: string }) => Promise<{ data: CalculatePortfolioValue['Returns'] | null; error: any }>;
+    get_portfolio_24h_change: (params: { p_user_id: string }) => Promise<{ data: GetPortfolio24hChange['Returns'] | null; error: any }>;
+    get_transaction_summary: (params: { p_user_id: string; p_days?: number }) => Promise<{ data: GetTransactionSummary['Returns'] | null; error: any }>;
+    get_portfolio_allocation: (params: { p_user_id: string }) => Promise<{ data: GetPortfolioAllocation['Returns'] | null; error: any }>;
+    update_asset_prices: () => Promise<{ data: UpdateAssetPrices['Returns'] | null; error: any }>;
+    check_and_trigger_price_alerts: () => Promise<{ data: CheckAndTriggerPriceAlerts['Returns'] | null; error: any }>;
+    cleanup_expired_sessions: () => Promise<{ data: CleanupExpiredSessions['Returns'] | null; error: any }>;
+    log_audit_event: (params: LogAuditEvent['Args']) => Promise<{ data: LogAuditEvent['Returns'] | null; error: any }>;
+    get_user_assets: (params: { p_user_id: string }) => Promise<{ data: any[] | null; error: any }>;
+  };
+};
+
 function getEnvVar(name: string) {
   // Read from a runtime-injected window.__env__ (set by /api/env.js) first,
   // then fall back to process.env when running on the server.
@@ -158,27 +190,30 @@ function createSupabaseClient(): SupabaseClient<Database> {
   return _supabaseClient;
 }
 
-export const supabase: SupabaseClient<Database> = new Proxy(
-  {},
-  {
-    get(_target, prop: string | symbol) {
-      const client = createSupabaseClient();
-      // @ts-ignore
-      return client[prop];
-    },
-    set(_target, prop: string | symbol, value) {
-      const client = createSupabaseClient();
-      // @ts-ignore
-      client[prop] = value;
-      return true;
-    },
-    apply(_target, thisArg, args) {
-      const client = createSupabaseClient();
-      // @ts-ignore
-      return (client as any).apply(thisArg, args);
-    },
-  },
-) as unknown as SupabaseClient<Database>;
+// Create a type-safe proxy for the Supabase client
+const createSupabaseProxy = (): CustomSupabaseClient => {
+  const client = createSupabaseClient() as unknown as CustomSupabaseClient;
+  
+  // Override the rpc method to provide better type safety
+  const rpcProxy = new Proxy({} as any, {
+    get(_, fn: string) {
+      return (params: Record<string, unknown>) => {
+        return client.rpc(fn, params as never);
+      };
+    }
+  });
+
+  return new Proxy(client, {
+    get(target, prop) {
+      if (prop === 'rpc') {
+        return rpcProxy;
+      }
+      return (target as any)[prop];
+    }
+  }) as CustomSupabaseClient;
+};
+
+export const supabase = createSupabaseProxy();
 
 // ==========================================
 // PORTFOLIO FUNCTIONS
@@ -186,87 +221,44 @@ export const supabase: SupabaseClient<Database> = new Proxy(
 
 export async function getPortfolioValue(userId: string) {
   try {
-    const { data, error } = await supabase.rpc("calculate_portfolio_value", {
-      p_user_id: userId,
+    const { data, error } = await supabase.rpc.calculate_portfolio_value({ 
+      p_user_id: userId 
     });
 
-    if (error) throw new Error((error as any)?.message || String(error));
+    if (error) throw error;
     return data;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/portfolio-value", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.data || { total_usd: 0, total_btc: 0, total_eth: 0 };
-        }
-      } catch (_) {
-        // Fallback to default if proxy fails
-      }
-    }
-
-    // Return default data instead of throwing
-    return { total_usd: 0, total_btc: 0, total_eth: 0 };
+  } catch (error) {
+    console.error('Error calculating portfolio value:', error);
+    throw error;
   }
 }
 
 export async function getPortfolio24hChange(userId: string) {
   try {
-    const { data, error } = await supabase.rpc("get_portfolio_24h_change", {
-      p_user_id: userId,
+    const { data, error } = await supabase.rpc.get_portfolio_24h_change({ 
+      p_user_id: userId 
     });
 
-    if (error) throw new Error((error as any)?.message || String(error));
+    if (error) throw error;
     return data;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/portfolio-24h-change", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.data || { change_usd: 0, change_percentage: 0 };
-        }
-      } catch (_) {
-        // Fallback to default if proxy fails
-      }
-    }
-
-    // Return default data instead of throwing
-    return { change_usd: 0, change_percentage: 0 };
+  } catch (error) {
+    console.error('Error getting 24h portfolio change:', error);
+    throw error;
   }
 }
 
 export async function getPortfolioAllocation(userId: string) {
-  const { data, error } = await supabase.rpc("get_portfolio_allocation", {
-    p_user_id: userId,
-  });
+  try {
+    const { data, error } = await supabase.rpc.get_portfolio_allocation({ 
+      p_user_id: userId 
+    });
 
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error getting portfolio allocation:', error);
+    throw error;
+  }
 }
 
 // ==========================================
@@ -274,612 +266,23 @@ export async function getPortfolioAllocation(userId: string) {
 // ==========================================
 
 export async function getTransactionSummary(userId: string, days: number = 30) {
-  const { data, error } = await supabase.rpc("get_transaction_summary", {
-    p_user_id: userId,
-    p_days: days,
-  });
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getTransactionHistory(
-  userId: string,
-  limit: number = 20,
-  offset: number = 0,
-) {
   try {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+    const { data, error } = await supabase.rpc.get_transaction_summary({ 
+      p_user_id: userId, 
+      p_days: days 
+    });
 
-    if (error) throw new Error((error as any)?.message || String(error));
+    if (error) throw error;
     return data;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/transaction-history", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, limit, offset }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.data || [];
-        }
-      } catch (_) {
-        // Fallback to empty array if proxy fails
-      }
-    }
-
-    // Return empty array instead of throwing
-    return [];
-  }
-}
-
-export async function getTransactionByHash(txHash: string) {
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("tx_hash", txHash)
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function createTransaction(
-  userId: string,
-  walletId: string,
-  txType: "send" | "receive" | "swap" | "stake" | "unstake",
-  symbol: string,
-  amount: number,
-  amountUsd?: number,
-  txHash?: string,
-  fromAddress?: string,
-  toAddress?: string,
-  feeAmount?: number,
-  feeUsd?: number,
-  status: "pending" | "confirmed" | "failed" | "cancelled" = "confirmed",
-  notes?: string,
-) {
-  const { data, error } = await supabase
-    .from("transactions")
-    .insert({
-      user_id: userId,
-      wallet_id: walletId,
-      tx_type: txType,
-      symbol,
-      amount,
-      amount_usd: amountUsd,
-      tx_hash: txHash,
-      from_address: fromAddress,
-      to_address: toAddress,
-      fee_amount: feeAmount,
-      fee_usd: feeUsd,
-      status,
-      confirmation_count: status === "confirmed" ? 1 : 0,
-      notes,
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-// ==========================================
-// WALLET FUNCTIONS
-// ==========================================
-
-export async function getUserWallets(userId: string) {
-  const { data, error } = await supabase
-    .from("wallets")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("is_active", true)
-    .order("is_primary", { ascending: false });
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getPrimaryWallet(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from("wallets")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("is_primary", true)
-      .eq("is_active", true)
-      .single();
-
-    if (error && error.code !== "PGRST116") {
-      throw new Error((error as any)?.message || String(error));
-    }
-    return data || null;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/user-wallets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, primaryOnly: true }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return (json.data && json.data[0]) || null;
-        }
-      } catch (_) {
-        // Fallback if proxy fails
-      }
-    }
-
-    // Return null instead of throwing
-    return null;
-  }
-}
-
-export async function createWallet(
-  userId: string,
-  walletAddress: string,
-  walletType: string,
-  label?: string,
-) {
-  const { data, error } = await supabase
-    .rpc('create_user_wallet', {
-      p_user_id: userId,
-      p_wallet_address: walletAddress,
-      p_wallet_type: walletType,
-      p_label: label
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function disconnectWallet(walletId: string) {
-  const { data, error } = await supabase
-    .from("wallets")
-    .update({
-      is_active: false,
-      disconnected_at: new Date().toISOString(),
-    })
-    .eq("id", walletId)
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-// ==========================================
-// ASSET FUNCTIONS
-// ==========================================
-
-export async function getUserAssets(userId: string) {
-  try {
-    const { data, error } = await supabase
-      .from("assets")
-      .select("*")
-      .eq("user_id", userId)
-      .gt("balance", 0)
-      .order("balance_usd", { ascending: false });
-
-    if (error) throw new Error((error as any)?.message || String(error));
-    return data;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/user-assets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          return json.data || [];
-        }
-      } catch (_) {
-        // Fallback to empty array if proxy fails
-      }
-    }
-
-    // Return empty array instead of throwing
-    return [];
-  }
-}
-
-export async function getWalletAssets(walletId: string) {
-  const { data, error } = await supabase
-    .from("assets")
-    .select("*")
-    .eq("wallet_id", walletId)
-    .gt("balance", 0)
-    .order("balance_usd", { ascending: false });
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function updateAssetBalance(
-  assetId: string,
-  balance: number,
-  priceUsd: number,
-) {
-  const { data, error } = await supabase
-    .from("assets")
-    .update({
-      balance,
-      balance_usd: balance * priceUsd,
-      price_usd: priceUsd,
-      last_synced: new Date().toISOString(),
-    })
-    .eq("id", assetId)
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-// ==========================================
-// WITHDRAWAL FUNCTIONS
-// ==========================================
-
-export async function createWithdrawalRequest(
-  userId: string,
-  walletId: string,
-  symbol: string,
-  amount: number,
-  amountUsd: number,
-  destinationAddress: string,
-  network: string,
-  feeAmount?: number,
-  feeUsd?: number,
-) {
-  const { data, error } = await supabase
-    .from("withdrawal_requests")
-    .insert({
-      user_id: userId,
-      wallet_id: walletId,
-      symbol,
-      amount,
-      amount_usd: amountUsd,
-      destination_address: destinationAddress,
-      network,
-      fee_amount: feeAmount,
-      fee_usd: feeUsd,
-      status: "pending",
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getWithdrawalRequests(userId: string) {
-  const { data, error } = await supabase
-    .from("withdrawal_requests")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function updateWithdrawalStatus(
-  withdrawalId: string,
-  status: string,
-  txHash?: string,
-) {
-  const update: any = { status };
-  if (txHash) update.tx_hash = txHash;
-  if (status === "completed") update.completed_at = new Date().toISOString();
-
-  const { data, error } = await supabase
-    .from("withdrawal_requests")
-    .update(update)
-    .eq("id", withdrawalId)
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-// ==========================================
-// PRICE HISTORY FUNCTIONS
-// ==========================================
-
-export async function getPriceHistory(
-  symbol: string,
-  daysBack: number = 30,
-  limit: number = 1000,
-) {
-  const { data, error } = await supabase
-    .from("price_history")
-    .select("*")
-    .eq("symbol", symbol)
-    .gt(
-      "timestamp",
-      new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString(),
-    )
-    .order("timestamp", { ascending: false })
-    .limit(limit);
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getLatestPrice(symbol: string) {
-  try {
-    const { data, error } = await supabase
-      .from("price_history")
-      .select("*")
-      .eq("symbol", symbol)
-      .order("timestamp", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (error && error.code !== "PGRST116") throw error;
-    return data || null;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/latest-price", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ symbol }),
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          let errMsg = "Proxy error";
-          try {
-            if (json?.error) {
-              if (typeof json.error === "string") errMsg = json.error;
-              else if (typeof json.error?.message === "string")
-                errMsg = json.error.message;
-              else errMsg = JSON.stringify(json.error);
-            } else if (json?.message && typeof json.message === "string") {
-              errMsg = json.message;
-            } else if (res.statusText) {
-              errMsg = res.statusText;
-            }
-          } catch (_) {}
-          throw new Error(errMsg);
-        }
-        return json.data || null;
-      } catch (_) {
-        return null;
-      }
-    }
-
-    throw new Error(String(err));
-  }
-}
-
-export async function insertPriceHistory(
-  symbol: string,
-  priceUsd: number,
-  priceChange24h?: number,
-  marketCap?: number,
-  volume24h?: number,
-  circulatingSupply?: number,
-  source: string = "coinbase",
-) {
-  const { data, error } = await supabase
-    .from("price_history")
-    .insert({
-      symbol,
-      price_usd: priceUsd,
-      price_change_24h: priceChange24h,
-      market_cap: marketCap,
-      volume_24h: volume24h,
-      circulating_supply: circulatingSupply,
-      source,
-      timestamp: new Date().toISOString(),
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-// ==========================================
-// PRICE ALERT FUNCTIONS
-// ==========================================
-
-export async function createPriceAlert(
-  userId: string,
-  symbol: string,
-  alertType: "above" | "below",
-  targetPrice: number,
-) {
-  const { data, error } = await supabase
-    .from("price_alerts")
-    .insert({
-      user_id: userId,
-      symbol,
-      alert_type: alertType,
-      target_price: targetPrice,
-      is_active: true,
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getUserPriceAlerts(
-  userId: string,
-  activeOnly: boolean = true,
-) {
-  const query = supabase.from("price_alerts").select("*").eq("user_id", userId);
-
-  if (activeOnly) query.eq("is_active", true);
-
-  const { data, error } = await query.order("created_at", { ascending: false });
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function deletePriceAlert(alertId: string) {
-  const { error } = await supabase
-    .from("price_alerts")
-    .delete()
-    .eq("id", alertId);
-
-  if (error) throw error;
-  return true;
-}
-
-// ==========================================
-// PORTFOLIO SNAPSHOT FUNCTIONS
-// ==========================================
-
-export async function createPortfolioSnapshot(
-  userId: string,
-  totalValueUsd: number,
-  totalValueBtc: number,
-  totalValueEth: number,
-  assetsCount: number,
-  allocationData?: any,
-) {
-  const { data, error } = await supabase
-    .from("portfolio_snapshots")
-    .insert({
-      user_id: userId,
-      total_value_usd: totalValueUsd,
-      total_value_btc: totalValueBtc,
-      total_value_eth: totalValueEth,
-      assets_count: assetsCount,
-      allocation_data: allocationData,
-    })
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function getPortfolioSnapshots(
-  userId: string,
-  daysBack: number = 90,
-) {
-  try {
-    const { data, error } = await supabase
-      .from("portfolio_snapshots")
-      .select("*")
-      .eq("user_id", userId)
-      .gt(
-        "snapshot_date",
-        new Date(Date.now() - daysBack * 24 * 60 * 60 * 1000).toISOString(),
-      )
-      .order("snapshot_date", { ascending: false });
-
-    if (error) throw new Error((error as any)?.message || String(error));
-    return data;
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    const isNetworkOrPermissionError =
-      err instanceof TypeError ||
-      errorMsg.toLowerCase().includes("failed to fetch") ||
-      errorMsg.toLowerCase().includes("row-level security") ||
-      errorMsg.toLowerCase().includes("insufficient_privilege") ||
-      errorMsg.toLowerCase().includes("permission denied");
-
-    if (typeof window !== "undefined" && isNetworkOrPermissionError) {
-      try {
-        const res = await fetch("/api/proxy/portfolio-snapshots", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId, daysBack }),
-        });
-        const json = await res.json();
-        if (!res.ok) {
-          let errMsg = "Proxy error";
-          try {
-            if (json?.error) {
-              if (typeof json.error === "string") errMsg = json.error;
-              else if (typeof json.error?.message === "string")
-                errMsg = json.error.message;
-              else errMsg = JSON.stringify(json.error);
-            } else if (json?.message && typeof json.message === "string") {
-              errMsg = json.message;
-            } else if (res.statusText) {
-              errMsg = res.statusText;
-            }
-          } catch (_) {}
-          throw new Error(errMsg);
-        }
-        return json.data;
-      } catch (_) {
-        return [];
-      }
-    }
-
-    throw new Error(String(err));
+  } catch (error) {
+    console.error('Error getting transaction summary:', error);
+    throw error;
   }
 }
 
 // ==========================================
 // AUDIT LOG FUNCTIONS
 // ==========================================
-
-export async function getAuditLogs(userId: string, limit: number = 50) {
-  const { data, error } = await supabase
-    .from("audit_logs")
-    .select("*")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(limit);
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
 
 export async function logAuditEvent(
   userId: string,
@@ -891,7 +294,7 @@ export async function logAuditEvent(
   ipAddress?: string,
   userAgent?: string,
 ) {
-  const { data, error } = await supabase.rpc("log_audit_event", {
+  const { data, error } = await supabase.rpc.log_audit_event({
     p_user_id: userId,
     p_action: action,
     p_entity_type: entityType,
@@ -902,56 +305,174 @@ export async function logAuditEvent(
     p_user_agent: userAgent,
   });
 
-  if (error) throw new Error((error as any)?.message || String(error));
+  if (error) throw error;
   return data;
 }
 
 // ==========================================
-// USER FUNCTIONS
+// TRANSACTION FUNCTIONS
 // ==========================================
 
-export async function getUserProfile(userId: string) {
-  const { data, error } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
+interface TransactionData {
+  tx_type: 'send' | 'receive' | 'swap' | 'stake' | 'unstake';
+  symbol: string;
+  amount: number;
+  amount_usd: number;
+  from_address?: string | null;
+  to_address?: string | null;
+  tx_hash?: string | null;
+  fee_amount?: number | null;
+  fee_usd?: number | null;
+  status?: 'pending' | 'confirmed' | 'failed' | 'cancelled';
+  notes?: string | null;
 }
 
-export async function updateUserProfile(userId: string, updates: Partial<any>) {
-  const { data, error } = await supabase
-    .from("users")
-    .update(updates)
-    .eq("id", userId)
-    .select()
-    .single();
-
-  if (error) throw new Error((error as any)?.message || String(error));
-  return data;
-}
-
-export async function createUserProfile(
+export async function createTransaction(
   userId: string,
-  email: string,
-  authId: string,
+  walletId: string,
+  txData: TransactionData
 ) {
-  const { data, error } = await supabase
-    .from("users")
-    .insert({
-      id: userId,
-      auth_id: authId,
-      email,
-      account_status: "active",
-      is_verified: false,
-    })
+  const transactionData = {
+    user_id: userId,
+    wallet_id: walletId,
+    ...txData,
+    from_address: txData.from_address || null,
+    to_address: txData.to_address || null,
+    tx_hash: txData.tx_hash || null,
+    fee_amount: txData.fee_amount || null,
+    fee_usd: txData.fee_usd || null,
+    notes: txData.notes || null,
+  };
+
+  // Using a type assertion to bypass TypeScript's type checking for the insert operation
+  const { data, error } = await (supabase as any)
+    .from('transactions')
+    .insert([transactionData])
     .select()
     .single();
 
-  if (error) throw new Error((error as any)?.message || String(error));
+  if (error) throw error;
   return data;
+}
+
+// ==========================================
+// WALLET FUNCTIONS
+// ==========================================
+
+export async function getPrimaryWallet(userId: string) {
+  const { data, error } = await supabase
+    .from('wallets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_primary', true)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 is the error code for no rows returned
+    throw error;
+  }
+  
+  return data || null;
+}
+
+export async function getUserAssets(userId: string) {
+  const { data, error } = await (supabase as any)
+    .rpc('get_user_assets', { p_user_id: userId });
+
+  if (error) throw error;
+  return data || [];
+}
+
+export async function getWalletAssets(userId: string): Promise<WalletAssets[]> {
+  try {
+    // First get all wallets for the user
+    const { data: wallets, error: walletsError } = await supabase
+      .from('wallets')
+      .select('*')
+      .eq('user_id', userId);
+
+    if (walletsError) throw walletsError;
+    if (!wallets) return [];
+
+    // For each wallet, get its assets
+    const walletsWithAssets = await Promise.all(
+      wallets.map(async (wallet: Tables['wallets']['Row']) => {
+        const { data: assets, error: assetsError } = await supabase
+          .from('assets')
+          .select('*')
+          .eq('wallet_id', wallet.id);
+
+        if (assetsError) throw assetsError;
+        return { ...wallet, assets: assets || [] } as WalletAssets;
+      })
+    );
+
+    return walletsWithAssets;
+  } catch (error) {
+    console.error('Error getting wallet assets:', error);
+    throw error;
+  }
+}
+
+export async function createWithdrawalRequest(
+  userId: string,
+  walletId: string,
+  symbol: string,
+  amount: number,
+  destinationAddress: string,
+  network: string
+): Promise<WithdrawalRequests> {
+  try {
+    const { data, error } = await supabase
+      .from('withdrawal_requests')
+      .insert({
+        user_id: userId,
+        wallet_id: walletId,
+        symbol,
+        amount,
+        destination_address: destinationAddress,
+        network,
+        status: 'pending',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as never)
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error creating withdrawal request:', error);
+    throw error;
+  }
+}
+
+// ==========================================
+// PRICE FUNCTIONS
+// ==========================================
+
+export async function insertPriceHistory(
+  symbol: string,
+  price: number,
+  timestamp: string = new Date().toISOString()
+): Promise<PriceHistory[]> {
+  try {
+    const { data, error } = await supabase
+      .from('price_history')
+      .insert({
+        symbol,
+        price_usd: price,
+        timestamp,
+        source: 'api'
+      } as never)
+      .select();
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error inserting price history:', error);
+    throw error;
+  }
 }
 
 // ==========================================
@@ -959,22 +480,19 @@ export async function createUserProfile(
 // ==========================================
 
 export async function updateAssetPrices() {
-  const { data, error } = await supabase.rpc("update_asset_prices");
-
-  if (error) throw new Error((error as any)?.message || String(error));
+  const { data, error } = await supabase.rpc.update_asset_prices();
+  if (error) throw error;
   return data;
 }
 
 export async function checkAndTriggerPriceAlerts() {
-  const { data, error } = await supabase.rpc("check_and_trigger_price_alerts");
-
-  if (error) throw new Error((error as any)?.message || String(error));
+  const { data, error } = await supabase.rpc.check_and_trigger_price_alerts();
+  if (error) throw error;
   return data;
 }
 
 export async function cleanupExpiredSessions() {
-  const { data, error } = await supabase.rpc("cleanup_expired_sessions");
-
-  if (error) throw new Error((error as any)?.message || String(error));
+  const { data, error } = await supabase.rpc.cleanup_expired_sessions();
+  if (error) throw error;
   return data;
 }
