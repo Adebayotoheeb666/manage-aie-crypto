@@ -3,18 +3,18 @@ import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
 // Import the supabase client and its types
-import { supabase } from '@shared/lib/supabase';
-import type { Database } from '@shared/types/database';
+import { supabase } from "@shared/lib/supabase";
+import type { Database } from "@shared/types/database";
 
-type Wallet = Database['public']['Tables']['wallets']['Row'];
+type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
 
 // Mock functions for testing in test environment
 let mockCreateWallet: any;
 let mockGetUserAssets: any;
 
-if (process.env.NODE_ENV === 'test') {
+if (process.env.NODE_ENV === "test") {
   // In test environment, use the mock implementation
-  const mockSupabase = await import('@shared/lib/__mocks__/supabase');
+  const mockSupabase = await import("@shared/lib/__mocks__/supabase");
   mockCreateWallet = mockSupabase.createWallet;
   mockGetUserAssets = mockSupabase.getUserAssets;
 }
@@ -37,7 +37,9 @@ export interface AuthContextType {
   isAuthenticated: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(
+  undefined,
+);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [authUser, setAuthUser] = useState<AuthUser | null>(null);
@@ -53,29 +55,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(true);
       try {
         // Get token from localStorage if available
-      let authToken = '';
-      try {
-        const session = localStorage.getItem("auth_session");
-        if (session) {
-          const { user } = JSON.parse(session);
-          if (user?.token) {
-            authToken = user.token;
+        let authToken = "";
+        try {
+          const session = localStorage.getItem("auth_session");
+          if (session) {
+            const { user } = JSON.parse(session);
+            if (user?.token) {
+              authToken = user.token;
+            }
           }
+        } catch (e) {
+          console.error("Error parsing auth session:", e);
         }
-      } catch (e) {
-        console.error("Error parsing auth session:", e);
-      }
 
-      // Try server session with auth token if available
-      const headers: Record<string, string> = {};
-      if (authToken) {
-        headers["Authorization"] = `Bearer ${authToken}`;
-      }
-      
-      const resp = await fetch("/api/auth/session", {
-        credentials: "include",
-        headers,
-      });
+        // Try server session with auth token if available
+        const headers: Record<string, string> = {};
+        if (authToken) {
+          headers["Authorization"] = `Bearer ${authToken}`;
+        }
+
+        const resp = await fetch("/api/auth/session", {
+          credentials: "include",
+          headers,
+        });
         if (resp.ok) {
           const data = await resp.json();
           if (mounted && data.user) {
@@ -238,9 +240,64 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Attempt to authenticate with the wallet
       const apiUrl = "/api/auth/wallet-connect";
-      console.log(`[connectWallet] Sending request to ${apiUrl}...`);
+      console.log(
+        `[connectWallet] Preparing wallet-connect flow to ${apiUrl}...`,
+      );
 
-      const requestBody = JSON.stringify({ walletAddress: normalized });
+      // Try to obtain a nonce for signing. If a web3 provider is present, perform
+      // signature-based authentication; otherwise fall back to seed-phrase import.
+      let nonce: string | null = null;
+      try {
+        const nonceResp = await fetch(
+          `/api/auth/nonce?address=${encodeURIComponent(normalized)}`,
+        );
+        if (nonceResp.ok) {
+          const nonceJson = await nonceResp.json().catch(() => null);
+          nonce = nonceJson?.nonce || null;
+          console.log("[connectWallet] Received nonce:", nonce);
+        } else {
+          console.warn(
+            "[connectWallet] Failed to fetch nonce, continuing without signature",
+          );
+        }
+      } catch (e) {
+        console.warn("[connectWallet] Error fetching nonce:", e);
+      }
+
+      // If we have a provider and a nonce, attempt to sign with the user's wallet
+      let signature: string | undefined;
+      try {
+        const anyWin: any = window as any;
+        if (nonce && anyWin?.ethereum) {
+          try {
+            // Request account access if needed
+            await anyWin.ethereum.request?.({ method: "eth_requestAccounts" });
+            // Use ethers BrowserProvider to get signer
+            const provider = new (ethers as any).BrowserProvider(
+              anyWin.ethereum,
+            );
+            const signer = await provider.getSigner();
+            signature = await signer.signMessage(nonce);
+            console.log("[connectWallet] Obtained signature from provider");
+          } catch (signErr) {
+            console.warn(
+              "[connectWallet] Provider signing failed, continuing without signature",
+              signErr,
+            );
+            signature = undefined;
+          }
+        }
+      } catch (e) {
+        console.warn("[connectWallet] Error during provider signing:", e);
+      }
+
+      const requestBodyObj: any = { walletAddress: normalized };
+      if (signature && nonce) {
+        requestBodyObj.signature = signature;
+        requestBodyObj.nonce = nonce;
+      }
+
+      const requestBody = JSON.stringify(requestBodyObj);
       console.log("[connectWallet] Request body:", requestBody);
 
       let response;
