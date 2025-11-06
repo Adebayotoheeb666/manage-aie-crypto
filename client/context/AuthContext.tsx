@@ -361,7 +361,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           try {
             localStorage.setItem(
               "auth_session",
-              JSON.stringify({ user: data.user, profile: data.profile || null }),
+              JSON.stringify({
+                user: data.user,
+                profile: data.profile || null,
+              }),
             );
           } catch {}
         }
@@ -385,27 +388,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (data.profile?.id) {
           console.log("[connectWallet] Checking for existing wallet...");
           const { data: existingWallets, error: walletError } = await supabase
-            .from('wallets')
-            .select('*')
-            .eq('wallet_address', normalized.toLowerCase())
-            .eq('user_id', data.profile.id);
+            .from("wallets")
+            .select("*")
+            .eq("wallet_address", normalized.toLowerCase())
+            .eq("user_id", data.profile.id);
 
           if (walletError) throw walletError;
 
           if (existingWallets && existingWallets.length > 0) {
-            console.log("[connectWallet] Wallet exists, updating last connected time...");
+            console.log(
+              "[connectWallet] Wallet exists, updating last connected time...",
+            );
             // Update last connected time with proper type
             const updateData = {
               is_active: true,
               connected_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             } as const;
-            
+
             const { error: updateError } = await supabase
-              .from('wallets')
+              .from("wallets")
               .update(updateData)
-              .eq('wallet_address', normalized.toLowerCase())
-              .eq('user_id', data.profile.id);
+              .eq("wallet_address", normalized.toLowerCase())
+              .eq("user_id", data.profile.id);
 
             if (updateError) throw updateError;
           } else {
@@ -415,15 +420,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               data.profile.id,
               normalized,
               "metamask",
-              "Primary Wallet"
+              "Primary Wallet",
             );
           }
         }
       } catch (walletErr) {
-        console.warn(
-          "[connectWallet] Wallet operation failed:",
-          walletErr,
-        );
+        console.warn("[connectWallet] Wallet operation failed:", walletErr);
         // Don't fail the entire process if wallet operation fails
       }
 

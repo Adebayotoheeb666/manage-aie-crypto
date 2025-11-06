@@ -78,7 +78,9 @@ export default function Dashboard() {
   const [filterType, setFilterType] = useState<
     "all" | "send" | "receive" | "swap"
   >("all");
-  const [wallets, setWallets] = useState<Array<{ id: string; wallet_address: string; is_primary: boolean }>>([]);
+  const [wallets, setWallets] = useState<
+    Array<{ id: string; wallet_address: string; is_primary: boolean }>
+  >([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -101,8 +103,12 @@ export default function Dashboard() {
         });
 
         if (!proxyResp.ok) {
-          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
-          throw new Error(`Failed to fetch assets via proxy: ${proxyResp.status} ${err.error || ""}`);
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch assets via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
         }
 
         const proxyData = await proxyResp.json();
@@ -189,8 +195,12 @@ export default function Dashboard() {
         });
 
         if (!proxyResp.ok) {
-          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
-          throw new Error(`Failed to fetch transactions via proxy: ${proxyResp.status} ${err.error || ""}`);
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch transactions via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
         }
 
         const proxyData = await proxyResp.json();
@@ -235,13 +245,20 @@ export default function Dashboard() {
         });
 
         if (!proxyResp.ok) {
-          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
-          throw new Error(`Failed to fetch portfolio snapshots via proxy: ${proxyResp.status} ${err.error || ""}`);
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch portfolio snapshots via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
         }
 
         const proxyData = await proxyResp.json();
         // The proxy returns 'data' array of snapshots; convert to history format
-        const history = (proxyData.data || []).map((s: any) => ({ timestamp: s.snapshot_date, value: s.total_usd || 0 }));
+        const history = (proxyData.data || []).map((s: any) => ({
+          timestamp: s.snapshot_date,
+          value: s.total_usd || 0,
+        }));
         setPortfolioData(history || []);
         return;
       }
@@ -303,8 +320,12 @@ export default function Dashboard() {
           body: JSON.stringify({ userId: dbUser.id }),
         });
         if (!proxyResp.ok) {
-          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
-          throw new Error(`Failed to fetch wallets via proxy: ${proxyResp.status} ${err.error || ""}`);
+          const err = await proxyResp
+            .json()
+            .catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(
+            `Failed to fetch wallets via proxy: ${proxyResp.status} ${err.error || ""}`,
+          );
         }
         const proxyData = await proxyResp.json();
         setWallets(proxyData.data || []);
@@ -328,10 +349,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated && !loading) {
       const loadData = async () => {
-        await Promise.all([
-          fetchDashboardData(),
-          fetchWallets()
-        ]);
+        await Promise.all([fetchDashboardData(), fetchWallets()]);
       };
       loadData();
     }

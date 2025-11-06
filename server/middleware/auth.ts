@@ -56,7 +56,8 @@ export const authMiddleware = async (
     if (!SESSION_SECRET) {
       try {
         // Try sb_access_token cookie first, then Authorization Bearer token
-        const supabaseToken = (req as any).cookies?.sb_access_token ||
+        const supabaseToken =
+          (req as any).cookies?.sb_access_token ||
           (authHeader && authHeader.startsWith("Bearer ")
             ? authHeader.split(" ")[1]
             : null);
@@ -64,7 +65,8 @@ export const authMiddleware = async (
         if (!supabaseToken) {
           return res.status(401).json({
             success: false,
-            error: "Session secret not configured and no Supabase token provided",
+            error:
+              "Session secret not configured and no Supabase token provided",
           });
         }
 
