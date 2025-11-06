@@ -81,23 +81,51 @@ export default function WithdrawReview() {
 
     setStep("processing");
     try {
-      const result = await createWithdrawalRequest(
-        dbUser.id,
+      // Build request payload expected by server
+      const payload = {
         walletId,
-        crypto,
-        amount,
-        amount * price,
-        address,
+        symbol: crypto,
+        amount: Number(amount),
+        destinationAddress: address,
         network,
-        networkFee,
-        networkFee * price,
-      );
+        email,
+      } as any;
 
-      // Simulate processing delay then show success
+      // Try to include an authorization token if available in localStorage
+      let headers: Record<string, string> = { "Content-Type": "application/json" };
+      try {
+        const stored = localStorage.getItem("auth_session");
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Accept both session.access_token and user.token conventions
+          const token = parsed?.session?.access_token || parsed?.user?.token || null;
+          if (token) {
+            headers["Authorization"] = `Bearer ${token}`;
+          }
+        }
+      } catch {}
+
+      const resp = await fetch("/api/withdraw", {
+        method: "POST",
+        headers,
+        body: JSON.stringify(payload),
+        credentials: headers["Authorization"] ? undefined : "include",
+      });
+
+      const resJson = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        const message = resJson?.error || resJson?.message || `Withdrawal failed: ${resp.status}`;
+        setError(message);
+        setStep("failure");
+        return;
+      }
+
+      // Successful creation
+      const id = resJson?.data?.id || resJson?.data?.withdrawal_id || resJson?.data?.id;
       setTimeout(() => {
-        setTxHash(result.id); // Use request ID as reference
+        setTxHash(id || "");
         setStep("success");
-      }, 2000);
+      }, 1000);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Withdrawal failed";
       setError(message);
