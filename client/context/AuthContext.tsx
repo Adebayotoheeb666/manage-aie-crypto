@@ -52,10 +52,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function restore() {
       setLoading(true);
       try {
-        // Try server session (cookie-based). Include credentials to ensure cookies are sent.
-        const resp = await fetch("/api/auth/session", {
-          credentials: "include",
-        });
+        // Get token from localStorage if available
+      let authToken = '';
+      try {
+        const session = localStorage.getItem("auth_session");
+        if (session) {
+          const { user } = JSON.parse(session);
+          if (user?.token) {
+            authToken = user.token;
+          }
+        }
+      } catch (e) {
+        console.error("Error parsing auth session:", e);
+      }
+
+      // Try server session with auth token if available
+      const headers: Record<string, string> = {};
+      if (authToken) {
+        headers["Authorization"] = `Bearer ${authToken}`;
+      }
+      
+      const resp = await fetch("/api/auth/session", {
+        credentials: "include",
+        headers,
+      });
         if (resp.ok) {
           const data = await resp.json();
           if (mounted && data.user) {

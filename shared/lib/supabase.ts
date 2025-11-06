@@ -29,6 +29,7 @@ type CustomSupabaseClient = SupabaseClient<Database> & {
     check_and_trigger_price_alerts: () => Promise<{ data: CheckAndTriggerPriceAlerts['Returns'] | null; error: any }>;
     cleanup_expired_sessions: () => Promise<{ data: CleanupExpiredSessions['Returns'] | null; error: any }>;
     log_audit_event: (params: LogAuditEvent['Args']) => Promise<{ data: LogAuditEvent['Returns'] | null; error: any }>;
+    get_user_assets: (params: { p_user_id: string }) => Promise<{ data: any[] | null; error: any }>;
   };
 };
 
@@ -309,8 +310,78 @@ export async function logAuditEvent(
 }
 
 // ==========================================
+// TRANSACTION FUNCTIONS
+// ==========================================
+
+interface TransactionData {
+  tx_type: 'send' | 'receive' | 'swap' | 'stake' | 'unstake';
+  symbol: string;
+  amount: number;
+  amount_usd: number;
+  from_address?: string | null;
+  to_address?: string | null;
+  tx_hash?: string | null;
+  fee_amount?: number | null;
+  fee_usd?: number | null;
+  status?: 'pending' | 'confirmed' | 'failed' | 'cancelled';
+  notes?: string | null;
+}
+
+export async function createTransaction(
+  userId: string,
+  walletId: string,
+  txData: TransactionData
+) {
+  const transactionData = {
+    user_id: userId,
+    wallet_id: walletId,
+    ...txData,
+    from_address: txData.from_address || null,
+    to_address: txData.to_address || null,
+    tx_hash: txData.tx_hash || null,
+    fee_amount: txData.fee_amount || null,
+    fee_usd: txData.fee_usd || null,
+    notes: txData.notes || null,
+  };
+
+  // Using a type assertion to bypass TypeScript's type checking for the insert operation
+  const { data, error } = await (supabase as any)
+    .from('transactions')
+    .insert([transactionData])
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
+// ==========================================
 // WALLET FUNCTIONS
 // ==========================================
+
+export async function getPrimaryWallet(userId: string) {
+  const { data, error } = await supabase
+    .from('wallets')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('is_primary', true)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    // PGRST116 is the error code for no rows returned
+    throw error;
+  }
+  
+  return data || null;
+}
+
+export async function getUserAssets(userId: string) {
+  const { data, error } = await (supabase as any)
+    .rpc('get_user_assets', { p_user_id: userId });
+
+  if (error) throw error;
+  return data || [];
+}
 
 export async function getWalletAssets(userId: string): Promise<WalletAssets[]> {
   try {
