@@ -226,6 +226,26 @@ export default function Dashboard() {
   // Fetch portfolio history
   const fetchPortfolioHistory = useCallback(async () => {
     try {
+      // Prefer proxy snapshots when dbUser available
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/portfolio-snapshots", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id, daysBack: 30 }),
+        });
+
+        if (!proxyResp.ok) {
+          const err = await proxyResp.json().catch(() => ({ error: proxyResp.statusText }));
+          throw new Error(`Failed to fetch portfolio snapshots via proxy: ${proxyResp.status} ${err.error || ""}`);
+        }
+
+        const proxyData = await proxyResp.json();
+        // The proxy returns 'data' array of snapshots; convert to history format
+        const history = (proxyData.data || []).map((s: any) => ({ timestamp: s.snapshot_date, value: s.total_usd || 0 }));
+        setPortfolioData(history || []);
+        return;
+      }
+
       const response = await fetch("/api/portfolio/history", {
         credentials: "include",
       });
@@ -249,7 +269,7 @@ export default function Dashboard() {
       console.error("Error fetching portfolio history:", error);
       throw error;
     }
-  }, []);
+  }, [dbUser]);
 
   // Fetch all dashboard data
   const fetchDashboardData = useCallback(async () => {
