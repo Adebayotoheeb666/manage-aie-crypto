@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { createWithdrawalRequest } from "@shared/lib/supabase";
 import { getCoinPrice } from "@shared/lib/coingecko";
 import { useAuth } from "@/context/AuthContext";
 import {
