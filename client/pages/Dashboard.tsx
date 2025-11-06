@@ -952,7 +952,10 @@ export default function Dashboard() {
           </div>
           <span className="text-sm font-medium">Buy Crypto</span>
         </button>
-        <button onClick={() => navigate("/withdraw")} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
+        <button
+          onClick={() => navigate("/withdraw")}
+          className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center"
+        >
           <div className="bg-orange-100 p-3 rounded-full mb-2">
             <ArrowUpRight className="w-6 h-6 text-orange-600" />
           </div>

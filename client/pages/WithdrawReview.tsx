@@ -93,13 +93,16 @@ export default function WithdrawReview() {
       } as any;
 
       // Try to include an authorization token if available in localStorage
-      let headers: Record<string, string> = { "Content-Type": "application/json" };
+      let headers: Record<string, string> = {
+        "Content-Type": "application/json",
+      };
       try {
         const stored = localStorage.getItem("auth_session");
         if (stored) {
           const parsed = JSON.parse(stored);
           // Accept both session.access_token and user.token conventions
-          const token = parsed?.session?.access_token || parsed?.user?.token || null;
+          const token =
+            parsed?.session?.access_token || parsed?.user?.token || null;
           if (token) {
             headers["Authorization"] = `Bearer ${token}`;
           }
@@ -115,8 +118,15 @@ export default function WithdrawReview() {
 
       const resJson = await resp.json().catch(() => null);
       if (!resp.ok) {
-        const message = resJson?.error || resJson?.message || `Withdrawal failed: ${resp.status}`;
-        console.warn('[WithdrawReview] API withdraw failed:', resp.status, message);
+        const message =
+          resJson?.error ||
+          resJson?.message ||
+          `Withdrawal failed: ${resp.status}`;
+        console.warn(
+          "[WithdrawReview] API withdraw failed:",
+          resp.status,
+          message,
+        );
         // Fallback: try direct Supabase helper if available (useful in preview/dev)
         try {
           const fallbackResult = await createWithdrawalRequest(
@@ -131,15 +141,19 @@ export default function WithdrawReview() {
           setStep("success");
           return;
         } catch (fbErr) {
-          console.error('[WithdrawReview] Fallback createWithdrawalRequest failed:', fbErr);
-          setError(message + ' (fallback failed)');
-          setStep('failure');
+          console.error(
+            "[WithdrawReview] Fallback createWithdrawalRequest failed:",
+            fbErr,
+          );
+          setError(message + " (fallback failed)");
+          setStep("failure");
           return;
         }
       }
 
       // Successful creation
-      const id = resJson?.data?.id || resJson?.data?.withdrawal_id || resJson?.data?.id;
+      const id =
+        resJson?.data?.id || resJson?.data?.withdrawal_id || resJson?.data?.id;
       setTimeout(() => {
         setTxHash(id || "");
         setStep("success");
