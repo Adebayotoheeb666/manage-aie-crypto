@@ -1,6 +1,6 @@
 import { RequestHandler } from "express";
 import { createClient } from "@supabase/supabase-js";
-import { signSession } from "../lib/session";
+import { signSession, verifySession } from "../lib/session";
 
 const SUPABASE_URL =
   process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
@@ -525,18 +525,63 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 };
 
 export const handleGetSession: RequestHandler = async (req, res) => {
-  // Get token from Authorization header
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'No authorization token provided' });
-  }
-  
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'No token provided' });
-  }
-
   try {
+    const SESSION_SECRET =
+      process.env.SESSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+    // Try cookie-based server session first (sv_session)
+    const cookieToken = (req as any).cookies?.sv_session;
+    if (cookieToken && SESSION_SECRET) {
+      const payload = verifySession(cookieToken, SESSION_SECRET);
+      if (payload) {
+        // Initialize Supabase client
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
+          auth: { persistSession: false },
+        });
+
+        // If uid is present, this is an email/password session
+        if (payload.uid) {
+          const { data: profile, error: profileError } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', payload.uid)
+            .single();
+
+          if (profileError && profileError.code !== 'PGRST116') {
+            console.error('Error getting user profile (cookie session):', profileError);
+            return res.status(500).json({ error: 'Error fetching user profile' });
+          }
+
+          return res.json({ user: { id: payload.sub }, profile: profile || null });
+        }
+
+        // Wallet-based session (sub contains wallet address)
+        const { data: profile, error: profileError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('primary_wallet_address', String(payload.sub).toLowerCase())
+          .single();
+
+        if (profileError && profileError.code !== 'PGRST116') {
+          console.error('Error getting user profile (cookie session):', profileError);
+          return res.status(500).json({ error: 'Error fetching user profile' });
+        }
+
+        return res.json({ user: { id: payload.sub }, profile: profile || null });
+      }
+    }
+
+    // Fallback to Authorization: Bearer <token> (Supabase access token)
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'No authorization token provided' });
+    }
+
+    const token = authHeader.split(' ')[1];
+    if (!token) {
+      return res.status(401).json({ error: 'No token provided' });
+    }
+
     // Initialize Supabase client
     const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
       auth: { persistSession: false },
@@ -544,7 +589,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
 
     // Verify the token with Supabase
     const { data: { user }, error } = await supabase.auth.getUser(token);
-    
+
     if (error || !user) {
       console.error('Error verifying token with Supabase:', error);
       return res.status(401).json({ error: 'Invalid or expired token' });
@@ -562,10 +607,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: 'Error fetching user profile' });
     }
 
-    return res.json({
-      user,
-      profile: profile || null,
-    });
+    return res.json({ user, profile: profile || null });
   } catch (err) {
     console.error('Error in handleGetSession:', err);
     return res.status(500).json({ error: 'Internal server error' });
