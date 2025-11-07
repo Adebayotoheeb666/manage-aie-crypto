@@ -225,6 +225,19 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   const walletAddressRaw =
     req.body?.walletAddress || req.body?.wallet_address || "";
 
+  // Basic request diagnostics
+  try {
+    console.info('[wallet-connect] Headers:', {
+      origin: req.headers.origin || null,
+      referer: req.headers.referer || null,
+      userAgent: req.headers['user-agent'] || null,
+      contentLength: req.headers['content-length'] || null,
+      cookiePresent: !!req.headers.cookie,
+    });
+  } catch (hdrErr) {
+    console.warn('[wallet-connect] Failed to log headers', hdrErr);
+  }
+
   if (!walletAddressRaw) {
     console.error("[wallet-connect] No wallet address in request body");
     return res.status(400).json({
@@ -256,26 +269,39 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   // If both are provided, verify the signature (web3 provider flow)
   // If both are missing, skip verification (seed phrase import flow)
   const hasSignature = signature && nonce;
+  console.info('[wallet-connect] hasSignature:', !!hasSignature, 'signatureLength:', signature?.length || 0, 'nonceLength:', nonce?.length || 0);
 
   try {
     if (hasSignature) {
       // verify signature (web3 provider flow: MetaMask/WalletConnect)
       const expectedNonce = getNonceForAddress(walletAddress);
+      console.info('[wallet-connect] expectedNonce:', expectedNonce, 'providedNonce:', nonce);
       if (!expectedNonce || expectedNonce !== nonce) {
+        console.warn('[wallet-connect] nonce mismatch or expired', { expected: expectedNonce, provided: nonce });
         return res.status(400).json({ error: "Invalid or expired nonce" });
       }
 
-      const recovered = ethers.verifyMessage(nonce, signature);
+      let recovered: string;
+      try {
+        recovered = ethers.verifyMessage(nonce, signature);
+        console.info('[wallet-connect] signature recovered address:', recovered);
+      } catch (sigErr) {
+        console.error('[wallet-connect] signature verification error:', sigErr?.message || sigErr);
+        return res.status(401).json({ error: "Signature verification failed" });
+      }
+
       if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
         console.warn(
-          `[wallet-connect] signature mismatch for ${walletAddress}`,
+          `[wallet-connect] signature mismatch for ${walletAddress}`, { recovered }
         );
         return res.status(401).json({ error: "Signature verification failed" });
       }
 
       // consume the nonce
       const consumed = consumeNonceForAddress(walletAddress, nonce);
+      console.info('[wallet-connect] nonce consumed:', !!consumed);
       if (!consumed) {
+        console.warn('[wallet-connect] failed to consume nonce', { walletAddress, nonce });
         return res.status(400).json({ error: "Invalid or expired nonce" });
       }
     } else {
@@ -312,9 +338,12 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       });
       console.info("[wallet-connect] Supabase client created successfully");
     } catch (err) {
-      console.error("[wallet-connect] Supabase client creation failed", err);
+      console.error("[wallet-connect] Supabase client creation failed", {
+        message: err?.message || err,
+        stack: err?.stack,
+      });
       return res.status(500).json({
-        error: "Supabase client creation failed: " + (err.message || err),
+        error: "Supabase client creation failed: " + (err.message || String(err)),
       });
     }
     // Ensure user profile exists in users table. Use primary_wallet_address for wallet users
@@ -356,6 +385,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
     if (!profile) {
       const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
+      console.info('[wallet-connect] Creating user profile with email:', walletEmail);
       const { data: inserted, error: insertErr } = await supabase
         .from("users")
         .insert({
@@ -370,16 +400,18 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       if (insertErr) {
         console.error(
           "[wallet-connect] failed to create user profile",
-          insertErr.message,
+          { message: insertErr.message, details: insertErr.details || null },
         );
         return res.status(500).json({
           error: "Failed to create user profile: " + insertErr.message,
         });
       }
       profile = inserted;
-      
+      console.info('[wallet-connect] Created user profile:', { id: profile.id });
+
       // Create a wallet record for the user
       try {
+        console.info('[wallet-connect] Inserting wallet record for user:', profile.id);
         const { data: wallet, error: walletError } = await supabase
           .from('wallets')
           .insert({
@@ -397,11 +429,11 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           .single();
 
         if (walletError) {
-          console.error('[wallet-connect] Failed to create wallet:', walletError);
+          console.error('[wallet-connect] Failed to create wallet:', { message: walletError.message, details: walletError.details || null });
           // Continue anyway as the user is already created
         } else {
           console.log('[wallet-connect] Created wallet:', wallet.id);
-          
+
           // Initialize default assets for the wallet
           const defaultAssets = [
             {
@@ -442,6 +474,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
             },
           ];
 
+          console.info('[wallet-connect] Inserting default assets for wallet:', wallet.id);
           const { error: assetsError } = await supabase
             .from('assets')
             .insert(defaultAssets);
@@ -449,11 +482,11 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           if (assetsError) {
             console.error('[wallet-connect] Failed to initialize default assets:', assetsError);
           } else {
-            console.log('[wallet-connect] Initialized default assets');
+            console.log('[wallet-connect] Initialized default assets for wallet:', wallet.id);
           }
         }
       } catch (walletErr) {
-        console.error('[wallet-connect] Error in wallet/asset initialization:', walletErr);
+        console.error('[wallet-connect] Error in wallet/asset initialization:', { message: walletErr?.message || walletErr, stack: walletErr?.stack || null });
         // Continue with the response even if wallet/asset initialization fails
       }
     }
