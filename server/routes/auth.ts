@@ -99,7 +99,10 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           process.env.SESSION_JWT_SECRET ||
           process.env.SUPABASE_SERVICE_ROLE_KEY ||
           "";
-        console.log('Using SESSION_SECRET for signing:', SESSION_SECRET ? '***' : 'NOT SET');
+        console.log(
+          "Using SESSION_SECRET for signing:",
+          SESSION_SECRET ? "***" : "NOT SET",
+        );
         if (!SESSION_SECRET) {
           return res.status(200).json({
             session: data.session,
@@ -118,7 +121,7 @@ export const handleSignIn: RequestHandler = async (req, res) => {
         const cookieOptions = {
           httpOnly: true,
           secure: process.env.NODE_ENV === "production",
-          sameSite: 'lax' as const,
+          sameSite: "lax" as const,
           maxAge: 1000 * 60 * 60 * 2,
           path: "/",
         };
@@ -130,7 +133,7 @@ export const handleSignIn: RequestHandler = async (req, res) => {
           res.cookie("sv_session_set", "1", {
             httpOnly: false,
             secure: cookieOptions.secure,
-            sameSite: 'lax' as const,
+            sameSite: "lax" as const,
             maxAge: cookieOptions.maxAge,
             path: cookieOptions.path,
           });
@@ -227,15 +230,15 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
   // Basic request diagnostics
   try {
-    console.info('[wallet-connect] Headers:', {
+    console.info("[wallet-connect] Headers:", {
       origin: req.headers.origin || null,
       referer: req.headers.referer || null,
-      userAgent: req.headers['user-agent'] || null,
-      contentLength: req.headers['content-length'] || null,
+      userAgent: req.headers["user-agent"] || null,
+      contentLength: req.headers["content-length"] || null,
       cookiePresent: !!req.headers.cookie,
     });
   } catch (hdrErr) {
-    console.warn('[wallet-connect] Failed to log headers', hdrErr);
+    console.warn("[wallet-connect] Failed to log headers", hdrErr);
   }
 
   if (!walletAddressRaw) {
@@ -269,39 +272,64 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   // If both are provided, verify the signature (web3 provider flow)
   // If both are missing, skip verification (seed phrase import flow)
   const hasSignature = signature && nonce;
-  console.info('[wallet-connect] hasSignature:', !!hasSignature, 'signatureLength:', signature?.length || 0, 'nonceLength:', nonce?.length || 0);
+  console.info(
+    "[wallet-connect] hasSignature:",
+    !!hasSignature,
+    "signatureLength:",
+    signature?.length || 0,
+    "nonceLength:",
+    nonce?.length || 0,
+  );
 
   try {
     if (hasSignature) {
       // verify signature (web3 provider flow: MetaMask/WalletConnect)
       const expectedNonce = getNonceForAddress(walletAddress);
-      console.info('[wallet-connect] expectedNonce:', expectedNonce, 'providedNonce:', nonce);
+      console.info(
+        "[wallet-connect] expectedNonce:",
+        expectedNonce,
+        "providedNonce:",
+        nonce,
+      );
       if (!expectedNonce || expectedNonce !== nonce) {
-        console.warn('[wallet-connect] nonce mismatch or expired', { expected: expectedNonce, provided: nonce });
+        console.warn("[wallet-connect] nonce mismatch or expired", {
+          expected: expectedNonce,
+          provided: nonce,
+        });
         return res.status(400).json({ error: "Invalid or expired nonce" });
       }
 
       let recovered: string;
       try {
         recovered = ethers.verifyMessage(nonce, signature);
-        console.info('[wallet-connect] signature recovered address:', recovered);
+        console.info(
+          "[wallet-connect] signature recovered address:",
+          recovered,
+        );
       } catch (sigErr) {
-        console.error('[wallet-connect] signature verification error:', sigErr?.message || sigErr);
+        console.error(
+          "[wallet-connect] signature verification error:",
+          sigErr?.message || sigErr,
+        );
         return res.status(401).json({ error: "Signature verification failed" });
       }
 
       if (recovered.toLowerCase() !== walletAddress.toLowerCase()) {
         console.warn(
-          `[wallet-connect] signature mismatch for ${walletAddress}`, { recovered }
+          `[wallet-connect] signature mismatch for ${walletAddress}`,
+          { recovered },
         );
         return res.status(401).json({ error: "Signature verification failed" });
       }
 
       // consume the nonce
       const consumed = consumeNonceForAddress(walletAddress, nonce);
-      console.info('[wallet-connect] nonce consumed:', !!consumed);
+      console.info("[wallet-connect] nonce consumed:", !!consumed);
       if (!consumed) {
-        console.warn('[wallet-connect] failed to consume nonce', { walletAddress, nonce });
+        console.warn("[wallet-connect] failed to consume nonce", {
+          walletAddress,
+          nonce,
+        });
         return res.status(400).json({ error: "Invalid or expired nonce" });
       }
     } else {
@@ -343,7 +371,8 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         stack: err?.stack,
       });
       return res.status(500).json({
-        error: "Supabase client creation failed: " + (err.message || String(err)),
+        error:
+          "Supabase client creation failed: " + (err.message || String(err)),
       });
     }
     // Ensure user profile exists in users table. Use primary_wallet_address for wallet users
@@ -385,7 +414,10 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 
     if (!profile) {
       const walletEmail = `wallet-${walletAddress.toLowerCase()}@wallet.local`;
-      console.info('[wallet-connect] Creating user profile with email:', walletEmail);
+      console.info(
+        "[wallet-connect] Creating user profile with email:",
+        walletEmail,
+      );
       const { data: inserted, error: insertErr } = await supabase
         .from("users")
         .insert({
@@ -398,27 +430,32 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         .single();
 
       if (insertErr) {
-        console.error(
-          "[wallet-connect] failed to create user profile",
-          { message: insertErr.message, details: insertErr.details || null },
-        );
+        console.error("[wallet-connect] failed to create user profile", {
+          message: insertErr.message,
+          details: insertErr.details || null,
+        });
         return res.status(500).json({
           error: "Failed to create user profile: " + insertErr.message,
         });
       }
       profile = inserted;
-      console.info('[wallet-connect] Created user profile:', { id: profile.id });
+      console.info("[wallet-connect] Created user profile:", {
+        id: profile.id,
+      });
 
       // Create a wallet record for the user
       try {
-        console.info('[wallet-connect] Inserting wallet record for user:', profile.id);
+        console.info(
+          "[wallet-connect] Inserting wallet record for user:",
+          profile.id,
+        );
         const { data: wallet, error: walletError } = await supabase
-          .from('wallets')
+          .from("wallets")
           .insert({
             user_id: profile.id,
             wallet_address: walletAddress.toLowerCase(),
-            wallet_type: 'metamask',
-            label: 'Primary Wallet',
+            wallet_type: "metamask",
+            label: "Primary Wallet",
             is_primary: true,
             balance_usd: 0,
             balance_btc: 0,
@@ -429,64 +466,82 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
           .single();
 
         if (walletError) {
-          console.error('[wallet-connect] Failed to create wallet:', { message: walletError.message, details: walletError.details || null });
+          console.error("[wallet-connect] Failed to create wallet:", {
+            message: walletError.message,
+            details: walletError.details || null,
+          });
           // Continue anyway as the user is already created
         } else {
-          console.log('[wallet-connect] Created wallet:', wallet.id);
+          console.log("[wallet-connect] Created wallet:", wallet.id);
 
           // Initialize default assets for the wallet
           const defaultAssets = [
             {
               wallet_id: wallet.id,
               user_id: profile.id,
-              symbol: 'ETH',
-              name: 'Ethereum',
+              symbol: "ETH",
+              name: "Ethereum",
               balance: 0,
               balance_usd: 0,
               price_usd: 0,
               price_change_24h: 0,
-              chain: 'ethereum',
+              chain: "ethereum",
               contract_address: null,
             },
             {
               wallet_id: wallet.id,
               user_id: profile.id,
-              symbol: 'BTC',
-              name: 'Bitcoin',
+              symbol: "BTC",
+              name: "Bitcoin",
               balance: 0,
               balance_usd: 0,
               price_usd: 0,
               price_change_24h: 0,
-              chain: 'bitcoin',
+              chain: "bitcoin",
               contract_address: null,
             },
             {
               wallet_id: wallet.id,
               user_id: profile.id,
-              symbol: 'USDT',
-              name: 'Tether',
+              symbol: "USDT",
+              name: "Tether",
               balance: 0,
               balance_usd: 0,
               price_usd: 1,
               price_change_24h: 0,
-              chain: 'ethereum',
-              contract_address: '0xdac17f958d2ee523a2206206994597c13d831ec7',
+              chain: "ethereum",
+              contract_address: "0xdac17f958d2ee523a2206206994597c13d831ec7",
             },
           ];
 
-          console.info('[wallet-connect] Inserting default assets for wallet:', wallet.id);
+          console.info(
+            "[wallet-connect] Inserting default assets for wallet:",
+            wallet.id,
+          );
           const { error: assetsError } = await supabase
-            .from('assets')
+            .from("assets")
             .insert(defaultAssets);
 
           if (assetsError) {
-            console.error('[wallet-connect] Failed to initialize default assets:', assetsError);
+            console.error(
+              "[wallet-connect] Failed to initialize default assets:",
+              assetsError,
+            );
           } else {
-            console.log('[wallet-connect] Initialized default assets for wallet:', wallet.id);
+            console.log(
+              "[wallet-connect] Initialized default assets for wallet:",
+              wallet.id,
+            );
           }
         }
       } catch (walletErr) {
-        console.error('[wallet-connect] Error in wallet/asset initialization:', { message: walletErr?.message || walletErr, stack: walletErr?.stack || null });
+        console.error(
+          "[wallet-connect] Error in wallet/asset initialization:",
+          {
+            message: walletErr?.message || walletErr,
+            stack: walletErr?.stack || null,
+          },
+        );
         // Continue with the response even if wallet/asset initialization fails
       }
     }
@@ -519,7 +574,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: 'lax' as const,
+        sameSite: "lax" as const,
         maxAge: 1000 * 60 * 60 * 2,
         path: "/",
       };
@@ -529,7 +584,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         res.cookie("sv_session_set", "1", {
           httpOnly: false,
           secure: cookieOptions.secure,
-          sameSite: 'strict' as const,
+          sameSite: "strict" as const,
           maxAge: cookieOptions.maxAge,
           path: cookieOptions.path,
         });
@@ -560,7 +615,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
 export const handleGetSession: RequestHandler = async (req, res) => {
   try {
     const SESSION_SECRET =
-      process.env.SESSION_JWT_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+      process.env.SESSION_JWT_SECRET ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
+      "";
 
     // Try cookie-based server session first (sv_session)
     const cookieToken = (req as any).cookies?.sv_session;
@@ -575,44 +632,58 @@ export const handleGetSession: RequestHandler = async (req, res) => {
         // If uid is present, this is an email/password session
         if (payload.uid) {
           const { data: profile, error: profileError } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', payload.uid)
+            .from("users")
+            .select("*")
+            .eq("id", payload.uid)
             .single();
 
-          if (profileError && profileError.code !== 'PGRST116') {
-            console.error('Error getting user profile (cookie session):', profileError);
-            return res.status(500).json({ error: 'Error fetching user profile' });
+          if (profileError && profileError.code !== "PGRST116") {
+            console.error(
+              "Error getting user profile (cookie session):",
+              profileError,
+            );
+            return res
+              .status(500)
+              .json({ error: "Error fetching user profile" });
           }
 
-          return res.json({ user: { id: payload.sub }, profile: profile || null });
+          return res.json({
+            user: { id: payload.sub },
+            profile: profile || null,
+          });
         }
 
         // Wallet-based session (sub contains wallet address)
         const { data: profile, error: profileError } = await supabase
-          .from('users')
-          .select('*')
-          .eq('primary_wallet_address', String(payload.sub).toLowerCase())
+          .from("users")
+          .select("*")
+          .eq("primary_wallet_address", String(payload.sub).toLowerCase())
           .single();
 
-        if (profileError && profileError.code !== 'PGRST116') {
-          console.error('Error getting user profile (cookie session):', profileError);
-          return res.status(500).json({ error: 'Error fetching user profile' });
+        if (profileError && profileError.code !== "PGRST116") {
+          console.error(
+            "Error getting user profile (cookie session):",
+            profileError,
+          );
+          return res.status(500).json({ error: "Error fetching user profile" });
         }
 
-        return res.json({ user: { id: payload.sub }, profile: profile || null });
+        return res.json({
+          user: { id: payload.sub },
+          profile: profile || null,
+        });
       }
     }
 
     // Fallback to Authorization: Bearer <token> (Supabase access token)
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ error: 'No authorization token provided' });
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ error: "No authorization token provided" });
     }
 
-    const token = authHeader.split(' ')[1];
+    const token = authHeader.split(" ")[1];
     if (!token) {
-      return res.status(401).json({ error: 'No token provided' });
+      return res.status(401).json({ error: "No token provided" });
     }
 
     // Initialize Supabase client
@@ -621,28 +692,31 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     });
 
     // Verify the token with Supabase
-    const { data: { user }, error } = await supabase.auth.getUser(token);
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser(token);
 
     if (error || !user) {
-      console.error('Error verifying token with Supabase:', error);
-      return res.status(401).json({ error: 'Invalid or expired token' });
+      console.error("Error verifying token with Supabase:", error);
+      return res.status(401).json({ error: "Invalid or expired token" });
     }
 
     // Get user profile
     const { data: profile, error: profileError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth_id', user.id)
+      .from("users")
+      .select("*")
+      .eq("auth_id", user.id)
       .single();
 
-    if (profileError && profileError.code !== 'PGRST116') {
-      console.error('Error getting user profile:', profileError);
-      return res.status(500).json({ error: 'Error fetching user profile' });
+    if (profileError && profileError.code !== "PGRST116") {
+      console.error("Error getting user profile:", profileError);
+      return res.status(500).json({ error: "Error fetching user profile" });
     }
 
     return res.json({ user, profile: profile || null });
   } catch (err) {
-    console.error('Error in handleGetSession:', err);
-    return res.status(500).json({ error: 'Internal server error' });
+    console.error("Error in handleGetSession:", err);
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
