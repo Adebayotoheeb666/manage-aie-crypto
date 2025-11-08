@@ -227,11 +227,24 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   // Extract wallet address from request body
   // Extract and normalize request body (handle string payloads on some hosts)
   let body: any = req.body as any;
+
+  // Debug logging to understand body format
+  console.info("[wallet-connect] Raw req.body type:", typeof body);
+  console.info("[wallet-connect] Raw req.body:",
+    typeof body === "string" ? body.substring(0, 100) :
+    body ? JSON.stringify(body).substring(0, 100) :
+    "null/undefined"
+  );
+
   try {
     if (typeof body === "string") {
+      console.info("[wallet-connect] Attempting to parse body as string");
       body = JSON.parse(body);
+      console.info("[wallet-connect] Successfully parsed body as JSON");
     }
-  } catch {}
+  } catch (parseErr) {
+    console.error("[wallet-connect] Failed to parse body as JSON:", parseErr);
+  }
 
   const walletAddressRaw =
     body?.walletAddress ||
@@ -254,8 +267,16 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
     console.warn("[wallet-connect] Failed to log headers", hdrErr);
   }
 
+  console.info("[wallet-connect] Extracted walletAddressRaw:",
+    walletAddressRaw ? walletAddressRaw.substring(0, 20) + "..." : "empty");
+
   if (!walletAddressRaw) {
-    console.error("[wallet-connect] No wallet address in request body");
+    console.error("[wallet-connect] No wallet address found in:", {
+      bodyWalletAddress: body?.walletAddress ? "present" : "missing",
+      bodyWalletAddressSnake: body?.wallet_address ? "present" : "missing",
+      queryWalletAddress: (req.query as any)?.walletAddress ? "present" : "missing",
+      headerXWalletAddress: req.headers["x-wallet-address"] ? "present" : "missing",
+    });
     return res.status(400).json({
       error: "Wallet address is required",
     });
