@@ -225,8 +225,21 @@ export const handleGetNonce: RequestHandler = async (req, res) => {
 
 export const handleWalletConnect: RequestHandler = async (req, res) => {
   // Extract wallet address from request body
+  // Extract and normalize request body (handle string payloads on some hosts)
+  let body: any = req.body as any;
+  try {
+    if (typeof body === "string") {
+      body = JSON.parse(body);
+    }
+  } catch {}
+
   const walletAddressRaw =
-    req.body?.walletAddress || req.body?.wallet_address || "";
+    body?.walletAddress ||
+    body?.wallet_address ||
+    (req.query as any)?.walletAddress ||
+    (req.query as any)?.wallet_address ||
+    req.headers["x-wallet-address"] ||
+    "";
 
   // Basic request diagnostics
   try {
@@ -249,8 +262,8 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   }
 
   const walletAddress = String(walletAddressRaw).trim();
-  const signature = String(req.body?.signature || "");
-  const nonce = String(req.body?.nonce || "");
+  const signature = body?.signature ? String(body.signature) : "";
+  const nonce = body?.nonce ? String(body.nonce) : "";
 
   // Basic logging for debugging (avoid logging full PII in production)
   const remoteIp = (
