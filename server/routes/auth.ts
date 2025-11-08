@@ -228,10 +228,26 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
   // Extract and normalize request body (handle string payloads on some hosts)
   let body: any = req.body as any;
   try {
+    console.info(
+      "[wallet-connect] raw req.body type:",
+      typeof req.body,
+      "content-type:",
+      req.headers["content-type"],
+      "bodyPreview:",
+      String(req.body).slice(0, 200),
+    );
+
     if (typeof body === "string") {
-      body = JSON.parse(body);
+      try {
+        body = JSON.parse(body);
+        console.info("[wallet-connect] parsed string body to JSON");
+      } catch (parseErr) {
+        console.warn("[wallet-connect] failed to parse body as JSON", parseErr?.message || parseErr);
+      }
     }
-  } catch {}
+  } catch (logErr) {
+    console.warn("[wallet-connect] error inspecting request body", logErr?.message || logErr);
+  }
 
   const walletAddressRaw =
     body?.walletAddress ||
@@ -248,6 +264,7 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       referer: req.headers.referer || null,
       userAgent: req.headers["user-agent"] || null,
       contentLength: req.headers["content-length"] || null,
+      contentType: req.headers["content-type"] || null,
       cookiePresent: !!req.headers.cookie,
     });
   } catch (hdrErr) {
