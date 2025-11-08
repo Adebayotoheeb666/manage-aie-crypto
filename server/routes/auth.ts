@@ -242,11 +242,17 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
         body = JSON.parse(body);
         console.info("[wallet-connect] parsed string body to JSON");
       } catch (parseErr) {
-        console.warn("[wallet-connect] failed to parse body as JSON", parseErr?.message || parseErr);
+        console.warn(
+          "[wallet-connect] failed to parse body as JSON",
+          parseErr?.message || parseErr,
+        );
       }
     }
   } catch (logErr) {
-    console.warn("[wallet-connect] error inspecting request body", logErr?.message || logErr);
+    console.warn(
+      "[wallet-connect] error inspecting request body",
+      logErr?.message || logErr,
+    );
   }
 
   const walletAddressRaw =
