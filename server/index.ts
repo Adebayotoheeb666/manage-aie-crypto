@@ -104,6 +104,24 @@ export function createServer() {
   // Parse cookies
   app.use(cookieParser());
 
+  // Add raw body middleware before JSON parser to handle serverless environments
+  // This captures the raw body which can be accessed if needed
+  app.use(
+    express.raw({ type: "application/json", limit: "10mb" }),
+    (req, res, next) => {
+      if (req.body && typeof req.body === "object" && Buffer.isBuffer(req.body)) {
+        try {
+          // Parse the raw Buffer to a string, then to JSON
+          const rawString = req.body.toString("utf-8");
+          req.body = JSON.parse(rawString);
+        } catch (e) {
+          // If parsing fails, Express.json() will handle it
+        }
+      }
+      next();
+    }
+  );
+
   // Parse JSON bodies - must be early in the middleware chain
   // Use a larger limit for Netlify functions which might buffer the entire request
   app.use(express.json({ limit: "10mb" }));
