@@ -104,31 +104,13 @@ export function createServer() {
   // Parse cookies
   app.use(cookieParser());
 
-  // Add raw body middleware before JSON parser to handle serverless environments
-  // This captures the raw body which can be accessed if needed
-  app.use(
-    express.raw({ type: "application/json", limit: "10mb" }),
-    (req, res, next) => {
-      if (req.body && typeof req.body === "object" && Buffer.isBuffer(req.body)) {
-        try {
-          // Parse the raw Buffer to a string, then to JSON
-          const rawString = req.body.toString("utf-8");
-          req.body = JSON.parse(rawString);
-        } catch (e) {
-          // If parsing fails, Express.json() will handle it
-        }
-      }
-      next();
-    }
-  );
-
   // Parse JSON bodies - must be early in the middleware chain
   // Use a larger limit for Netlify functions which might buffer the entire request
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
   // Add a fallback body parser for Netlify serverless environments
-  // On Netlify, the body might come as a string and not be properly parsed by express.json()
+  // On Netlify, the body might come as a string or Buffer and not be properly parsed by express.json()
   app.use((req, res, next) => {
     // Only process POST/PUT/PATCH requests
     if (!["POST", "PUT", "PATCH"].includes(req.method)) {
@@ -136,7 +118,7 @@ export function createServer() {
     }
 
     // If body is already parsed as an object, skip
-    if (typeof req.body === "object" && req.body !== null) {
+    if (typeof req.body === "object" && req.body !== null && !Buffer.isBuffer(req.body)) {
       return next();
     }
 
@@ -144,6 +126,18 @@ export function createServer() {
     if (typeof req.body === "string") {
       try {
         req.body = JSON.parse(req.body);
+        return next();
+      } catch (e) {
+        // If parsing fails, leave it as-is and continue
+        return next();
+      }
+    }
+
+    // If body is a Buffer (raw body), convert to string and parse as JSON
+    if (Buffer.isBuffer(req.body)) {
+      try {
+        const bodyString = req.body.toString("utf-8");
+        req.body = JSON.parse(bodyString);
         return next();
       } catch (e) {
         // If parsing fails, leave it as-is and continue
