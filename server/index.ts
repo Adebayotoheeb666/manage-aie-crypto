@@ -118,7 +118,11 @@ export function createServer() {
     }
 
     // If body is already parsed as an object, skip
-    if (typeof req.body === "object" && req.body !== null && !Buffer.isBuffer(req.body)) {
+    if (
+      typeof req.body === "object" &&
+      req.body !== null &&
+      !Buffer.isBuffer(req.body)
+    ) {
       return next();
     }
 
