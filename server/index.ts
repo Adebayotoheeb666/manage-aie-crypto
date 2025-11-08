@@ -105,8 +105,52 @@ export function createServer() {
   app.use(cookieParser());
 
   // Parse JSON bodies - must be early in the middleware chain
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // Use a larger limit for Netlify functions which might buffer the entire request
+  app.use(express.json({ limit: "10mb" }));
+  app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+  // Add a fallback body parser for Netlify serverless environments
+  // On Netlify, the body might come as a string or Buffer and not be properly parsed by express.json()
+  app.use((req, res, next) => {
+    // Only process POST/PUT/PATCH requests
+    if (!["POST", "PUT", "PATCH"].includes(req.method)) {
+      return next();
+    }
+
+    // If body is already parsed as an object, skip
+    if (
+      typeof req.body === "object" &&
+      req.body !== null &&
+      !Buffer.isBuffer(req.body)
+    ) {
+      return next();
+    }
+
+    // If body is a string, try to parse it as JSON
+    if (typeof req.body === "string") {
+      try {
+        req.body = JSON.parse(req.body);
+        return next();
+      } catch (e) {
+        // If parsing fails, leave it as-is and continue
+        return next();
+      }
+    }
+
+    // If body is a Buffer (raw body), convert to string and parse as JSON
+    if (Buffer.isBuffer(req.body)) {
+      try {
+        const bodyString = req.body.toString("utf-8");
+        req.body = JSON.parse(bodyString);
+        return next();
+      } catch (e) {
+        // If parsing fails, leave it as-is and continue
+        return next();
+      }
+    }
+
+    next();
+  });
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
