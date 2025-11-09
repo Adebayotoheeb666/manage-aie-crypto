@@ -535,9 +535,21 @@ export default function Dashboard() {
   }, [isAuthenticated, loading, fetchWallets]);
 
   // Handle refresh
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    fetchDashboardData();
+    try {
+      // Reset to mock data
+      const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+      setTotalBalance(balance);
+      setPreviousBalance(30500);
+      setChange24h(4000);
+      setChange24hPercent(11.6);
+      setAssets(mockAssets);
+      setTransactions(mockTransactions);
+      setPortfolioData(mockPortfolioData);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Format currency
