@@ -62,14 +62,180 @@ interface PortfolioData {
   value: number;
 }
 
+const mockTransactions: Transaction[] = [
+  {
+    id: "1",
+    tx_hash: "0xabc123def456ghi789jkl012",
+    tx_type: "deposit",
+    amount: 2.5,
+    symbol: "ETH",
+    amount_usd: 5750,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 5).toISOString(),
+  },
+  {
+    id: "2",
+    tx_hash: "0x123456789abcdefghijklmno",
+    tx_type: "send",
+    amount: 0.5,
+    symbol: "BTC",
+    amount_usd: 21250,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
+  },
+  {
+    id: "3",
+    tx_hash: "0xdef789ghi012jkl345mno678",
+    tx_type: "receive",
+    amount: 1000,
+    symbol: "USDC",
+    amount_usd: 1000,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 60).toISOString(),
+  },
+  {
+    id: "4",
+    tx_hash: "0xpqr012stu345vwx678yza901",
+    tx_type: "swap",
+    amount: 100,
+    symbol: "ADA",
+    amount_usd: 98,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 120).toISOString(),
+  },
+  {
+    id: "5",
+    tx_hash: "0xghi345jkl678mno901pqr234",
+    tx_type: "deposit",
+    amount: 1.0,
+    symbol: "ETH",
+    amount_usd: 2300,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 180).toISOString(),
+  },
+  {
+    id: "6",
+    tx_hash: "0xstu678vwx901yza234bcd567",
+    tx_type: "send",
+    amount: 5000,
+    symbol: "USDC",
+    amount_usd: 5000,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 240).toISOString(),
+  },
+  {
+    id: "7",
+    tx_hash: "0xvwx901yza234bcd567efg890",
+    tx_type: "receive",
+    amount: 0.1,
+    symbol: "BTC",
+    amount_usd: 4250,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 300).toISOString(),
+  },
+  {
+    id: "8",
+    tx_hash: "0xyza234bcd567efg890hij123",
+    tx_type: "swap",
+    amount: 2,
+    symbol: "ETH",
+    amount_usd: 4600,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 360).toISOString(),
+  },
+  {
+    id: "9",
+    tx_hash: "0xbcd567efg890hij123ijk456",
+    tx_type: "deposit",
+    amount: 50,
+    symbol: "ADA",
+    amount_usd: 49,
+    status: "pending",
+    created_at: new Date(Date.now() - 1000 * 60 * 420).toISOString(),
+  },
+  {
+    id: "10",
+    tx_hash: "0xefg890hij123ijk456jkl789",
+    tx_type: "withdrawal",
+    amount: 3000,
+    symbol: "USDC",
+    amount_usd: 3000,
+    status: "completed",
+    created_at: new Date(Date.now() - 1000 * 60 * 480).toISOString(),
+  },
+];
+
+const mockPortfolioData: PortfolioData[] = [
+  { timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), value: 18500 },
+  { timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), value: 19200 },
+  { timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), value: 18800 },
+  { timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), value: 20100 },
+  { timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), value: 21500 },
+  { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 22800 },
+  { timestamp: new Date().toISOString(), value: 34500 },
+];
+
+const mockAssets: Asset[] = [
+  {
+    id: "1",
+    symbol: "BTC",
+    name: "Bitcoin",
+    balance: 0.542,
+    price_usd: 42500,
+    change_24h: 2.5,
+    value_usd: 23035,
+    logo_url: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
+  },
+  {
+    id: "2",
+    symbol: "ETH",
+    name: "Ethereum",
+    balance: 5.148,
+    price_usd: 2280,
+    change_24h: -1.2,
+    value_usd: 11735,
+    logo_url: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+  },
+  {
+    id: "3",
+    symbol: "USDC",
+    name: "USD Coin",
+    balance: 8500,
+    price_usd: 1.0,
+    change_24h: 0.0,
+    value_usd: 8500,
+    logo_url: "https://assets.coingecko.com/coins/images/6319/large/usdc.png",
+  },
+  {
+    id: "4",
+    symbol: "ADA",
+    name: "Cardano",
+    balance: 2500,
+    price_usd: 0.98,
+    change_24h: 3.2,
+    value_usd: 2450,
+    logo_url: "https://assets.coingecko.com/coins/images/975/large/cardano.png",
+  },
+  {
+    id: "5",
+    symbol: "SOL",
+    name: "Solana",
+    balance: 12.5,
+    price_usd: 195,
+    change_24h: 1.8,
+    value_usd: 2437.5,
+    logo_url: "https://assets.coingecko.com/coins/images/4128/large/solana.png",
+  },
+];
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { dbUser, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [assets, setAssets] = useState<Asset[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [portfolioData, setPortfolioData] = useState<PortfolioData[]>([]);
+  const [assets, setAssets] = useState<Asset[]>(mockAssets);
+  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
+  const [portfolioData, setPortfolioData] = useState<PortfolioData[]>(mockPortfolioData);
   const [totalBalance, setTotalBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(0);
   const [change24h, setChange24h] = useState(0);
@@ -349,16 +515,41 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated && !loading) {
       const loadData = async () => {
-        await Promise.all([fetchDashboardData(), fetchWallets()]);
+        try {
+          // Initialize with mock data
+          const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+          setTotalBalance(balance);
+          setPreviousBalance(30500);
+          setChange24h(4000);
+          setChange24hPercent(11.6);
+          setAssets(mockAssets);
+          setTransactions(mockTransactions);
+          setPortfolioData(mockPortfolioData);
+          await fetchWallets();
+        } finally {
+          setIsLoading(false);
+        }
       };
       loadData();
     }
-  }, [isAuthenticated, loading, fetchDashboardData, fetchWallets]);
+  }, [isAuthenticated, loading, fetchWallets]);
 
   // Handle refresh
-  const handleRefresh = () => {
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    fetchDashboardData();
+    try {
+      // Reset to mock data
+      const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+      setTotalBalance(balance);
+      setPreviousBalance(30500);
+      setChange24h(4000);
+      setChange24hPercent(11.6);
+      setAssets(mockAssets);
+      setTransactions(mockTransactions);
+      setPortfolioData(mockPortfolioData);
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   // Format currency
@@ -818,84 +1009,71 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((tx) => (
-                  <tr key={tx.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0">
-                          {getTransactionIcon(tx.tx_type)}
+              {filteredTransactions.map((tx) => (
+                <tr key={tx.id} className="hover:bg-gray-50">
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        {getTransactionIcon(tx.tx_type)}
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">
+                          {tx.tx_type.charAt(0).toUpperCase() +
+                            tx.tx_type.slice(1)}
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {tx.tx_type.charAt(0).toUpperCase() +
-                              tx.tx_type.slice(1)}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            {tx.tx_hash
-                              ? `${tx.tx_hash.substring(0, 6)}...${tx.tx_hash.substring(tx.tx_hash.length - 4)}`
-                              : "N/A"}
-                          </div>
+                        <div className="text-sm text-gray-500">
+                          {tx.tx_hash
+                            ? `${tx.tx_hash.substring(0, 6)}...${tx.tx_hash.substring(tx.tx_hash.length - 4)}`
+                            : "N/A"}
                         </div>
                       </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          tx.tx_type === "receive"
-                            ? "bg-green-100 text-green-800"
-                            : tx.tx_type === "send"
-                              ? "bg-red-100 text-red-800"
-                              : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {tx.tx_type}
-                      </span>
-                    </td>
-                    <td
-                      className={`px-6 py-4 whitespace-nowrap text-right text-sm ${
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span
+                      className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         tx.tx_type === "receive"
-                          ? "text-green-600"
-                          : "text-gray-900"
+                          ? "bg-green-100 text-green-800"
+                          : tx.tx_type === "send"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-blue-100 text-blue-800"
                       }`}
                     >
-                      {tx.tx_type === "receive"
-                        ? "+"
-                        : tx.tx_type === "send"
-                          ? "-"
-                          : ""}
-                      {tx.amount.toLocaleString(undefined, {
-                        maximumFractionDigits: 8,
-                      })}{" "}
-                      {tx.symbol}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
-                      {formatCurrency(tx.amount_usd)}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <span
-                        className={`text-xs font-medium ${getStatusColor(tx.status)}`}
-                      >
-                        {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
-                      {formatDate(tx.created_at)}
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
+                      {tx.tx_type}
+                    </span>
+                  </td>
                   <td
-                    colSpan={6}
-                    className="px-6 py-8 text-center text-gray-500"
+                    className={`px-6 py-4 whitespace-nowrap text-right text-sm ${
+                      tx.tx_type === "receive"
+                        ? "text-green-600"
+                        : "text-gray-900"
+                    }`}
                   >
-                    {searchTerm || filterType !== "all"
-                      ? "No transactions match your search criteria."
-                      : "No transactions found. Your transactions will appear here."}
+                    {tx.tx_type === "receive"
+                      ? "+"
+                      : tx.tx_type === "send"
+                        ? "-"
+                        : ""}
+                    {tx.amount.toLocaleString(undefined, {
+                      maximumFractionDigits: 8,
+                    })}{" "}
+                    {tx.symbol}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">
+                    {formatCurrency(tx.amount_usd)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right">
+                    <span
+                      className={`text-xs font-medium ${getStatusColor(tx.status)}`}
+                    >
+                      {tx.status.charAt(0).toUpperCase() + tx.status.slice(1)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-500">
+                    {formatDate(tx.created_at)}
                   </td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
         </div>
@@ -927,31 +1105,7 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
-          <div className="bg-blue-100 p-3 rounded-full mb-2">
-            <ArrowDownLeft className="w-6 h-6 text-blue-600" />
-          </div>
-          <span className="text-sm font-medium">Receive</span>
-        </button>
-        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
-          <div className="bg-red-100 p-3 rounded-full mb-2">
-            <ArrowUpRight className="w-6 h-6 text-red-600" />
-          </div>
-          <span className="text-sm font-medium">Send</span>
-        </button>
-        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
-          <div className="bg-green-100 p-3 rounded-full mb-2">
-            <ArrowLeftRight className="w-6 h-6 text-green-600" />
-          </div>
-          <span className="text-sm font-medium">Swap</span>
-        </button>
-        <button className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center">
-          <div className="bg-purple-100 p-3 rounded-full mb-2">
-            <Plus className="w-6 h-6 text-purple-600" />
-          </div>
-          <span className="text-sm font-medium">Buy Crypto</span>
-        </button>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
           onClick={() => navigate("/withdraw")}
           className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center"
@@ -960,6 +1114,15 @@ export default function Dashboard() {
             <ArrowUpRight className="w-6 h-6 text-orange-600" />
           </div>
           <span className="text-sm font-medium">Withdraw</span>
+        </button>
+        <button
+          onClick={() => navigate("/progress-report")}
+          className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center"
+        >
+          <div className="bg-green-100 p-3 rounded-full mb-2">
+            <TrendingUp className="w-6 h-6 text-green-600" />
+          </div>
+          <span className="text-sm font-medium">Progress Report</span>
         </button>
       </div>
     </div>
