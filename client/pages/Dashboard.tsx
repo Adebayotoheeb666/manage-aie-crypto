@@ -515,17 +515,20 @@ export default function Dashboard() {
   useEffect(() => {
     if (isAuthenticated && !loading) {
       const loadData = async () => {
-        setIsLoading(false);
-        // Initialize with mock data
-        const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
-        setTotalBalance(balance);
-        setPreviousBalance(30500);
-        setChange24h(4000);
-        setChange24hPercent(11.6);
-        setAssets(mockAssets);
-        setTransactions(mockTransactions);
-        setPortfolioData(mockPortfolioData);
-        await Promise.all([fetchWallets()]);
+        try {
+          // Initialize with mock data
+          const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+          setTotalBalance(balance);
+          setPreviousBalance(30500);
+          setChange24h(4000);
+          setChange24hPercent(11.6);
+          setAssets(mockAssets);
+          setTransactions(mockTransactions);
+          setPortfolioData(mockPortfolioData);
+          await fetchWallets();
+        } finally {
+          setIsLoading(false);
+        }
       };
       loadData();
     }
