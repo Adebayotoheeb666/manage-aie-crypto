@@ -1,31 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, AlertCircle, CheckCircle2, QrCode } from "lucide-react";
+import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const assets = [
   { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 42500 },
-  { id: 2, symbol: "ETH", name: "Ethereum", balance: 2.148, price: 2280 },
-  { id: 3, symbol: "USDC", name: "USD Coin", balance: 5000, price: 1.0 },
-  { id: 4, symbol: "ADA", name: "Cardano", balance: 1500, price: 0.98 },
+  { id: 2, symbol: "ETH", name: "Ethereum", balance: 5.148, price: 2280 },
+  { id: 3, symbol: "USDC", name: "USD Coin", balance: 8500, price: 1.0 },
+  { id: 4, symbol: "ADA", name: "Cardano", balance: 2500, price: 0.98 },
 ];
 
-const networkFees = {
-  BTC: { Bitcoin: 0.0005 },
-  ETH: { Ethereum: 0.005, "Ethereum L2": 0.001 },
-  USDC: { Ethereum: 0.005, Polygon: 0.0001 },
-  ADA: { Cardano: 0.17 },
-};
-
-const validateAddress = (address: string, crypto: string): boolean => {
-  // Simple validation patterns (in production would be more thorough)
-  const patterns: Record<string, RegExp> = {
-    BTC: /^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$/,
-    ETH: /^0x[a-fA-F0-9]{40}$/,
-    USDC: /^0x[a-fA-F0-9]{40}$/, // Same as ETH
-    ADA: /^addr1[a-z0-9]{53}$/,
-  };
-  return patterns[crypto]?.test(address) || false;
+// Tiered network fees based on amount
+const getNetworkFee = (amount: number): number => {
+  if (amount <= 100) return amount * 0.02; // 2% fee for 0-100
+  if (amount <= 1000) return amount * 0.015; // 1.5% fee for 101-1000
+  if (amount <= 10000) return amount * 0.01; // 1% fee for 1001-10000
+  if (amount <= 100000) return amount * 0.005; // 0.5% fee for 10001-100000
+  return amount * 0.003; // 0.3% fee for 100000+
 };
 
 export default function Withdraw() {
@@ -34,11 +25,12 @@ export default function Withdraw() {
   // Form state
   const [selectedCrypto, setSelectedCrypto] = useState(assets[0].symbol);
   const [amount, setAmount] = useState("");
-  const [recipientAddress, setRecipientAddress] = useState("");
-  const [network, setNetwork] = useState("");
+  const [bankName, setBankName] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [accountNo, setAccountNo] = useState("");
+  const [routingNo, setRoutingNo] = useState("");
   const [email, setEmail] = useState("");
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
-  const [saveEmail, setSaveEmail] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const selectedAsset = assets.find((a) => a.symbol === selectedCrypto);
@@ -56,16 +48,19 @@ export default function Withdraw() {
       newErrors.amount = "Insufficient balance";
     if (parseFloat(amount) < 0.001)
       newErrors.amount = "Minimum withdrawal is 0.001";
-    if (!recipientAddress) newErrors.address = "Please enter recipient address";
-    if (!validateAddress(recipientAddress, selectedCrypto)) {
-      newErrors.address = `Invalid ${selectedCrypto} address format`;
-    }
-    if (!network) newErrors.network = "Please select a network";
+    if (!bankName.trim()) newErrors.bankName = "Please enter bank name";
+    if (!accountName.trim()) newErrors.accountName = "Please enter account name";
+    if (!accountNo.trim()) newErrors.accountNo = "Please enter account number";
+    if (!/^\d{8,17}$/.test(accountNo.replace(/\s/g, "")))
+      newErrors.accountNo = "Invalid account number format";
+    if (!routingNo.trim()) newErrors.routingNo = "Please enter routing number";
+    if (!/^\d{9}$/.test(routingNo.replace(/\s/g, "")))
+      newErrors.routingNo = "Routing number must be 9 digits";
     if (!email) newErrors.email = "Please enter your email";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
       newErrors.email = "Please enter a valid email";
     if (!confirmCheckbox)
-      newErrors.confirm = "You must confirm the recipient address";
+      newErrors.confirm = "You must confirm the bank details are correct";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -79,25 +74,19 @@ export default function Withdraw() {
         state: {
           crypto: selectedCrypto,
           amount: parseFloat(amount),
-          address: recipientAddress,
-          network,
+          bankName,
+          accountName,
+          accountNo,
+          routingNo,
           email,
-          saveEmail,
+          networkFee: getNetworkFee(parseFloat(amount)),
         },
       });
     }
   };
 
-  const networkOptions = network
-    ? Object.keys(networkFees[selectedCrypto as keyof typeof networkFees] || {})
-    : [];
-  const networkFeeAmount = network
-    ? networkFees[selectedCrypto as keyof typeof networkFees]?.[
-        network as keyof any
-      ] || 0
-    : 0;
   const amountNum = parseFloat(amount) || 0;
-  const totalCost = amountNum + networkFeeAmount;
+  const networkFeeAmount = getNetworkFee(amountNum);
   const receiveAmount = amountNum - networkFeeAmount;
 
   return (
@@ -120,10 +109,10 @@ export default function Withdraw() {
         {/* Title */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Withdraw Funds
+            Transfer your crypto to your bank account
           </h1>
           <p className="text-gray-600">
-            Transfer your crypto to another wallet securely
+            Convert your cryptocurrency and transfer funds to your bank account securely
           </p>
         </div>
 
@@ -135,11 +124,10 @@ export default function Withdraw() {
           />
           <div>
             <p className="font-semibold text-yellow-900 mb-1">
-              ⚠️ Cryptocurrency transfers are irreversible
+              ⚠️ Verify all bank details before submitting
             </p>
             <p className="text-yellow-800 text-sm">
-              Please double-check all details before confirming. Incorrect
-              addresses cannot be corrected.
+              Transfers to incorrect bank accounts cannot be reversed. Please triple-check all information.
             </p>
           </div>
         </div>
@@ -167,7 +155,6 @@ export default function Withdraw() {
                 value={selectedCrypto}
                 onChange={(e) => {
                   setSelectedCrypto(e.target.value);
-                  setNetwork("");
                   setErrors({});
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -223,75 +210,95 @@ export default function Withdraw() {
               )}
             </div>
 
-            {/* Recipient Address */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Recipient {selectedCrypto} Address
-              </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  value={recipientAddress}
-                  onChange={(e) => {
-                    setRecipientAddress(e.target.value);
-                    setErrors({ ...errors, address: "" });
-                  }}
-                  placeholder={`Enter ${selectedCrypto} wallet address`}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-                <button
-                  type="button"
-                  className="absolute right-4 top-1/2 transform -translate-y-1/2 text-blue-600 hover:text-blue-700"
-                  title="Scan QR Code"
-                >
-                  <QrCode size={20} />
-                </button>
-                {recipientAddress &&
-                  validateAddress(recipientAddress, selectedCrypto) && (
-                    <CheckCircle2
-                      className="absolute right-12 top-1/2 transform -translate-y-1/2 text-green-600"
-                      size={20}
-                    />
+            {/* Bank Details Section */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Bank Account Details</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Bank Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Bank Name
+                  </label>
+                  <input
+                    type="text"
+                    value={bankName}
+                    onChange={(e) => {
+                      setBankName(e.target.value);
+                      setErrors({ ...errors, bankName: "" });
+                    }}
+                    placeholder="e.g., Chase Bank"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {errors.bankName && (
+                    <p className="text-red-600 text-sm mt-2">{errors.bankName}</p>
                   )}
-              </div>
-              {errors.address && (
-                <p className="text-red-600 text-sm mt-2">{errors.address}</p>
-              )}
-            </div>
+                </div>
 
-            {/* Network Selection */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Blockchain Network
-              </label>
-              <select
-                value={network}
-                onChange={(e) => {
-                  setNetwork(e.target.value);
-                  setErrors({ ...errors, network: "" });
-                }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="">Select a network</option>
-                {Object.keys(
-                  networkFees[selectedCrypto as keyof typeof networkFees] || {},
-                ).map((net) => (
-                  <option key={net} value={net}>
-                    {net} - Fee:{" "}
-                    {networkFees[selectedCrypto as keyof typeof networkFees]?.[
-                      net as keyof any
-                    ]?.toFixed(6)}{" "}
-                    {selectedCrypto}
-                  </option>
-                ))}
-              </select>
-              {errors.network && (
-                <p className="text-red-600 text-sm mt-2">{errors.network}</p>
-              )}
+                {/* Account Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Account Name
+                  </label>
+                  <input
+                    type="text"
+                    value={accountName}
+                    onChange={(e) => {
+                      setAccountName(e.target.value);
+                      setErrors({ ...errors, accountName: "" });
+                    }}
+                    placeholder="Your name"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {errors.accountName && (
+                    <p className="text-red-600 text-sm mt-2">{errors.accountName}</p>
+                  )}
+                </div>
+
+                {/* Account Number */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Account Number
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNo}
+                    onChange={(e) => {
+                      setAccountNo(e.target.value);
+                      setErrors({ ...errors, accountNo: "" });
+                    }}
+                    placeholder="0000000000"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {errors.accountNo && (
+                    <p className="text-red-600 text-sm mt-2">{errors.accountNo}</p>
+                  )}
+                </div>
+
+                {/* Routing Number */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-3">
+                    Routing Number
+                  </label>
+                  <input
+                    type="text"
+                    value={routingNo}
+                    onChange={(e) => {
+                      setRoutingNo(e.target.value);
+                      setErrors({ ...errors, routingNo: "" });
+                    }}
+                    placeholder="000000000"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                  {errors.routingNo && (
+                    <p className="text-red-600 text-sm mt-2">{errors.routingNo}</p>
+                  )}
+                </div>
+              </div>
             </div>
 
             {/* Fee Summary */}
-            {network && amount && (
+            {amount && (
               <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Withdrawal Amount:</span>
@@ -302,7 +309,7 @@ export default function Withdraw() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Network Fee:</span>
                   <span className="font-medium text-gray-900">
-                    {networkFeeAmount.toFixed(6)} {selectedCrypto}
+                    {networkFeeAmount.toFixed(8)} {selectedCrypto} ({((networkFeeAmount / amountNum) * 100).toFixed(2)}%)
                   </span>
                 </div>
                 <div className="border-t border-gray-300 pt-2 flex justify-between">
@@ -338,26 +345,11 @@ export default function Withdraw() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-600 mt-2">
-                You'll receive withdrawal confirmation and updates at this
-                address
+                You'll receive withdrawal confirmation and updates at this address
               </p>
               {errors.email && (
                 <p className="text-red-600 text-sm mt-2">{errors.email}</p>
               )}
-            </div>
-
-            {/* Save Email Checkbox */}
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="saveEmail"
-                checked={saveEmail}
-                onChange={(e) => setSaveEmail(e.target.checked)}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <label htmlFor="saveEmail" className="text-sm text-gray-700">
-                Save this email for future withdrawals
-              </label>
             </div>
 
             {/* Confirmation Checkbox */}
@@ -378,11 +370,10 @@ export default function Withdraw() {
                     htmlFor="confirm"
                     className="text-sm font-medium text-gray-900"
                   >
-                    I verify the recipient address is correct
+                    I verify all bank details are correct
                   </label>
                   <p className="text-xs text-gray-600 mt-1">
-                    Cryptocurrency transactions are irreversible. Please
-                    triple-check the address.
+                    Bank transfers are irreversible. Please confirm all information is accurate.
                   </p>
                 </div>
               </div>
@@ -397,7 +388,7 @@ export default function Withdraw() {
                 type="submit"
                 className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg transition"
               >
-                Review Withdrawal
+                Review Transfer
               </button>
               <Button
                 type="button"
