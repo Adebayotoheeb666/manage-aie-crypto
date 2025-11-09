@@ -18,9 +18,9 @@ export default function Index() {
         <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded bg-blue-600 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">₿</span>
+              <span className="text-white font-bold text-lg">C</span>
             </div>
-            <span className="text-xl font-bold text-gray-900">CryptoVault</span>
+            <span className="text-xl font-bold text-gray-900">Coinbaze</span>
           </div>
           <nav className="hidden md:flex gap-8">
             <a href="#features" className="text-gray-600 hover:text-gray-900">
@@ -104,11 +104,11 @@ export default function Index() {
               className="grid grid-cols-1 sm:grid-cols-3 gap-6"
             >
               <div>
-                <p className="text-3xl font-bold text-gray-900">10K+</p>
+                <p className="text-3xl font-bold text-gray-900">10M+</p>
                 <p className="text-gray-600">Active Users</p>
               </div>
               <div>
-                <p className="text-3xl font-bold text-gray-900">$2B+</p>
+                <p className="text-3xl font-bold text-gray-900">$90.5M+</p>
                 <p className="text-gray-600">Assets Managed</p>
               </div>
               <div>
@@ -174,7 +174,7 @@ export default function Index() {
       <section id="features" className="bg-blue-50 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h2 className="text-4xl font-bold text-gray-900 text-center mb-4">
-            Why Choose CryptoVault?
+            Why Choose Coinbaze?
           </h2>
           <p className="text-center text-gray-600 mb-16 max-w-2xl mx-auto">
             Secure, fast, and user-friendly crypto management
@@ -403,7 +403,7 @@ export default function Index() {
             viewport={{ once: true }}
             className="border-t border-blue-100 pt-8 text-center text-gray-600"
           >
-            <p>&copy; 2025 CryptoVault. All rights reserved.</p>
+            <p>&copy; 2025 Coinbaze. All rights reserved.</p>
           </motion.div>
         </div>
       </footer>
