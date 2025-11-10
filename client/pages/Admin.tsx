@@ -151,6 +151,50 @@ export default function Admin() {
     });
   };
 
+  const handleSaveUserBalance = () => {
+    if (!selectedUserEmail || !balanceForm.totalBalance || !balanceForm.assetCount) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    const existingIndex = userBalances.findIndex(
+      (ub) => ub.email === selectedUserEmail
+    );
+
+    if (existingIndex >= 0) {
+      const updated = [...userBalances];
+      updated[existingIndex] = {
+        ...updated[existingIndex],
+        totalBalance: parseFloat(balanceForm.totalBalance),
+        assetCount: parseInt(balanceForm.assetCount),
+      };
+      setUserBalances(updated);
+    } else {
+      const newBalance: UserBalance = {
+        userId: `U${Date.now()}`,
+        email: selectedUserEmail,
+        totalBalance: parseFloat(balanceForm.totalBalance),
+        assetCount: parseInt(balanceForm.assetCount),
+      };
+      setUserBalances([...userBalances, newBalance]);
+    }
+
+    setSelectedUserEmail("");
+    setBalanceForm({ totalBalance: "", assetCount: "" });
+  };
+
+  const handleDeleteUserBalance = (email: string) => {
+    setUserBalances(userBalances.filter((ub) => ub.email !== email));
+  };
+
+  const handleSelectUserBalance = (userBalance: UserBalance) => {
+    setSelectedUserEmail(userBalance.email);
+    setBalanceForm({
+      totalBalance: userBalance.totalBalance.toString(),
+      assetCount: userBalance.assetCount.toString(),
+    });
+  };
+
   if (!isLoggedIn) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center p-4">
