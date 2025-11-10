@@ -96,20 +96,42 @@ export default function Admin() {
     setEditData({});
   };
 
-  const markStageComplete = (id: string, stage: number) => {
-    if (stage < 1 || stage > 3) return;
+  const markStageComplete = async (id: string, currentStage: number) => {
+    if (currentStage < 1 || currentStage > 2) return;
 
-    const updatedWithdrawals = withdrawals.map((w) => {
-      if (w.id === id) {
-        const newStage = Math.min(stage + 1, 3) as 1 | 2 | 3;
-        const newStatus =
-          newStage === 3 ? ("completed" as const) : ("processing" as const);
-        return { ...w, stage: newStage, status: newStatus };
+    const nextStage = Math.min(currentStage + 1, 3);
+
+    try {
+      const response = await fetch(`/api/admin/withdrawal-requests/${id}/stage`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ stage: nextStage }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update stage: ${response.status}`);
       }
-      return w;
-    });
-    setWithdrawals(updatedWithdrawals);
-    setSelectedWithdrawal(null);
+
+      const result = await response.json();
+
+      // Update local state
+      const updatedWithdrawals = withdrawals.map((w) => {
+        if (w.id === id) {
+          return { ...w, stage: nextStage as 1 | 2 | 3 };
+        }
+        return w;
+      });
+      setWithdrawals(updatedWithdrawals);
+
+      if (selectedWithdrawal && selectedWithdrawal.id === id) {
+        setSelectedWithdrawal({ ...selectedWithdrawal, stage: nextStage as 1 | 2 | 3 });
+      }
+    } catch (error) {
+      console.error("Error updating withdrawal stage:", error);
+      alert(`Failed to update stage: ${error instanceof Error ? error.message : "Unknown error"}`);
+    }
   };
 
   const formatDate = (dateString: string) => {
