@@ -784,7 +784,7 @@ const isValidWord = (word: string): boolean => {
 export default function ConnectWallet() {
   const navigate = useNavigate();
   const { connectWallet: authConnectWallet } = useAuth();
-  const [wordCount, setWordCount] = useState(12);
+  const wordCount = 12;
   const [words, setWords] = useState<string[]>(Array(12).fill(""));
   const [showWords, setShowWords] = useState(false);
   const [validations, setValidations] = useState<boolean[]>(
@@ -831,12 +831,6 @@ export default function ConnectWallet() {
     setError("");
   };
 
-  const handleWordCountChange = (count: number) => {
-    setWordCount(count);
-    setWords(Array(count).fill(""));
-    setValidations(Array(count).fill(false));
-    setError("");
-  };
 
   const handleConnect = async () => {
     // Validate all words are filled and valid
@@ -929,30 +923,6 @@ export default function ConnectWallet() {
                 it and it's never stored on our servers.
               </p>
             </div>
-          </div>
-
-          {/* Word Count Selector */}
-          <div className="flex justify-center gap-4 mb-12">
-            <button
-              onClick={() => handleWordCountChange(12)}
-              className={`px-6 py-2 rounded-lg font-medium transition ${
-                wordCount === 12
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              12 Words
-            </button>
-            <button
-              onClick={() => handleWordCountChange(24)}
-              className={`px-6 py-2 rounded-lg font-medium transition ${
-                wordCount === 24
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              }`}
-            >
-              24 Words
-            </button>
           </div>
 
           {/* Word Input Grid */}

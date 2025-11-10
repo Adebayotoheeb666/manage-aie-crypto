@@ -137,8 +137,19 @@ export default function WithdrawReview() {
             address,
             network,
           );
-          setTxHash(fallbackResult.id || "");
-          setStep("success");
+          const withdrawalId = fallbackResult.id || "";
+          // Navigate to progress report with withdrawal data
+          navigate("/progress-report", {
+            state: {
+              withdrawalId,
+              crypto,
+              amount,
+              address,
+              network,
+              email,
+              price,
+            },
+          });
           return;
         } catch (fbErr) {
           console.error(
@@ -151,12 +162,21 @@ export default function WithdrawReview() {
         }
       }
 
-      // Successful creation
-      const id =
+      // Successful creation - navigate to progress report
+      const withdrawalId =
         resJson?.data?.id || resJson?.data?.withdrawal_id || resJson?.data?.id;
       setTimeout(() => {
-        setTxHash(id || "");
-        setStep("success");
+        navigate("/progress-report", {
+          state: {
+            withdrawalId: withdrawalId || "",
+            crypto,
+            amount,
+            address,
+            network,
+            email,
+            price,
+          },
+        });
       }, 1000);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Withdrawal failed";
@@ -496,22 +516,6 @@ export default function WithdrawReview() {
               <p className="text-blue-700 mt-1 font-medium">
                 ≈ ${(receiveAmount * price).toLocaleString()}
               </p>
-            </div>
-
-            {/* Recipient Address */}
-            <div className="border-t border-gray-200 pt-6">
-              <p className="text-sm text-gray-600 mb-2">Recipient Address</p>
-              <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                <p className="font-mono text-sm text-gray-900 flex-1 break-all">
-                  {address}
-                </p>
-                <button
-                  onClick={handleCopyAddress}
-                  className="text-blue-600 hover:text-blue-700 flex-shrink-0"
-                >
-                  <Copy size={18} />
-                </button>
-              </div>
             </div>
 
             {/* Network */}

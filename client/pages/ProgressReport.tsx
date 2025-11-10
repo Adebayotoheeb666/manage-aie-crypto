@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, CheckCircle2, Clock, AlertCircle } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -13,6 +13,7 @@ interface ProgressStage {
 
 export default function ProgressReport() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [stages, setStages] = useState<ProgressStage[]>([
     {
       id: 1,
@@ -35,14 +36,19 @@ export default function ProgressReport() {
     },
   ]);
 
+  const state = location.state || {};
   const [withdrawalInfo] = useState({
-    amount: "5000",
-    crypto: "USDC",
-    bankName: "Chase Bank",
-    accountName: "John Doe",
-    lastFourAccount: "4567",
-    email: "john@example.com",
+    amount: state.amount || "5000",
+    crypto: state.crypto || "USDC",
+    bankName: state.bankName || "Chase Bank",
+    accountName: state.accountName || "John Doe",
+    lastFourAccount: state.lastFourAccount || "4567",
+    email: state.email || "john@example.com",
     initiatedAt: new Date().toISOString(),
+    withdrawalId: state.withdrawalId || "",
+    address: state.address || "",
+    network: state.network || "",
+    price: state.price || 1,
   });
 
   const completedCount = stages.filter((s) => s.completed).length;
@@ -193,6 +199,11 @@ export default function ProgressReport() {
                   <p className="text-2xl font-bold text-gray-900">
                     {withdrawalInfo.amount} {withdrawalInfo.crypto}
                   </p>
+                  {withdrawalInfo.price > 0 && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      ≈ ${(parseFloat(withdrawalInfo.amount) * withdrawalInfo.price).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 {/* Bank Details */}
@@ -229,6 +240,26 @@ export default function ProgressReport() {
                     {withdrawalInfo.email}
                   </p>
                 </div>
+
+                {/* Network */}
+                {withdrawalInfo.network && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <p className="text-xs text-gray-600 mb-1">Network</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {withdrawalInfo.network}
+                    </p>
+                  </div>
+                )}
+
+                {/* Withdrawal ID */}
+                {withdrawalInfo.withdrawalId && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <p className="text-xs text-gray-600 mb-1">Withdrawal ID</p>
+                    <p className="text-sm font-medium text-gray-900 break-all">
+                      {withdrawalInfo.withdrawalId}
+                    </p>
+                  </div>
+                )}
 
                 {/* Status Info */}
                 <div className="border-t border-gray-200 pt-6">

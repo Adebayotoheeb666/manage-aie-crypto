@@ -41,6 +41,7 @@ import { handleDebugSession } from "./routes/debug";
 import walletRoutes from "./routes/wallet";
 import transactionRoutes from "./routes/transactions";
 import portfolioRoutes from "./routes/portfolio";
+import adminRoutes from "./routes/admin";
 
 export function createServer() {
   const app = express();
@@ -265,6 +266,9 @@ export function createServer() {
   app.use("/api/wallet", walletRoutes);
   app.use("/api/transactions", transactionRoutes);
   app.use("/api/portfolio", portfolioRoutes);
+
+  // Admin routes
+  app.use("/api/admin", adminRoutes);
 
   return app;
 }
