@@ -157,6 +157,7 @@ export const handleWithdraw: RequestHandler<
       network,
       feeAmount,
       feeUsd,
+      flowCompleted
     );
     const withdrawal = withdrawalRaw as WithdrawalRequestType;
 
