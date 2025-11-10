@@ -1,7 +1,16 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Loader,
+} from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@shared/lib/supabase";
+import type { WithdrawalRequest } from "@shared/types/database";
 
 interface ProgressStage {
   id: number;
@@ -14,13 +23,13 @@ interface ProgressStage {
 export default function ProgressReport() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { authUser, dbUser } = useAuth();
   const [stages, setStages] = useState<ProgressStage[]>([
     {
       id: 1,
       title: "Withdrawal Initiated",
       description: "Your withdrawal request has been received and verified",
-      completed: true,
-      completedAt: new Date().toISOString(),
+      completed: false,
     },
     {
       id: 2,
@@ -37,19 +46,94 @@ export default function ProgressReport() {
   ]);
 
   const state = location.state || {};
-  const [withdrawalInfo] = useState({
-    amount: state.amount || "5000",
-    crypto: state.crypto || "USDC",
-    bankName: state.bankName || "Chase Bank",
-    accountName: state.accountName || "John Doe",
-    lastFourAccount: state.lastFourAccount || "4567",
-    email: state.email || "john@example.com",
+  const [withdrawalInfo, setWithdrawalInfo] = useState({
+    amount: state.amount || "0",
+    crypto: state.crypto || "",
+    bankName: state.bankName || "N/A",
+    accountName: state.accountName || "N/A",
+    lastFourAccount: state.lastFourAccount || "0000",
+    email: state.email || "",
     initiatedAt: new Date().toISOString(),
     withdrawalId: state.withdrawalId || "",
     address: state.address || "",
     network: state.network || "",
-    price: state.price || 1,
+    price: state.price || 0,
   });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [withdrawal, setWithdrawal] = useState<WithdrawalRequest | null>(null);
+
+  // Fetch withdrawal request from database
+  useEffect(() => {
+    const fetchWithdrawal = async () => {
+      if (!dbUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: fetchError } = await supabase
+          .from("withdrawal_requests")
+          .select("*")
+          .eq("user_id", dbUser.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (fetchError && fetchError.code !== "PGRST116") {
+          throw fetchError;
+        }
+
+        if (data) {
+          setWithdrawal(data as WithdrawalRequest);
+
+          // Update stages based on withdrawal stage
+          const newStages = stages.map((stage) => ({
+            ...stage,
+            completed: (data as WithdrawalRequest).stage >= stage.id,
+            completedAt:
+              (data as WithdrawalRequest).stage >= stage.id
+                ? new Date().toISOString()
+                : undefined,
+          }));
+          setStages(newStages);
+
+          // Update withdrawal info from database
+          setWithdrawalInfo((prev) => ({
+            ...prev,
+            amount: String((data as WithdrawalRequest).amount),
+            crypto: (data as WithdrawalRequest).symbol,
+            email: (data as WithdrawalRequest).destination_address,
+            address: (data as WithdrawalRequest).destination_address,
+            network: (data as WithdrawalRequest).network,
+            initiatedAt: (data as WithdrawalRequest).created_at,
+            withdrawalId: (data as WithdrawalRequest).id,
+          }));
+        } else {
+          setError("No active withdrawal request found");
+        }
+      } catch (err) {
+        console.error("Error fetching withdrawal request:", err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch withdrawal request",
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (state.withdrawalId) {
+      setLoading(false);
+    } else {
+      fetchWithdrawal();
+    }
+  }, [dbUser, state.withdrawalId]);
 
   const completedCount = stages.filter((s) => s.completed).length;
   const progressPercentage = (completedCount / stages.length) * 100;
@@ -64,6 +148,53 @@ export default function ProgressReport() {
       minute: "2-digit",
     });
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading withdrawal details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-blue-100">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft size={20} />
+              Back to Dashboard
+            </Button>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex gap-3">
+            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h2 className="font-semibold text-red-900 mb-1">
+                Error Loading Withdrawal
+              </h2>
+              <p className="text-red-800 mb-4">{error}</p>
+              <Button
+                onClick={() => navigate("/dashboard")}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Return to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -201,7 +332,10 @@ export default function ProgressReport() {
                   </p>
                   {withdrawalInfo.price > 0 && (
                     <p className="text-sm text-gray-600 mt-1">
-                      ≈ ${(parseFloat(withdrawalInfo.amount) * withdrawalInfo.price).toLocaleString()}
+                      ≈ $
+                      {(
+                        parseFloat(withdrawalInfo.amount) * withdrawalInfo.price
+                      ).toLocaleString()}
                     </p>
                   )}
                 </div>

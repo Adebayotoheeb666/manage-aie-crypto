@@ -325,6 +325,8 @@ CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
   fee_amount DECIMAL(20, 8) DEFAULT 0,
   fee_usd DECIMAL(20, 2) DEFAULT 0,
   status VARCHAR(50) DEFAULT 'pending', -- pending, review, processing, completed, failed, cancelled
+  stage INTEGER DEFAULT 1 CHECK (stage >= 1 AND stage <= 3), -- 1: Withdrawal Initiated, 2: Bank Processing, 3: Transfer Complete
+  flow_completed BOOLEAN DEFAULT FALSE, -- true if user completed the full Withdraw -> WithdrawReview flow
   tx_hash VARCHAR(255),
   rejection_reason TEXT,
   reviewed_by UUID REFERENCES public.users(id) ON DELETE SET NULL,
@@ -336,7 +338,7 @@ CREATE TABLE IF NOT EXISTS public.withdrawal_requests (
   completed_at TIMESTAMP WITH TIME ZONE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  
+
   CONSTRAINT amount_positive CHECK (amount > 0),
   CONSTRAINT fee_positive CHECK (fee_amount >= 0),
   CONSTRAINT status_valid CHECK (status IN ('pending', 'review', 'processing', 'completed', 'failed', 'cancelled'))

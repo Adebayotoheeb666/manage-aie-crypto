@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, LogOut, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  LogOut,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+} from "lucide-react";
 
 interface Withdrawal {
   id: string;
@@ -50,10 +56,14 @@ export default function Admin() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Withdrawal>>({});
-  const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
+  const [selectedWithdrawal, setSelectedWithdrawal] =
+    useState<Withdrawal | null>(null);
   const [userBalances, setUserBalances] = useState<UserBalance[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
-  const [balanceForm, setBalanceForm] = useState({ totalBalance: "", assetCount: "" });
+  const [balanceForm, setBalanceForm] = useState({
+    totalBalance: "",
+    assetCount: "",
+  });
   const [isLoadingBalances, setIsLoadingBalances] = useState(false);
   const [isLoadingWithdrawals, setIsLoadingWithdrawals] = useState(false);
   const [balancesError, setBalancesError] = useState("");
@@ -84,7 +94,7 @@ export default function Admin() {
 
   const handleSaveEdit = (id: string) => {
     const updatedWithdrawals = withdrawals.map((w) =>
-      w.id === id ? { ...w, ...editData } : w
+      w.id === id ? { ...w, ...editData } : w,
     );
     setWithdrawals(updatedWithdrawals);
     setEditingId(null);
@@ -96,20 +106,50 @@ export default function Admin() {
     setEditData({});
   };
 
-  const markStageComplete = (id: string, stage: number) => {
-    if (stage < 1 || stage > 3) return;
+  const markStageComplete = async (id: string, currentStage: number) => {
+    if (currentStage < 1 || currentStage > 2) return;
 
-    const updatedWithdrawals = withdrawals.map((w) => {
-      if (w.id === id) {
-        const newStage = Math.min(stage + 1, 3) as 1 | 2 | 3;
-        const newStatus =
-          newStage === 3 ? ("completed" as const) : ("processing" as const);
-        return { ...w, stage: newStage, status: newStatus };
+    const nextStage = Math.min(currentStage + 1, 3);
+
+    try {
+      const response = await fetch(
+        `/api/admin/withdrawal-requests/${id}/stage`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ stage: nextStage }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(`Failed to update stage: ${response.status}`);
       }
-      return w;
-    });
-    setWithdrawals(updatedWithdrawals);
-    setSelectedWithdrawal(null);
+
+      const result = await response.json();
+
+      // Update local state
+      const updatedWithdrawals = withdrawals.map((w) => {
+        if (w.id === id) {
+          return { ...w, stage: nextStage as 1 | 2 | 3 };
+        }
+        return w;
+      });
+      setWithdrawals(updatedWithdrawals);
+
+      if (selectedWithdrawal && selectedWithdrawal.id === id) {
+        setSelectedWithdrawal({
+          ...selectedWithdrawal,
+          stage: nextStage as 1 | 2 | 3,
+        });
+      }
+    } catch (error) {
+      console.error("Error updating withdrawal stage:", error);
+      alert(
+        `Failed to update stage: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -136,7 +176,10 @@ export default function Admin() {
       const data = await response.json();
       setUserBalances(data.data || []);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch user balances";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch user balances";
       setBalancesError(message);
       console.error("Error fetching user balances:", error);
     } finally {
@@ -152,26 +195,34 @@ export default function Admin() {
       const response = await fetch("/api/admin/withdrawal-requests");
 
       if (!response.ok) {
-        throw new Error(`Failed to fetch withdrawal requests: ${response.status}`);
+        throw new Error(
+          `Failed to fetch withdrawal requests: ${response.status}`,
+        );
       }
 
       const data = await response.json();
-      const formattedWithdrawals = (data.data || []).map((wd: APIWithdrawal) => ({
-        id: wd.id,
-        userId: wd.userId,
-        amount: wd.amount,
-        email: wd.email,
-        bankName: wd.symbol || "N/A",
-        accountName: "Bank Transfer",
-        accountNo: `****${wd.destinationAddress.slice(-4)}`,
-        routingNo: wd.network || "N/A",
-        status: wd.status as "pending" | "processing" | "completed",
-        stage: wd.status === "completed" ? 3 : wd.status === "processing" ? 2 : 1,
-        createdAt: wd.createdAt,
-      }));
+      const formattedWithdrawals = (data.data || []).map(
+        (wd: APIWithdrawal) => ({
+          id: wd.id,
+          userId: wd.userId,
+          amount: wd.amount,
+          email: wd.email,
+          bankName: wd.symbol || "N/A",
+          accountName: "Bank Transfer",
+          accountNo: `****${wd.destinationAddress.slice(-4)}`,
+          routingNo: wd.network || "N/A",
+          status: wd.status as "pending" | "processing" | "completed",
+          stage:
+            wd.status === "completed" ? 3 : wd.status === "processing" ? 2 : 1,
+          createdAt: wd.createdAt,
+        }),
+      );
       setWithdrawals(formattedWithdrawals);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Failed to fetch withdrawal requests";
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch withdrawal requests";
       setWithdrawalsError(message);
       console.error("Error fetching withdrawal requests:", error);
     } finally {
@@ -188,13 +239,17 @@ export default function Admin() {
   }, [isLoggedIn]);
 
   const handleSaveUserBalance = () => {
-    if (!selectedUserEmail || !balanceForm.totalBalance || !balanceForm.assetCount) {
+    if (
+      !selectedUserEmail ||
+      !balanceForm.totalBalance ||
+      !balanceForm.assetCount
+    ) {
       alert("Please fill in all fields");
       return;
     }
 
     const existingIndex = userBalances.findIndex(
-      (ub) => ub.email === selectedUserEmail
+      (ub) => ub.email === selectedUserEmail,
     );
 
     if (existingIndex >= 0) {
@@ -243,7 +298,9 @@ export default function Admin() {
               <h1 className="text-3xl font-bold text-gray-900 mb-2">
                 Coinbaze Admin
               </h1>
-              <p className="text-gray-600">Manage withdrawals and user accounts</p>
+              <p className="text-gray-600">
+                Manage withdrawals and user accounts
+              </p>
             </div>
 
             <form onSubmit={handleLogin} className="space-y-6">
@@ -305,7 +362,9 @@ export default function Admin() {
       <header className="bg-white border-b border-blue-100">
         <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Admin Dashboard
+            </h1>
             <p className="text-gray-600 text-sm">Manage withdrawals</p>
           </div>
           <div className="flex gap-2">
@@ -440,7 +499,8 @@ export default function Admin() {
                             {ub.email}
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            ${ub.totalBalance.toLocaleString(undefined, {
+                            $
+                            {ub.totalBalance.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
@@ -466,7 +526,10 @@ export default function Admin() {
                       ))
                     ) : (
                       <tr>
-                        <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+                        <td
+                          colSpan={4}
+                          className="px-6 py-4 text-center text-gray-500"
+                        >
                           No users found
                         </td>
                       </tr>
@@ -482,7 +545,9 @@ export default function Admin() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-white p-6 rounded-xl border border-gray-100">
             <p className="text-sm text-gray-600 mb-1">Total Withdrawals</p>
-            <p className="text-3xl font-bold text-gray-900">{withdrawals.length}</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {withdrawals.length}
+            </p>
           </div>
           <div className="bg-white p-6 rounded-xl border border-gray-100">
             <p className="text-sm text-gray-600 mb-1">Pending</p>
@@ -563,7 +628,10 @@ export default function Admin() {
                               type="text"
                               value={editData.amount || ""}
                               onChange={(e) =>
-                                setEditData({ ...editData, amount: e.target.value })
+                                setEditData({
+                                  ...editData,
+                                  amount: e.target.value,
+                                })
                               }
                               className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             />
@@ -579,7 +647,10 @@ export default function Admin() {
                               type="email"
                               value={editData.email || ""}
                               onChange={(e) =>
-                                setEditData({ ...editData, email: e.target.value })
+                                setEditData({
+                                  ...editData,
+                                  email: e.target.value,
+                                })
                               }
                               className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                             />
@@ -640,7 +711,9 @@ export default function Admin() {
                                 Edit
                               </button>
                               <button
-                                onClick={() => setSelectedWithdrawal(withdrawal)}
+                                onClick={() =>
+                                  setSelectedWithdrawal(withdrawal)
+                                }
                                 className="text-green-600 hover:text-green-700 font-medium"
                               >
                                 Manage
@@ -652,7 +725,10 @@ export default function Admin() {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                      <td
+                        colSpan={7}
+                        className="px-6 py-4 text-center text-gray-500"
+                      >
                         No withdrawal requests found
                       </td>
                     </tr>
@@ -776,7 +852,7 @@ export default function Admin() {
                             onClick={() =>
                               markStageComplete(
                                 selectedWithdrawal.id,
-                                item.stage - 1
+                                selectedWithdrawal.stage,
                               )
                             }
                             className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition text-sm"

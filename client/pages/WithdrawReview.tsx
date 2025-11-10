@@ -90,6 +90,7 @@ export default function WithdrawReview() {
         destinationAddress: address,
         network,
         email,
+        flowCompleted: true,
       } as any;
 
       // Try to include an authorization token if available in localStorage

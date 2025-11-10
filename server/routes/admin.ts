@@ -25,7 +25,7 @@ router.get("/user-balances", async (req: Request, res: Response) => {
 
         const totalBalance = (assets || []).reduce(
           (sum, asset) => sum + (asset.balance_usd || 0),
-          0
+          0,
         );
         const assetCount = (assets || []).length;
 
@@ -35,17 +35,15 @@ router.get("/user-balances", async (req: Request, res: Response) => {
           totalBalance,
           assetCount,
         };
-      })
+      }),
     );
 
     res.json({ data: userBalances });
   } catch (error) {
     console.error("Error fetching user balances:", error);
-    res
-      .status(500)
-      .json({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 
@@ -64,9 +62,11 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
         destination_address,
         network,
         status,
+        stage,
+        flow_completed,
         created_at,
         users!withdrawal_requests_user_id_fkey(email)
-      `
+      `,
       )
       .order("created_at", { ascending: false });
 
@@ -83,31 +83,29 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
       network: w.network,
       destinationAddress: w.destination_address,
       status: w.status,
+      stage: w.stage || 1,
+      flowCompleted: w.flow_completed || false,
       createdAt: w.created_at,
     }));
 
     res.json({ data: formattedWithdrawals });
   } catch (error) {
     console.error("Error fetching withdrawal requests:", error);
-    res
-      .status(500)
-      .json({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
 });
 
 // Get withdrawal request by ID with full details
-router.get(
-  "/withdrawal-requests/:id",
-  async (req: Request, res: Response) => {
-    try {
-      const { id } = req.params;
+router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
 
-      const { data: withdrawal, error: withdrawalError } = await supabase
-        .from("withdrawal_requests")
-        .select(
-          `
+    const { data: withdrawal, error: withdrawalError } = await supabase
+      .from("withdrawal_requests")
+      .select(
+        `
           id,
           user_id,
           wallet_id,
@@ -119,50 +117,51 @@ router.get(
           fee_amount,
           fee_usd,
           status,
+          stage,
+          flow_completed,
           tx_hash,
           created_at,
           updated_at,
           users!withdrawal_requests_user_id_fkey(email)
-        `
-        )
-        .eq("id", id)
-        .single();
+        `,
+      )
+      .eq("id", id)
+      .single();
 
-      if (withdrawalError) throw withdrawalError;
+    if (withdrawalError) throw withdrawalError;
 
-      if (!withdrawal) {
-        return res.status(404).json({ error: "Withdrawal not found" });
-      }
-
-      const formatted = {
-        id: withdrawal.id,
-        userId: withdrawal.user_id,
-        walletId: withdrawal.wallet_id,
-        amount: withdrawal.amount.toString(),
-        amountUsd: withdrawal.amount_usd,
-        symbol: withdrawal.symbol,
-        email: withdrawal.users?.email,
-        network: withdrawal.network,
-        destinationAddress: withdrawal.destination_address,
-        fee: withdrawal.fee_amount,
-        feeUsd: withdrawal.fee_usd,
-        status: withdrawal.status,
-        txHash: withdrawal.tx_hash,
-        createdAt: withdrawal.created_at,
-        updatedAt: withdrawal.updated_at,
-      };
-
-      res.json({ data: formatted });
-    } catch (error) {
-      console.error("Error fetching withdrawal request:", error);
-      res
-        .status(500)
-        .json({
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+    if (!withdrawal) {
+      return res.status(404).json({ error: "Withdrawal not found" });
     }
+
+    const formatted = {
+      id: withdrawal.id,
+      userId: withdrawal.user_id,
+      walletId: withdrawal.wallet_id,
+      amount: withdrawal.amount.toString(),
+      amountUsd: withdrawal.amount_usd,
+      symbol: withdrawal.symbol,
+      email: withdrawal.users?.email,
+      network: withdrawal.network,
+      destinationAddress: withdrawal.destination_address,
+      fee: withdrawal.fee_amount,
+      feeUsd: withdrawal.fee_usd,
+      status: withdrawal.status,
+      stage: withdrawal.stage || 1,
+      flowCompleted: withdrawal.flow_completed || false,
+      txHash: withdrawal.tx_hash,
+      createdAt: withdrawal.created_at,
+      updatedAt: withdrawal.updated_at,
+    };
+
+    res.json({ data: formatted });
+  } catch (error) {
+    console.error("Error fetching withdrawal request:", error);
+    res.status(500).json({
+      error: error instanceof Error ? error.message : "Unknown error",
+    });
   }
-);
+});
 
 // Update withdrawal status (admin only)
 router.patch(
@@ -188,13 +187,56 @@ router.patch(
       res.json({ data: withdrawal });
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
-      res
-        .status(500)
-        .json({
-          error: error instanceof Error ? error.message : "Unknown error",
-        });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
-  }
+  },
+);
+
+// Update withdrawal stage (admin only)
+router.patch(
+  "/withdrawal-requests/:id/stage",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { stage } = req.body;
+
+      if (!stage || stage < 1 || stage > 3) {
+        return res.status(400).json({ error: "Stage must be 1, 2, or 3" });
+      }
+
+      const { data: withdrawal, error: updateError } = await supabase
+        .from("withdrawal_requests")
+        .update({
+          stage,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (!withdrawal) {
+        return res.status(404).json({ error: "Withdrawal not found" });
+      }
+
+      res.json({
+        data: {
+          id: withdrawal.id,
+          stage: withdrawal.stage,
+          status: withdrawal.status,
+          updatedAt: withdrawal.updated_at,
+        },
+      });
+    } catch (error) {
+      console.error("Error updating withdrawal stage:", error);
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+  },
 );
 
 export default router;
