@@ -12,6 +12,7 @@ const withdrawalSchema = z.object({
   destinationAddress: z.string().min(1),
   network: z.string().min(1),
   email: z.string().email(),
+  flowCompleted: z.boolean().optional().default(false),
 });
 
 type WithdrawalRequest = z.infer<typeof withdrawalSchema>;
