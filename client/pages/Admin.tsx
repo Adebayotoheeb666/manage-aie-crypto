@@ -47,17 +47,17 @@ export default function Admin() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
-  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>(mockWithdrawals);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editData, setEditData] = useState<Partial<Withdrawal>>({});
   const [selectedWithdrawal, setSelectedWithdrawal] = useState<Withdrawal | null>(null);
-  const [userBalances, setUserBalances] = useState<UserBalance[]>([
-    { userId: "U001", email: "user1@example.com", totalBalance: 34500, assetCount: 5 },
-    { userId: "U002", email: "user2@example.com", totalBalance: 45200, assetCount: 3 },
-    { userId: "U003", email: "user3@example.com", totalBalance: 12300, assetCount: 4 },
-  ]);
+  const [userBalances, setUserBalances] = useState<UserBalance[]>([]);
   const [selectedUserEmail, setSelectedUserEmail] = useState("");
   const [balanceForm, setBalanceForm] = useState({ totalBalance: "", assetCount: "" });
+  const [isLoadingBalances, setIsLoadingBalances] = useState(false);
+  const [isLoadingWithdrawals, setIsLoadingWithdrawals] = useState(false);
+  const [balancesError, setBalancesError] = useState("");
+  const [withdrawalsError, setWithdrawalsError] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
