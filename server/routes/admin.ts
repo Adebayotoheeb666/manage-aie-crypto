@@ -105,7 +105,35 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
       }
     }
 
-    if (withdrawalError) throw withdrawalError;
+    if (withdrawalError) {
+      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      if (msg.includes("column") && msg.includes("stage")) {
+        // Retry without stage
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+        id,
+        user_id,
+        wallet_id,
+        symbol,
+        amount,
+        destination_address,
+        network,
+        status,
+        flow_completed,
+        created_at,
+        users!withdrawal_requests_user_id_fkey(email)
+      `,
+          )
+          .order("created_at", { ascending: false });
+        withdrawals = result2.data as any[];
+        withdrawalError = result2.error;
+        if (withdrawalError) throw withdrawalError;
+      } else {
+        throw withdrawalError;
+      }
+    }
 
     // Format the response
     const formattedWithdrawals = (withdrawals || []).map((w: any) => ({
