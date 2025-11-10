@@ -197,4 +197,51 @@ router.patch(
   }
 );
 
+// Update withdrawal stage (admin only)
+router.patch(
+  "/withdrawal-requests/:id/stage",
+  async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { stage } = req.body;
+
+      if (!stage || stage < 1 || stage > 3) {
+        return res.status(400).json({ error: "Stage must be 1, 2, or 3" });
+      }
+
+      const { data: withdrawal, error: updateError } = await supabase
+        .from("withdrawal_requests")
+        .update({
+          stage,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .select()
+        .single();
+
+      if (updateError) throw updateError;
+
+      if (!withdrawal) {
+        return res.status(404).json({ error: "Withdrawal not found" });
+      }
+
+      res.json({
+        data: {
+          id: withdrawal.id,
+          stage: withdrawal.stage,
+          status: withdrawal.status,
+          updatedAt: withdrawal.updated_at,
+        }
+      });
+    } catch (error) {
+      console.error("Error updating withdrawal stage:", error);
+      res
+        .status(500)
+        .json({
+          error: error instanceof Error ? error.message : "Unknown error",
+        });
+    }
+  }
+);
+
 export default router;
