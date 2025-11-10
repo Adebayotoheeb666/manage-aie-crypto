@@ -267,5 +267,8 @@ export function createServer() {
   app.use("/api/transactions", transactionRoutes);
   app.use("/api/portfolio", portfolioRoutes);
 
+  // Admin routes
+  app.use("/api/admin", adminRoutes);
+
   return app;
 }
