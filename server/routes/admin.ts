@@ -122,7 +122,7 @@ router.get(
           tx_hash,
           created_at,
           updated_at,
-          users!inner(email)
+          users!withdrawal_requests_user_id_fkey(email)
         `
         )
         .eq("id", id)
