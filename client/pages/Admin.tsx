@@ -122,6 +122,71 @@ export default function Admin() {
     });
   };
 
+  // Fetch user balances from API
+  const fetchUserBalances = async () => {
+    try {
+      setIsLoadingBalances(true);
+      setBalancesError("");
+      const response = await fetch("/api/admin/user-balances");
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch user balances: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setUserBalances(data.data || []);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to fetch user balances";
+      setBalancesError(message);
+      console.error("Error fetching user balances:", error);
+    } finally {
+      setIsLoadingBalances(false);
+    }
+  };
+
+  // Fetch withdrawal requests from API
+  const fetchWithdrawalRequests = async () => {
+    try {
+      setIsLoadingWithdrawals(true);
+      setWithdrawalsError("");
+      const response = await fetch("/api/admin/withdrawal-requests");
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch withdrawal requests: ${response.status}`);
+      }
+
+      const data = await response.json();
+      const formattedWithdrawals = (data.data || []).map((wd: APIWithdrawal) => ({
+        id: wd.id,
+        userId: wd.userId,
+        amount: wd.amount,
+        email: wd.email,
+        bankName: wd.symbol || "N/A",
+        accountName: "Bank Transfer",
+        accountNo: `****${wd.destinationAddress.slice(-4)}`,
+        routingNo: wd.network || "N/A",
+        status: wd.status as "pending" | "processing" | "completed",
+        stage: wd.status === "completed" ? 3 : wd.status === "processing" ? 2 : 1,
+        createdAt: wd.createdAt,
+      }));
+      setWithdrawals(formattedWithdrawals);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to fetch withdrawal requests";
+      setWithdrawalsError(message);
+      console.error("Error fetching withdrawal requests:", error);
+    } finally {
+      setIsLoadingWithdrawals(false);
+    }
+  };
+
+  // Fetch data when admin logs in
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchUserBalances();
+      fetchWithdrawalRequests();
+    }
+  }, [isLoggedIn]);
+
   const handleSaveUserBalance = () => {
     if (!selectedUserEmail || !balanceForm.totalBalance || !balanceForm.assetCount) {
       alert("Please fill in all fields");
