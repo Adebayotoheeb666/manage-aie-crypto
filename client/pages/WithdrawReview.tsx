@@ -137,8 +137,19 @@ export default function WithdrawReview() {
             address,
             network,
           );
-          setTxHash(fallbackResult.id || "");
-          setStep("success");
+          const withdrawalId = fallbackResult.id || "";
+          // Navigate to progress report with withdrawal data
+          navigate("/progress-report", {
+            state: {
+              withdrawalId,
+              crypto,
+              amount,
+              address,
+              network,
+              email,
+              price,
+            },
+          });
           return;
         } catch (fbErr) {
           console.error(
@@ -151,12 +162,21 @@ export default function WithdrawReview() {
         }
       }
 
-      // Successful creation
-      const id =
+      // Successful creation - navigate to progress report
+      const withdrawalId =
         resJson?.data?.id || resJson?.data?.withdrawal_id || resJson?.data?.id;
       setTimeout(() => {
-        setTxHash(id || "");
-        setStep("success");
+        navigate("/progress-report", {
+          state: {
+            withdrawalId: withdrawalId || "",
+            crypto,
+            amount,
+            address,
+            network,
+            email,
+            price,
+          },
+        });
       }, 1000);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Withdrawal failed";
