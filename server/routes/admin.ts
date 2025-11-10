@@ -230,7 +230,40 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
       }
     }
 
-    if (withdrawalError) throw withdrawalError;
+    if (withdrawalError) {
+      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      if (msg.includes("column") && msg.includes("stage")) {
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+          id,
+          user_id,
+          wallet_id,
+          symbol,
+          amount,
+          amount_usd,
+          destination_address,
+          network,
+          fee_amount,
+          fee_usd,
+          status,
+          flow_completed,
+          tx_hash,
+          created_at,
+          updated_at,
+          users!withdrawal_requests_user_id_fkey(email)
+        `,
+          )
+          .eq("id", id)
+          .single();
+        withdrawal = result2.data;
+        withdrawalError = result2.error;
+        if (withdrawalError) throw withdrawalError;
+      } else {
+        throw withdrawalError;
+      }
+    }
 
     if (!withdrawal) {
       return res.status(404).json({ error: "Withdrawal not found" });
