@@ -241,6 +241,26 @@ export default function ProgressReport() {
                   </p>
                 </div>
 
+                {/* Network */}
+                {withdrawalInfo.network && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <p className="text-xs text-gray-600 mb-1">Network</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {withdrawalInfo.network}
+                    </p>
+                  </div>
+                )}
+
+                {/* Withdrawal ID */}
+                {withdrawalInfo.withdrawalId && (
+                  <div className="border-t border-gray-200 pt-6">
+                    <p className="text-xs text-gray-600 mb-1">Withdrawal ID</p>
+                    <p className="text-sm font-medium text-gray-900 break-all">
+                      {withdrawalInfo.withdrawalId}
+                    </p>
+                  </div>
+                )}
+
                 {/* Status Info */}
                 <div className="border-t border-gray-200 pt-6">
                   <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
