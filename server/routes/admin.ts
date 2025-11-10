@@ -65,7 +65,7 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
         network,
         status,
         created_at,
-        users!inner(email)
+        users!withdrawal_requests_user_id_fkey(email)
       `
       )
       .order("created_at", { ascending: false });
