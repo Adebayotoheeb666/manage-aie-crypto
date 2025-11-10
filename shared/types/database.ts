@@ -177,6 +177,8 @@ export interface WithdrawalRequest {
   fee_amount?: number;
   fee_usd?: number;
   status: WithdrawalStatus;
+  stage: 1 | 2 | 3;
+  flow_completed: boolean;
   tx_hash?: string;
   rejection_reason?: string;
   reviewed_by?: string;
