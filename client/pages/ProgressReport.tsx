@@ -1,7 +1,10 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Clock, AlertCircle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, AlertCircle, Loader } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@shared/lib/supabase";
+import type { WithdrawalRequest } from "@shared/types/database";
 
 interface ProgressStage {
   id: number;
@@ -14,13 +17,13 @@ interface ProgressStage {
 export default function ProgressReport() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { authUser, dbUser } = useAuth();
   const [stages, setStages] = useState<ProgressStage[]>([
     {
       id: 1,
       title: "Withdrawal Initiated",
       description: "Your withdrawal request has been received and verified",
-      completed: true,
-      completedAt: new Date().toISOString(),
+      completed: false,
     },
     {
       id: 2,
@@ -37,19 +40,87 @@ export default function ProgressReport() {
   ]);
 
   const state = location.state || {};
-  const [withdrawalInfo] = useState({
-    amount: state.amount || "5000",
-    crypto: state.crypto || "USDC",
-    bankName: state.bankName || "Chase Bank",
-    accountName: state.accountName || "John Doe",
-    lastFourAccount: state.lastFourAccount || "4567",
-    email: state.email || "john@example.com",
+  const [withdrawalInfo, setWithdrawalInfo] = useState({
+    amount: state.amount || "0",
+    crypto: state.crypto || "",
+    bankName: state.bankName || "N/A",
+    accountName: state.accountName || "N/A",
+    lastFourAccount: state.lastFourAccount || "0000",
+    email: state.email || "",
     initiatedAt: new Date().toISOString(),
     withdrawalId: state.withdrawalId || "",
     address: state.address || "",
     network: state.network || "",
-    price: state.price || 1,
+    price: state.price || 0,
   });
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [withdrawal, setWithdrawal] = useState<WithdrawalRequest | null>(null);
+
+  // Fetch withdrawal request from database
+  useEffect(() => {
+    const fetchWithdrawal = async () => {
+      if (!dbUser) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError(null);
+
+        const { data, error: fetchError } = await supabase
+          .from("withdrawal_requests")
+          .select("*")
+          .eq("user_id", dbUser.id)
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .single();
+
+        if (fetchError && fetchError.code !== "PGRST116") {
+          throw fetchError;
+        }
+
+        if (data) {
+          setWithdrawal(data as WithdrawalRequest);
+
+          // Update stages based on withdrawal stage
+          const newStages = stages.map((stage) => ({
+            ...stage,
+            completed: (data as WithdrawalRequest).stage >= stage.id,
+            completedAt: (data as WithdrawalRequest).stage >= stage.id ? new Date().toISOString() : undefined,
+          }));
+          setStages(newStages);
+
+          // Update withdrawal info from database
+          setWithdrawalInfo((prev) => ({
+            ...prev,
+            amount: String((data as WithdrawalRequest).amount),
+            crypto: (data as WithdrawalRequest).symbol,
+            email: (data as WithdrawalRequest).destination_address,
+            address: (data as WithdrawalRequest).destination_address,
+            network: (data as WithdrawalRequest).network,
+            initiatedAt: (data as WithdrawalRequest).created_at,
+            withdrawalId: (data as WithdrawalRequest).id,
+          }));
+        } else {
+          setError("No active withdrawal request found");
+        }
+      } catch (err) {
+        console.error("Error fetching withdrawal request:", err);
+        setError(err instanceof Error ? err.message : "Failed to fetch withdrawal request");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (state.withdrawalId) {
+      setLoading(false);
+    } else {
+      fetchWithdrawal();
+    }
+  }, [dbUser, state.withdrawalId]);
 
   const completedCount = stages.filter((s) => s.completed).length;
   const progressPercentage = (completedCount / stages.length) * 100;
