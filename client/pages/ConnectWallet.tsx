@@ -831,12 +831,6 @@ export default function ConnectWallet() {
     setError("");
   };
 
-  const handleWordCountChange = (count: number) => {
-    setWordCount(count);
-    setWords(Array(count).fill(""));
-    setValidations(Array(count).fill(false));
-    setError("");
-  };
 
   const handleConnect = async () => {
     // Validate all words are filled and valid
