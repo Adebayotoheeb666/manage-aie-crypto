@@ -67,8 +67,6 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
         destination_address,
         network,
         status,
-        stage,
-        flow_completed,
         created_at,
         users!withdrawal_requests_user_id_fkey(email)
       `,
@@ -184,8 +182,6 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
           fee_amount,
           fee_usd,
           status,
-          stage,
-          flow_completed,
           tx_hash,
           created_at,
           updated_at,
