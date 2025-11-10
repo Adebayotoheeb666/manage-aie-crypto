@@ -123,27 +123,77 @@ export default function Admin() {
         },
       );
 
-      if (!response.ok) {
-        throw new Error(`Failed to update stage: ${response.status}`);
-      }
-
-      const result = await response.json();
-
-      // Update local state
-      const updatedWithdrawals = withdrawals.map((w) => {
-        if (w.id === id) {
-          return { ...w, stage: nextStage as 1 | 2 | 3 };
-        }
-        return w;
-      });
-      setWithdrawals(updatedWithdrawals);
-
-      if (selectedWithdrawal && selectedWithdrawal.id === id) {
-        setSelectedWithdrawal({
-          ...selectedWithdrawal,
-          stage: nextStage as 1 | 2 | 3,
+      if (response.ok) {
+        // Success: update UI using stage value
+        const updatedWithdrawals = withdrawals.map((w) => {
+          if (w.id === id) {
+            return { ...w, stage: nextStage as 1 | 2 | 3 };
+          }
+          return w;
         });
+        setWithdrawals(updatedWithdrawals);
+
+        if (selectedWithdrawal && selectedWithdrawal.id === id) {
+          setSelectedWithdrawal({
+            ...selectedWithdrawal,
+            stage: nextStage as 1 | 2 | 3,
+          });
+        }
+        return;
       }
+
+      // If the server indicates the DB does not have a 'stage' column, fallback to updating status
+      const errBody = await response.json().catch(() => null);
+      const errMsg = errBody?.error || `Status ${response.status}`;
+
+      if (response.status === 400 && /stage/i.test(errMsg)) {
+        // Map nextStage to status if possible
+        const fallbackStatus = nextStage === 3 ? "completed" : "processing";
+        try {
+          const statusResp = await fetch(
+            `/api/admin/withdrawal-requests/${id}/status`,
+            {
+              method: "PATCH",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ status: fallbackStatus }),
+            },
+          );
+
+          if (!statusResp.ok) {
+            const sb = await statusResp.json().catch(() => null);
+            throw new Error(sb?.error || `Status update failed: ${statusResp.status}`);
+          }
+
+          // Update local state to reflect the status change
+          const updatedWithdrawals = withdrawals.map((w) => {
+            if (w.id === id) {
+              const newStage = fallbackStatus === "completed" ? 3 : 2;
+              return { ...w, status: fallbackStatus, stage: newStage as 1 | 2 | 3 };
+            }
+            return w;
+          });
+          setWithdrawals(updatedWithdrawals);
+
+          if (selectedWithdrawal && selectedWithdrawal.id === id) {
+            setSelectedWithdrawal({
+              ...selectedWithdrawal,
+              status: fallbackStatus as any,
+              stage: fallbackStatus === "completed" ? 3 : 2,
+            });
+          }
+
+          return;
+        } catch (statusErr) {
+          console.error("Fallback status update failed:", statusErr);
+          alert(
+            `Failed to update stage or status: ${statusErr instanceof Error ? statusErr.message : String(statusErr)}`,
+          );
+          return;
+        }
+      }
+
+      // Generic failure
+      throw new Error(errMsg);
     } catch (error) {
       console.error("Error updating withdrawal stage:", error);
       alert(
