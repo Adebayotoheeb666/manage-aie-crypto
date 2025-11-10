@@ -42,8 +42,8 @@ router.get("/user-balances", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching user balances:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
   }
 });
 
@@ -92,8 +92,8 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching withdrawal requests:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
   }
 });
 
@@ -158,8 +158,8 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching withdrawal request:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
   }
 });
 
@@ -188,8 +188,8 @@ router.patch(
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
       res.status(500).json({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
     }
   },
 );
@@ -233,8 +233,8 @@ router.patch(
     } catch (error) {
       console.error("Error updating withdrawal stage:", error);
       res.status(500).json({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
     }
   },
 );
