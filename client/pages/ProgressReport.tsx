@@ -13,6 +13,7 @@ interface ProgressStage {
 
 export default function ProgressReport() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [stages, setStages] = useState<ProgressStage[]>([
     {
       id: 1,
@@ -35,14 +36,19 @@ export default function ProgressReport() {
     },
   ]);
 
+  const state = location.state || {};
   const [withdrawalInfo] = useState({
-    amount: "5000",
-    crypto: "USDC",
-    bankName: "Chase Bank",
-    accountName: "John Doe",
-    lastFourAccount: "4567",
-    email: "john@example.com",
+    amount: state.amount || "5000",
+    crypto: state.crypto || "USDC",
+    bankName: state.bankName || "Chase Bank",
+    accountName: state.accountName || "John Doe",
+    lastFourAccount: state.lastFourAccount || "4567",
+    email: state.email || "john@example.com",
     initiatedAt: new Date().toISOString(),
+    withdrawalId: state.withdrawalId || "",
+    address: state.address || "",
+    network: state.network || "",
+    price: state.price || 1,
   });
 
   const completedCount = stages.filter((s) => s.completed).length;
