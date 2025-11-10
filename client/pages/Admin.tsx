@@ -259,7 +259,7 @@ export default function Admin() {
           email: wd.email,
           bankName: wd.symbol || "N/A",
           accountName: "Bank Transfer",
-          accountNo: `****${wd.destinationAddress.slice(-4)}`,
+          accountNo: `****${(wd.destinationAddress || "").slice(-4)}`,
           routingNo: wd.network || "N/A",
           status: wd.status as "pending" | "processing" | "completed",
           stage:
