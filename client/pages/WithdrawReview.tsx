@@ -518,22 +518,6 @@ export default function WithdrawReview() {
               </p>
             </div>
 
-            {/* Recipient Address */}
-            <div className="border-t border-gray-200 pt-6">
-              <p className="text-sm text-gray-600 mb-2">Recipient Address</p>
-              <div className="flex items-center gap-2 bg-gray-50 p-3 rounded-lg">
-                <p className="font-mono text-sm text-gray-900 flex-1 break-all">
-                  {address}
-                </p>
-                <button
-                  onClick={handleCopyAddress}
-                  className="text-blue-600 hover:text-blue-700 flex-shrink-0"
-                >
-                  <Copy size={18} />
-                </button>
-              </div>
-            </div>
-
             {/* Network */}
             <div className="border-t border-gray-200 pt-6">
               <p className="text-sm text-gray-600 mb-1">Network</p>
