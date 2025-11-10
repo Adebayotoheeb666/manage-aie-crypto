@@ -199,6 +199,11 @@ export default function ProgressReport() {
                   <p className="text-2xl font-bold text-gray-900">
                     {withdrawalInfo.amount} {withdrawalInfo.crypto}
                   </p>
+                  {withdrawalInfo.price > 0 && (
+                    <p className="text-sm text-gray-600 mt-1">
+                      ≈ ${(parseFloat(withdrawalInfo.amount) * withdrawalInfo.price).toLocaleString()}
+                    </p>
+                  )}
                 </div>
 
                 {/* Bank Details */}
