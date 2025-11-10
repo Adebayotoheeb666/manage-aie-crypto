@@ -64,6 +64,8 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
         destination_address,
         network,
         status,
+        stage,
+        flow_completed,
         created_at,
         users!withdrawal_requests_user_id_fkey(email)
       `
@@ -83,6 +85,8 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
       network: w.network,
       destinationAddress: w.destination_address,
       status: w.status,
+      stage: w.stage || 1,
+      flowCompleted: w.flow_completed || false,
       createdAt: w.created_at,
     }));
 
