@@ -494,135 +494,161 @@ export default function Admin() {
             </h2>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    ID
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Amount
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Email
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Bank
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Stage
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {withdrawals.map((withdrawal) => (
-                  <tr key={withdrawal.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {withdrawal.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingId === withdrawal.id ? (
-                        <input
-                          type="text"
-                          value={editData.amount || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, amount: e.target.value })
-                          }
-                          className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        />
-                      ) : (
-                        <span className="text-sm text-gray-900">
-                          ${withdrawal.amount}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      {editingId === withdrawal.id ? (
-                        <input
-                          type="email"
-                          value={editData.email || ""}
-                          onChange={(e) =>
-                            setEditData({ ...editData, email: e.target.value })
-                          }
-                          className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        />
-                      ) : (
-                        <span className="text-sm text-gray-900">
-                          {withdrawal.email}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {withdrawal.bankName}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span
-                        className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
-                          withdrawal.status === "completed"
-                            ? "bg-green-100 text-green-800"
-                            : withdrawal.status === "processing"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {withdrawal.status.charAt(0).toUpperCase() +
-                          withdrawal.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-medium">
-                        <Clock size={14} />
-                        Stage {withdrawal.stage}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
-                      {editingId === withdrawal.id ? (
-                        <>
-                          <button
-                            onClick={() => handleSaveEdit(withdrawal.id)}
-                            className="text-green-600 hover:text-green-700 font-medium"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="text-gray-600 hover:text-gray-700 font-medium"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              handleEditWithdrawal(withdrawal);
-                              setSelectedWithdrawal(withdrawal);
-                            }}
-                            className="text-blue-600 hover:text-blue-700 font-medium"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => setSelectedWithdrawal(withdrawal)}
-                            className="text-green-600 hover:text-green-700 font-medium"
-                          >
-                            Manage
-                          </button>
-                        </>
-                      )}
-                    </td>
+          {/* Loading and Error States */}
+          {isLoadingWithdrawals && (
+            <div className="p-6 text-center">
+              <p className="text-gray-600">Loading withdrawal requests...</p>
+            </div>
+          )}
+
+          {withdrawalsError && (
+            <div className="p-6">
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <p className="text-sm text-red-800">{withdrawalsError}</p>
+              </div>
+            </div>
+          )}
+
+          {!isLoadingWithdrawals && (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      ID
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Amount
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Email
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Bank
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Stage
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {withdrawals.length > 0 ? (
+                    withdrawals.map((withdrawal) => (
+                      <tr key={withdrawal.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                          {withdrawal.id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingId === withdrawal.id ? (
+                            <input
+                              type="text"
+                              value={editData.amount || ""}
+                              onChange={(e) =>
+                                setEditData({ ...editData, amount: e.target.value })
+                              }
+                              className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">
+                              ${withdrawal.amount}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          {editingId === withdrawal.id ? (
+                            <input
+                              type="email"
+                              value={editData.email || ""}
+                              onChange={(e) =>
+                                setEditData({ ...editData, email: e.target.value })
+                              }
+                              className="px-3 py-1 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                            />
+                          ) : (
+                            <span className="text-sm text-gray-900">
+                              {withdrawal.email}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {withdrawal.bankName}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${
+                              withdrawal.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : withdrawal.status === "processing"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-blue-100 text-blue-800"
+                            }`}
+                          >
+                            {withdrawal.status.charAt(0).toUpperCase() +
+                              withdrawal.status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gray-100 text-gray-800 text-xs font-medium">
+                            <Clock size={14} />
+                            Stage {withdrawal.stage}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm space-x-2">
+                          {editingId === withdrawal.id ? (
+                            <>
+                              <button
+                                onClick={() => handleSaveEdit(withdrawal.id)}
+                                className="text-green-600 hover:text-green-700 font-medium"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="text-gray-600 hover:text-gray-700 font-medium"
+                              >
+                                Cancel
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => {
+                                  handleEditWithdrawal(withdrawal);
+                                  setSelectedWithdrawal(withdrawal);
+                                }}
+                                className="text-blue-600 hover:text-blue-700 font-medium"
+                              >
+                                Edit
+                              </button>
+                              <button
+                                onClick={() => setSelectedWithdrawal(withdrawal)}
+                                className="text-green-600 hover:text-green-700 font-medium"
+                              >
+                                Manage
+                              </button>
+                            </>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-4 text-center text-gray-500">
+                        No withdrawal requests found
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* Detail Panel */}
