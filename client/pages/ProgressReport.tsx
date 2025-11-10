@@ -1,6 +1,12 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle2, Clock, AlertCircle, Loader } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  AlertCircle,
+  Loader,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@shared/lib/supabase";
@@ -89,7 +95,10 @@ export default function ProgressReport() {
           const newStages = stages.map((stage) => ({
             ...stage,
             completed: (data as WithdrawalRequest).stage >= stage.id,
-            completedAt: (data as WithdrawalRequest).stage >= stage.id ? new Date().toISOString() : undefined,
+            completedAt:
+              (data as WithdrawalRequest).stage >= stage.id
+                ? new Date().toISOString()
+                : undefined,
           }));
           setStages(newStages);
 
@@ -109,7 +118,11 @@ export default function ProgressReport() {
         }
       } catch (err) {
         console.error("Error fetching withdrawal request:", err);
-        setError(err instanceof Error ? err.message : "Failed to fetch withdrawal request");
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Failed to fetch withdrawal request",
+        );
       } finally {
         setLoading(false);
       }
@@ -166,7 +179,9 @@ export default function ProgressReport() {
           <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex gap-3">
             <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
             <div>
-              <h2 className="font-semibold text-red-900 mb-1">Error Loading Withdrawal</h2>
+              <h2 className="font-semibold text-red-900 mb-1">
+                Error Loading Withdrawal
+              </h2>
               <p className="text-red-800 mb-4">{error}</p>
               <Button
                 onClick={() => navigate("/dashboard")}
@@ -317,7 +332,10 @@ export default function ProgressReport() {
                   </p>
                   {withdrawalInfo.price > 0 && (
                     <p className="text-sm text-gray-600 mt-1">
-                      ≈ ${(parseFloat(withdrawalInfo.amount) * withdrawalInfo.price).toLocaleString()}
+                      ≈ $
+                      {(
+                        parseFloat(withdrawalInfo.amount) * withdrawalInfo.price
+                      ).toLocaleString()}
                     </p>
                   )}
                 </div>

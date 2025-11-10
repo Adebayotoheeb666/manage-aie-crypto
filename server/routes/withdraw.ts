@@ -1,8 +1,15 @@
 import { RequestHandler } from "express";
-import { createWithdrawalRequest, getWalletAssets } from "../../shared/lib/supabase";
+import {
+  createWithdrawalRequest,
+  getWalletAssets,
+} from "../../shared/lib/supabase";
 import { supabase } from "../../shared/lib/supabase";
 import { z } from "zod";
-import type { User, Asset, WithdrawalRequest as WithdrawalRequestType } from "../../shared/types/database";
+import type {
+  User,
+  Asset,
+  WithdrawalRequest as WithdrawalRequestType,
+} from "../../shared/types/database";
 
 // Validation schema for withdrawal request
 const withdrawalSchema = z.object({
@@ -73,8 +80,15 @@ export const handleWithdraw: RequestHandler<
       return;
     }
 
-    const { walletId, symbol, amount, destinationAddress, network, email, flowCompleted } =
-      withdrawalData;
+    const {
+      walletId,
+      symbol,
+      amount,
+      destinationAddress,
+      network,
+      email,
+      flowCompleted,
+    } = withdrawalData;
 
     // Get user from database
     const { data: userRaw, error: userError } = await supabase
@@ -157,7 +171,7 @@ export const handleWithdraw: RequestHandler<
       network,
       feeAmount,
       feeUsd,
-      flowCompleted
+      flowCompleted,
     );
     const withdrawal = withdrawalRaw as WithdrawalRequestType;
 

@@ -29,10 +29,10 @@ export interface User {
   two_factor_enabled: boolean;
   preferred_currency: string;
   notification_preferences: NotificationPreferences;
-  kyc_status: 'pending' | 'verified' | 'rejected';
+  kyc_status: "pending" | "verified" | "rejected";
   kyc_submitted_at?: string;
   kyc_verified_at?: string;
-  account_status: 'active' | 'suspended' | 'closed';
+  account_status: "active" | "suspended" | "closed";
   last_login?: string;
   created_at: string;
   updated_at: string;
@@ -66,7 +66,7 @@ export interface Session {
 // WALLET TYPES
 // ==========================================
 
-export type WalletType = 'coinbase' | 'metamask' | 'ledger' | 'trezor';
+export type WalletType = "coinbase" | "metamask" | "ledger" | "trezor";
 
 export interface Wallet {
   id: string;
@@ -113,8 +113,12 @@ export interface Asset {
 // TRANSACTION TYPES
 // ==========================================
 
-export type TransactionType = 'send' | 'receive' | 'swap' | 'stake' | 'unstake';
-export type TransactionStatus = 'pending' | 'confirmed' | 'failed' | 'cancelled';
+export type TransactionType = "send" | "receive" | "swap" | "stake" | "unstake";
+export type TransactionStatus =
+  | "pending"
+  | "confirmed"
+  | "failed"
+  | "cancelled";
 
 export interface Transaction {
   id: string;
@@ -163,7 +167,12 @@ export interface PriceHistory {
 // WITHDRAWAL REQUEST TYPES
 // ==========================================
 
-export type WithdrawalStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type WithdrawalStatus =
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed"
+  | "cancelled";
 
 export interface WithdrawalRequest {
   id: string;
@@ -212,7 +221,7 @@ export interface PortfolioSnapshot {
 // PRICE ALERT TYPES
 // ==========================================
 
-export type PriceAlertType = 'above' | 'below';
+export type PriceAlertType = "above" | "below";
 
 export interface PriceAlert {
   id: string;
@@ -233,13 +242,13 @@ export interface PriceAlert {
 // ==========================================
 
 export type AuditAction =
-  | 'WALLET_CONNECTED'
-  | 'WALLET_DISCONNECTED'
-  | 'TRANSACTION_CREATED'
-  | 'TRANSACTION_UPDATED'
-  | 'WITHDRAWAL_REQUESTED'
-  | 'WITHDRAWAL_STATUS_UPDATED'
-  | 'CUSTOM_ACTION';
+  | "WALLET_CONNECTED"
+  | "WALLET_DISCONNECTED"
+  | "TRANSACTION_CREATED"
+  | "TRANSACTION_UPDATED"
+  | "WITHDRAWAL_REQUESTED"
+  | "WITHDRAWAL_STATUS_UPDATED"
+  | "CUSTOM_ACTION";
 
 export interface AuditLog {
   id: string;
@@ -294,52 +303,52 @@ export interface Database {
     Tables: {
       users: {
         Row: User;
-        Insert: Omit<User, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<User, 'id' | 'created_at'>>;
+        Insert: Omit<User, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<User, "id" | "created_at">>;
       };
       sessions: {
         Row: Session;
-        Insert: Omit<Session, 'id' | 'created_at'>;
-        Update: Partial<Omit<Session, 'id' | 'created_at'>>;
+        Insert: Omit<Session, "id" | "created_at">;
+        Update: Partial<Omit<Session, "id" | "created_at">>;
       };
       wallets: {
         Row: Wallet;
-        Insert: Omit<Wallet, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Wallet, 'id' | 'created_at'>>;
+        Insert: Omit<Wallet, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Wallet, "id" | "created_at">>;
       };
       assets: {
         Row: Asset;
-        Insert: Omit<Asset, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Asset, 'id' | 'created_at'>>;
+        Insert: Omit<Asset, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Asset, "id" | "created_at">>;
       };
       transactions: {
         Row: Transaction;
-        Insert: Omit<Transaction, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<Transaction, 'id' | 'created_at'>>;
+        Insert: Omit<Transaction, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<Transaction, "id" | "created_at">>;
       };
       price_history: {
         Row: PriceHistory;
-        Insert: Omit<PriceHistory, 'id'>;
-        Update: Partial<Omit<PriceHistory, 'id'>>;
+        Insert: Omit<PriceHistory, "id">;
+        Update: Partial<Omit<PriceHistory, "id">>;
       };
       withdrawal_requests: {
         Row: WithdrawalRequest;
-        Insert: Omit<WithdrawalRequest, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<WithdrawalRequest, 'id' | 'created_at'>>;
+        Insert: Omit<WithdrawalRequest, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<WithdrawalRequest, "id" | "created_at">>;
       };
       portfolio_snapshots: {
         Row: PortfolioSnapshot;
-        Insert: Omit<PortfolioSnapshot, 'id' | 'created_at'>;
-        Update: Partial<Omit<PortfolioSnapshot, 'id' | 'created_at'>>;
+        Insert: Omit<PortfolioSnapshot, "id" | "created_at">;
+        Update: Partial<Omit<PortfolioSnapshot, "id" | "created_at">>;
       };
       price_alerts: {
         Row: PriceAlert;
-        Insert: Omit<PriceAlert, 'id' | 'created_at' | 'updated_at'>;
-        Update: Partial<Omit<PriceAlert, 'id' | 'created_at'>>;
+        Insert: Omit<PriceAlert, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<PriceAlert, "id" | "created_at">>;
       };
       audit_logs: {
         Row: AuditLog;
-        Insert: Omit<AuditLog, 'id' | 'created_at'>;
+        Insert: Omit<AuditLog, "id" | "created_at">;
         Update: never;
       };
     };

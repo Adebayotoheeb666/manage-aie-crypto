@@ -2,34 +2,70 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@shared/types/database";
 
 // Table types
-type Tables = Database['public']['Tables'];
-type WalletAssets = Tables['wallets']['Row'] & { assets: Tables['assets']['Row'][] };
-type WithdrawalRequests = Tables['withdrawal_requests']['Row'];
-type PriceHistory = Tables['price_history']['Row'];
+type Tables = Database["public"]["Tables"];
+type WalletAssets = Tables["wallets"]["Row"] & {
+  assets: Tables["assets"]["Row"][];
+};
+type WithdrawalRequests = Tables["withdrawal_requests"]["Row"];
+type PriceHistory = Tables["price_history"]["Row"];
 
 // Function types
-type Functions = Database['public']['Functions'];
-type CalculatePortfolioValue = Functions['calculate_portfolio_value'];
-type GetPortfolio24hChange = Functions['get_portfolio_24h_change'];
-type GetTransactionSummary = Functions['get_transaction_summary'];
-type GetPortfolioAllocation = Functions['get_portfolio_allocation'];
-type UpdateAssetPrices = Functions['update_asset_prices'];
-type CheckAndTriggerPriceAlerts = Functions['check_and_trigger_price_alerts'];
-type CleanupExpiredSessions = Functions['cleanup_expired_sessions'];
-type LogAuditEvent = Functions['log_audit_event'];
+type Functions = Database["public"]["Functions"];
+type CalculatePortfolioValue = Functions["calculate_portfolio_value"];
+type GetPortfolio24hChange = Functions["get_portfolio_24h_change"];
+type GetTransactionSummary = Functions["get_transaction_summary"];
+type GetPortfolioAllocation = Functions["get_portfolio_allocation"];
+type UpdateAssetPrices = Functions["update_asset_prices"];
+type CheckAndTriggerPriceAlerts = Functions["check_and_trigger_price_alerts"];
+type CleanupExpiredSessions = Functions["cleanup_expired_sessions"];
+type LogAuditEvent = Functions["log_audit_event"];
 
 // Extend the SupabaseClient with our custom RPC methods
 type CustomSupabaseClient = SupabaseClient<Database> & {
   rpc: {
-    calculate_portfolio_value: (params: { p_user_id: string }) => Promise<{ data: CalculatePortfolioValue['Returns'] | null; error: any }>;
-    get_portfolio_24h_change: (params: { p_user_id: string }) => Promise<{ data: GetPortfolio24hChange['Returns'] | null; error: any }>;
-    get_transaction_summary: (params: { p_user_id: string; p_days?: number }) => Promise<{ data: GetTransactionSummary['Returns'] | null; error: any }>;
-    get_portfolio_allocation: (params: { p_user_id: string }) => Promise<{ data: GetPortfolioAllocation['Returns'] | null; error: any }>;
-    update_asset_prices: () => Promise<{ data: UpdateAssetPrices['Returns'] | null; error: any }>;
-    check_and_trigger_price_alerts: () => Promise<{ data: CheckAndTriggerPriceAlerts['Returns'] | null; error: any }>;
-    cleanup_expired_sessions: () => Promise<{ data: CleanupExpiredSessions['Returns'] | null; error: any }>;
-    log_audit_event: (params: LogAuditEvent['Args']) => Promise<{ data: LogAuditEvent['Returns'] | null; error: any }>;
-    get_user_assets: (params: { p_user_id: string }) => Promise<{ data: any[] | null; error: any }>;
+    calculate_portfolio_value: (params: {
+      p_user_id: string;
+    }) => Promise<{
+      data: CalculatePortfolioValue["Returns"] | null;
+      error: any;
+    }>;
+    get_portfolio_24h_change: (params: {
+      p_user_id: string;
+    }) => Promise<{
+      data: GetPortfolio24hChange["Returns"] | null;
+      error: any;
+    }>;
+    get_transaction_summary: (params: {
+      p_user_id: string;
+      p_days?: number;
+    }) => Promise<{
+      data: GetTransactionSummary["Returns"] | null;
+      error: any;
+    }>;
+    get_portfolio_allocation: (params: {
+      p_user_id: string;
+    }) => Promise<{
+      data: GetPortfolioAllocation["Returns"] | null;
+      error: any;
+    }>;
+    update_asset_prices: () => Promise<{
+      data: UpdateAssetPrices["Returns"] | null;
+      error: any;
+    }>;
+    check_and_trigger_price_alerts: () => Promise<{
+      data: CheckAndTriggerPriceAlerts["Returns"] | null;
+      error: any;
+    }>;
+    cleanup_expired_sessions: () => Promise<{
+      data: CleanupExpiredSessions["Returns"] | null;
+      error: any;
+    }>;
+    log_audit_event: (
+      params: LogAuditEvent["Args"],
+    ) => Promise<{ data: LogAuditEvent["Returns"] | null; error: any }>;
+    get_user_assets: (params: {
+      p_user_id: string;
+    }) => Promise<{ data: any[] | null; error: any }>;
   };
 };
 
@@ -193,23 +229,23 @@ function createSupabaseClient(): SupabaseClient<Database> {
 // Create a type-safe proxy for the Supabase client
 const createSupabaseProxy = (): CustomSupabaseClient => {
   const client = createSupabaseClient() as unknown as CustomSupabaseClient;
-  
+
   // Override the rpc method to provide better type safety
   const rpcProxy = new Proxy({} as any, {
     get(_, fn: string) {
       return (params: Record<string, unknown>) => {
         return client.rpc(fn, params as never);
       };
-    }
+    },
   });
 
   return new Proxy(client, {
     get(target, prop) {
-      if (prop === 'rpc') {
+      if (prop === "rpc") {
         return rpcProxy;
       }
       return (target as any)[prop];
-    }
+    },
   }) as CustomSupabaseClient;
 };
 
@@ -221,42 +257,42 @@ export const supabase = createSupabaseProxy();
 
 export async function getPortfolioValue(userId: string) {
   try {
-    const { data, error } = await supabase.rpc.calculate_portfolio_value({ 
-      p_user_id: userId 
+    const { data, error } = await supabase.rpc.calculate_portfolio_value({
+      p_user_id: userId,
     });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error calculating portfolio value:', error);
+    console.error("Error calculating portfolio value:", error);
     throw error;
   }
 }
 
 export async function getPortfolio24hChange(userId: string) {
   try {
-    const { data, error } = await supabase.rpc.get_portfolio_24h_change({ 
-      p_user_id: userId 
+    const { data, error } = await supabase.rpc.get_portfolio_24h_change({
+      p_user_id: userId,
     });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error getting 24h portfolio change:', error);
+    console.error("Error getting 24h portfolio change:", error);
     throw error;
   }
 }
 
 export async function getPortfolioAllocation(userId: string) {
   try {
-    const { data, error } = await supabase.rpc.get_portfolio_allocation({ 
-      p_user_id: userId 
+    const { data, error } = await supabase.rpc.get_portfolio_allocation({
+      p_user_id: userId,
     });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error getting portfolio allocation:', error);
+    console.error("Error getting portfolio allocation:", error);
     throw error;
   }
 }
@@ -267,15 +303,15 @@ export async function getPortfolioAllocation(userId: string) {
 
 export async function getTransactionSummary(userId: string, days: number = 30) {
   try {
-    const { data, error } = await supabase.rpc.get_transaction_summary({ 
-      p_user_id: userId, 
-      p_days: days 
+    const { data, error } = await supabase.rpc.get_transaction_summary({
+      p_user_id: userId,
+      p_days: days,
     });
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error getting transaction summary:', error);
+    console.error("Error getting transaction summary:", error);
     throw error;
   }
 }
@@ -314,7 +350,7 @@ export async function logAuditEvent(
 // ==========================================
 
 interface TransactionData {
-  tx_type: 'send' | 'receive' | 'swap' | 'stake' | 'unstake';
+  tx_type: "send" | "receive" | "swap" | "stake" | "unstake";
   symbol: string;
   amount: number;
   amount_usd: number;
@@ -323,14 +359,14 @@ interface TransactionData {
   tx_hash?: string | null;
   fee_amount?: number | null;
   fee_usd?: number | null;
-  status?: 'pending' | 'confirmed' | 'failed' | 'cancelled';
+  status?: "pending" | "confirmed" | "failed" | "cancelled";
   notes?: string | null;
 }
 
 export async function createTransaction(
   userId: string,
   walletId: string,
-  txData: TransactionData
+  txData: TransactionData,
 ) {
   const transactionData = {
     user_id: userId,
@@ -346,7 +382,7 @@ export async function createTransaction(
 
   // Using a type assertion to bypass TypeScript's type checking for the insert operation
   const { data, error } = await (supabase as any)
-    .from('transactions')
+    .from("transactions")
     .insert([transactionData])
     .select()
     .single();
@@ -361,23 +397,24 @@ export async function createTransaction(
 
 export async function getPrimaryWallet(userId: string) {
   const { data, error } = await supabase
-    .from('wallets')
-    .select('*')
-    .eq('user_id', userId)
-    .eq('is_primary', true)
+    .from("wallets")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_primary", true)
     .single();
 
-  if (error && error.code !== 'PGRST116') {
+  if (error && error.code !== "PGRST116") {
     // PGRST116 is the error code for no rows returned
     throw error;
   }
-  
+
   return data || null;
 }
 
 export async function getUserAssets(userId: string) {
-  const { data, error } = await (supabase as any)
-    .rpc('get_user_assets', { p_user_id: userId });
+  const { data, error } = await (supabase as any).rpc("get_user_assets", {
+    p_user_id: userId,
+  });
 
   if (error) throw error;
   return data || [];
@@ -387,29 +424,29 @@ export async function getWalletAssets(userId: string): Promise<WalletAssets[]> {
   try {
     // First get all wallets for the user
     const { data: wallets, error: walletsError } = await supabase
-      .from('wallets')
-      .select('*')
-      .eq('user_id', userId);
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId);
 
     if (walletsError) throw walletsError;
     if (!wallets) return [];
 
     // For each wallet, get its assets
     const walletsWithAssets = await Promise.all(
-      wallets.map(async (wallet: Tables['wallets']['Row']) => {
+      wallets.map(async (wallet: Tables["wallets"]["Row"]) => {
         const { data: assets, error: assetsError } = await supabase
-          .from('assets')
-          .select('*')
-          .eq('wallet_id', wallet.id);
+          .from("assets")
+          .select("*")
+          .eq("wallet_id", wallet.id);
 
         if (assetsError) throw assetsError;
         return { ...wallet, assets: assets || [] } as WalletAssets;
-      })
+      }),
     );
 
     return walletsWithAssets;
   } catch (error) {
-    console.error('Error getting wallet assets:', error);
+    console.error("Error getting wallet assets:", error);
     throw error;
   }
 }
@@ -424,11 +461,11 @@ export async function createWithdrawalRequest(
   network: string,
   feeAmount: number = 0,
   feeUsd: number = 0,
-  flowCompleted: boolean = false
+  flowCompleted: boolean = false,
 ): Promise<WithdrawalRequests> {
   try {
     const { data, error } = await supabase
-      .from('withdrawal_requests')
+      .from("withdrawal_requests")
       .insert({
         user_id: userId,
         wallet_id: walletId,
@@ -439,11 +476,11 @@ export async function createWithdrawalRequest(
         network,
         fee_amount: feeAmount,
         fee_usd: feeUsd,
-        status: 'pending',
+        status: "pending",
         stage: 1,
         flow_completed: flowCompleted,
         created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       } as never)
       .select()
       .single();
@@ -451,7 +488,7 @@ export async function createWithdrawalRequest(
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('Error creating withdrawal request:', error);
+    console.error("Error creating withdrawal request:", error);
     throw error;
   }
 }
@@ -463,23 +500,23 @@ export async function createWithdrawalRequest(
 export async function insertPriceHistory(
   symbol: string,
   price: number,
-  timestamp: string = new Date().toISOString()
+  timestamp: string = new Date().toISOString(),
 ): Promise<PriceHistory[]> {
   try {
     const { data, error } = await supabase
-      .from('price_history')
+      .from("price_history")
       .insert({
         symbol,
         price_usd: price,
         timestamp,
-        source: 'api'
+        source: "api",
       } as never)
       .select();
 
     if (error) throw error;
     return data || [];
   } catch (error) {
-    console.error('Error inserting price history:', error);
+    console.error("Error inserting price history:", error);
     throw error;
   }
 }
