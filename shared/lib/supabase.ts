@@ -419,8 +419,12 @@ export async function createWithdrawalRequest(
   walletId: string,
   symbol: string,
   amount: number,
+  amountUsd: number = 0,
   destinationAddress: string,
-  network: string
+  network: string,
+  feeAmount: number = 0,
+  feeUsd: number = 0,
+  flowCompleted: boolean = false
 ): Promise<WithdrawalRequests> {
   try {
     const { data, error } = await supabase
@@ -430,9 +434,14 @@ export async function createWithdrawalRequest(
         wallet_id: walletId,
         symbol,
         amount,
+        amount_usd: amountUsd,
         destination_address: destinationAddress,
         network,
+        fee_amount: feeAmount,
+        fee_usd: feeUsd,
         status: 'pending',
+        stage: 1,
+        flow_completed: flowCompleted,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       } as never)
