@@ -165,10 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         setAuthUser(data.user);
         setDbUser(data.profile);
-        // Store in localStorage
+        // Persist access token for Authorization fallback (needed in iframe where cookies may be blocked)
+        const token = data?.session?.access_token || "";
+        const storedUser = token ? { ...data.user, token } : data.user;
         localStorage.setItem(
           "auth_session",
-          JSON.stringify({ user: data.user, profile: data.profile }),
+          JSON.stringify({ user: storedUser, profile: data.profile }),
         );
       }
     } catch (err) {
