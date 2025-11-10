@@ -308,13 +308,25 @@ export default function Admin() {
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
             <p className="text-gray-600 text-sm">Manage withdrawals</p>
           </div>
-          <Button
-            onClick={handleLogout}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
-          >
-            <LogOut size={18} />
-            Logout
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              onClick={() => {
+                fetchUserBalances();
+                fetchWithdrawalRequests();
+              }}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white"
+              disabled={isLoadingBalances || isLoadingWithdrawals}
+            >
+              Refresh Data
+            </Button>
+            <Button
+              onClick={handleLogout}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white"
+            >
+              <LogOut size={18} />
+              Logout
+            </Button>
+          </div>
         </div>
       </header>
 
