@@ -41,6 +41,7 @@ import { handleDebugSession } from "./routes/debug";
 import walletRoutes from "./routes/wallet";
 import transactionRoutes from "./routes/transactions";
 import portfolioRoutes from "./routes/portfolio";
+import adminRoutes from "./routes/admin";
 
 export function createServer() {
   const app = express();
