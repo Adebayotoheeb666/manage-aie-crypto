@@ -27,48 +27,19 @@ interface UserBalance {
 const ADMIN_USERNAME = "ajibolaEmmanuel";
 const ADMIN_PASSWORD = "Emmanuel123";
 
-// Mock withdrawal data
-const mockWithdrawals: Withdrawal[] = [
-  {
-    id: "W001",
-    userId: "U001",
-    amount: "5000",
-    email: "user1@example.com",
-    bankName: "Chase Bank",
-    accountName: "John Doe",
-    accountNo: "****1234",
-    routingNo: "****0001",
-    status: "pending",
-    stage: 1,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: "W002",
-    userId: "U002",
-    amount: "10000",
-    email: "user2@example.com",
-    bankName: "Bank of America",
-    accountName: "Jane Smith",
-    accountNo: "****5678",
-    routingNo: "****0002",
-    status: "processing",
-    stage: 2,
-    createdAt: new Date(Date.now() - 3600000).toISOString(),
-  },
-  {
-    id: "W003",
-    userId: "U003",
-    amount: "3000",
-    email: "user3@example.com",
-    bankName: "Wells Fargo",
-    accountName: "Bob Johnson",
-    accountNo: "****9012",
-    routingNo: "****0003",
-    status: "processing",
-    stage: 2,
-    createdAt: new Date(Date.now() - 7200000).toISOString(),
-  },
-];
+// Default withdrawal interface for API responses
+interface APIWithdrawal {
+  id: string;
+  userId: string;
+  walletId: string;
+  amount: string;
+  email: string;
+  symbol: string;
+  network: string;
+  destinationAddress: string;
+  status: "pending" | "processing" | "completed" | "failed" | "cancelled";
+  createdAt: string;
+}
 
 export default function Admin() {
   const navigate = useNavigate();
