@@ -798,7 +798,7 @@ export default function Admin() {
                             onClick={() =>
                               markStageComplete(
                                 selectedWithdrawal.id,
-                                item.stage - 1
+                                selectedWithdrawal.stage
                               )
                             }
                             className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg transition text-sm"
