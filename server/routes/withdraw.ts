@@ -73,7 +73,7 @@ export const handleWithdraw: RequestHandler<
       return;
     }
 
-    const { walletId, symbol, amount, destinationAddress, network, email } =
+    const { walletId, symbol, amount, destinationAddress, network, email, flowCompleted } =
       withdrawalData;
 
     // Get user from database
