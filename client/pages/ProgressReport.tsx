@@ -136,6 +136,51 @@ export default function ProgressReport() {
     });
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
+          <p className="text-gray-600">Loading withdrawal details...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <header className="bg-white border-b border-blue-100">
+          <div className="max-w-4xl mx-auto px-4 py-4">
+            <Button
+              variant="ghost"
+              onClick={() => navigate("/dashboard")}
+              className="flex items-center gap-2 text-gray-600 hover:text-gray-900 mb-4"
+            >
+              <ArrowLeft size={20} />
+              Back to Dashboard
+            </Button>
+          </div>
+        </header>
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-6 flex gap-3">
+            <AlertCircle className="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" />
+            <div>
+              <h2 className="font-semibold text-red-900 mb-1">Error Loading Withdrawal</h2>
+              <p className="text-red-800 mb-4">{error}</p>
+              <Button
+                onClick={() => navigate("/dashboard")}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Return to Dashboard
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
