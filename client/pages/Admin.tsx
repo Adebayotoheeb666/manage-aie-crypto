@@ -17,6 +17,13 @@ interface Withdrawal {
   createdAt: string;
 }
 
+interface UserBalance {
+  userId: string;
+  email: string;
+  totalBalance: number;
+  assetCount: number;
+}
+
 const ADMIN_USERNAME = "ajibolaEmmanuel";
 const ADMIN_PASSWORD = "Emmanuel123";
 
