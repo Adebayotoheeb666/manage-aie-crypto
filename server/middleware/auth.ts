@@ -61,11 +61,7 @@ export const authMiddleware = async (
             : null);
 
         if (!supabaseToken) {
-          return res.status(401).json({
-            success: false,
-            error:
-              "Session secret not configured and no Supabase token provided",
-          });
+          return res.status(401).json({ error: "Session secret not configured and no Supabase token provided" });
         }
 
         const { data, error } = await supabase.auth.getUser(supabaseToken);
