@@ -44,9 +44,8 @@ export const handleGetPrices: RequestHandler = async (req, res) => {
     });
   } catch (err) {
     console.error("Get prices error:", err);
-    res.status(500).json({
-      error: err instanceof Error ? err.message : "Failed to fetch prices",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -77,9 +76,8 @@ export const handleGetPriceBySymbol: RequestHandler = async (req, res) => {
     });
   } catch (err) {
     console.error("Get price error:", err);
-    res.status(500).json({
-      error: err instanceof Error ? err.message : "Failed to fetch price",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -199,12 +197,8 @@ export const handleUpdatePrices: RequestHandler<
     });
   } catch (err) {
     console.error("Update prices error:", err);
-    res.status(500).json({
-      success: false,
-      updated: 0,
-      failed: 0,
-      error: err instanceof Error ? err.message : "Failed to update prices",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -250,10 +244,7 @@ export const handleCheckPriceAlerts: RequestHandler<
     });
   } catch (err) {
     console.error("Check price alerts error:", err);
-    res.status(500).json({
-      success: false,
-      triggered: 0,
-      error: err instanceof Error ? err.message : "Failed to check alerts",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
