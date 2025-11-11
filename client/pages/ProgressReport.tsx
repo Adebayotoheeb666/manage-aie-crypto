@@ -72,56 +72,75 @@ export default function ProgressReport() {
         return;
       }
 
-      try {
-        setLoading(true);
-        setError(null);
+      let attempts = 0;
+      const maxAttempts = 2;
 
-        const { data, error: fetchError } = await supabase
-          .from("withdrawal_requests")
-          .select("*")
-          .eq("user_id", dbUser.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+      while (attempts < maxAttempts) {
+        try {
+          setLoading(true);
+          setError(null);
 
-        if (fetchError && fetchError.code !== "PGRST116") {
-          throw fetchError;
+          const { data, error: fetchError } = await supabase
+            .from("withdrawal_requests")
+            .select("*")
+            .eq("user_id", dbUser.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
+
+          if (fetchError && fetchError.code !== "PGRST116") {
+            throw fetchError;
+          }
+
+          if (data) {
+            setWithdrawal(data as WithdrawalRequest);
+
+            // Update stages based on withdrawal stage
+            const newStages = stages.map((stage) => ({
+              ...stage,
+              completed: (data as WithdrawalRequest).stage >= stage.id,
+              completedAt:
+                (data as WithdrawalRequest).stage >= stage.id
+                  ? new Date().toISOString()
+                  : undefined,
+            }));
+            setStages(newStages);
+
+            // Update withdrawal info from database
+            setWithdrawalInfo((prev) => ({
+              ...prev,
+              amount: String((data as WithdrawalRequest).amount),
+              crypto: (data as WithdrawalRequest).symbol,
+              email: (data as WithdrawalRequest).destination_address,
+              address: (data as WithdrawalRequest).destination_address,
+              network: (data as WithdrawalRequest).network,
+              initiatedAt: (data as WithdrawalRequest).created_at,
+              withdrawalId: (data as WithdrawalRequest).id,
+            }));
+          } else {
+            setError("No active withdrawal request found");
+          }
+
+          // Success - break the retry loop
+          break;
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : (err && typeof err === 'object' ? JSON.stringify(err) : String(err));
+          console.error("Error fetching withdrawal request:", errMsg);
+
+          // Retry transient "body stream already read" errors once
+          if (typeof errMsg === 'string' && /body stream already read|Failed to execute 'text' on 'Response'/.test(errMsg)) {
+            attempts++;
+            console.warn(`Transient fetch error detected, retrying (${attempts}/${maxAttempts})`);
+            // small delay before retrying
+            await new Promise((r) => setTimeout(r, 250));
+            continue;
+          }
+
+          setError(errMsg || "Failed to fetch withdrawal request");
+          break;
+        } finally {
+          setLoading(false);
         }
-
-        if (data) {
-          setWithdrawal(data as WithdrawalRequest);
-
-          // Update stages based on withdrawal stage
-          const newStages = stages.map((stage) => ({
-            ...stage,
-            completed: (data as WithdrawalRequest).stage >= stage.id,
-            completedAt:
-              (data as WithdrawalRequest).stage >= stage.id
-                ? new Date().toISOString()
-                : undefined,
-          }));
-          setStages(newStages);
-
-          // Update withdrawal info from database
-          setWithdrawalInfo((prev) => ({
-            ...prev,
-            amount: String((data as WithdrawalRequest).amount),
-            crypto: (data as WithdrawalRequest).symbol,
-            email: (data as WithdrawalRequest).destination_address,
-            address: (data as WithdrawalRequest).destination_address,
-            network: (data as WithdrawalRequest).network,
-            initiatedAt: (data as WithdrawalRequest).created_at,
-            withdrawalId: (data as WithdrawalRequest).id,
-          }));
-        } else {
-          setError("No active withdrawal request found");
-        }
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : (err && typeof err === 'object' ? JSON.stringify(err) : String(err));
-        console.error("Error fetching withdrawal request:", errMsg);
-        setError(errMsg || "Failed to fetch withdrawal request");
-      } finally {
-        setLoading(false);
       }
     };
 
