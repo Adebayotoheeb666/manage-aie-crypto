@@ -165,12 +165,30 @@ const mockTransactions: Transaction[] = [
 ];
 
 const mockPortfolioData: PortfolioData[] = [
-  { timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), value: 18500 },
-  { timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), value: 19200 },
-  { timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), value: 18800 },
-  { timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), value: 20100 },
-  { timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), value: 21500 },
-  { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 22800 },
+  {
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 18500,
+  },
+  {
+    timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 19200,
+  },
+  {
+    timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 18800,
+  },
+  {
+    timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 20100,
+  },
+  {
+    timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 21500,
+  },
+  {
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 22800,
+  },
   { timestamp: new Date().toISOString(), value: 34500 },
 ];
 
@@ -193,7 +211,8 @@ const mockAssets: Asset[] = [
     price_usd: 2280,
     change_24h: -1.2,
     value_usd: 11737.44,
-    logo_url: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    logo_url:
+      "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
   },
   {
     id: "3",
@@ -232,8 +251,10 @@ export default function Dashboard() {
   const { dbUser, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
   const [assets, setAssets] = useState<Asset[]>(mockAssets);
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
-  const [portfolioData, setPortfolioData] = useState<PortfolioData[]>(mockPortfolioData);
+  const [transactions, setTransactions] =
+    useState<Transaction[]>(mockTransactions);
+  const [portfolioData, setPortfolioData] =
+    useState<PortfolioData[]>(mockPortfolioData);
   const [totalBalance, setTotalBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(0);
   const [change24h, setChange24h] = useState(0);
@@ -514,7 +535,10 @@ export default function Dashboard() {
       const loadData = async () => {
         try {
           // Initialize with mock data
-          const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+          const balance = mockAssets.reduce(
+            (sum: number, asset: Asset) => sum + (asset.value_usd || 0),
+            0,
+          );
           setTotalBalance(balance);
           setPreviousBalance(30500);
           setChange24h(4000);
@@ -530,7 +554,6 @@ export default function Dashboard() {
       loadData();
     }
   }, [isAuthenticated, loading, fetchWallets]);
-
 
   // Format currency
   const formatCurrency = (value: number) => {

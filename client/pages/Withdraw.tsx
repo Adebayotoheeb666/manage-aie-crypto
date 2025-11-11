@@ -152,7 +152,9 @@ export default function Withdraw() {
             {/* Current Balance */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
               <p className="text-sm text-gray-600">Total Balance</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalUsd)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(totalUsd)}
+              </p>
               <p className="text-sm text-gray-600 mt-2">&nbsp;</p>
 
               <div className="mt-4 border-t border-blue-100 pt-4">
