@@ -196,11 +196,7 @@ export const sessionAuth = async (
         userId: user.id,
         query: `SELECT * FROM users WHERE auth_id = '${user.id}'`
       });
-      return res.status(401).json({
-        success: false,
-        error: 'User not found',
-        details: dbUserError?.message || 'No user found with the provided ID'
-      });
+      return res.status(401).json({ error: 'User not found', details: dbUserError?.message || 'No user found with the provided ID' });
     }
 
     console.log('User authenticated successfully:', { userId: user.id, email: user.email });
