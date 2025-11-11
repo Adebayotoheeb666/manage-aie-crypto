@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const assets = [
-  { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 42500 },
+  { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 370544.3 },
   { id: 2, symbol: "ETH", name: "Ethereum", balance: 5.148, price: 2280 },
   { id: 3, symbol: "USDC", name: "USD Coin", balance: 8500, price: 1.0 },
   { id: 4, symbol: "ADA", name: "Cardano", balance: 2500, price: 0.98 },
@@ -37,6 +37,16 @@ export default function Withdraw() {
   const selectedAsset = assets.find((a) => a.symbol === selectedCrypto);
   const maxBalance = selectedAsset?.balance ?? 0;
   const selectedPrice = selectedAsset?.price ?? 0;
+
+  const totalUsd = assets.reduce((sum, a) => sum + a.balance * a.price, 0);
+
+  const formatCurrency = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
 
   // Validate form
   const validateForm = (): boolean => {
@@ -142,7 +152,9 @@ export default function Withdraw() {
             {/* Current Balance */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
               <p className="text-sm text-gray-600">Total Balance</p>
-              <p className="text-2xl font-bold text-gray-900">$225,982.00</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(totalUsd)}
+              </p>
               <p className="text-sm text-gray-600 mt-2">&nbsp;</p>
 
               <div className="mt-4 border-t border-blue-100 pt-4">

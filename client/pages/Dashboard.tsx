@@ -28,7 +28,6 @@ import {
 } from "recharts";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { SyncButton } from "@/components/wallet/SyncButton";
 
 // Types
 interface Asset {
@@ -166,12 +165,30 @@ const mockTransactions: Transaction[] = [
 ];
 
 const mockPortfolioData: PortfolioData[] = [
-  { timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(), value: 18500 },
-  { timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(), value: 19200 },
-  { timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(), value: 18800 },
-  { timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(), value: 20100 },
-  { timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(), value: 21500 },
-  { timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(), value: 22800 },
+  {
+    timestamp: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 18500,
+  },
+  {
+    timestamp: new Date(Date.now() - 25 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 19200,
+  },
+  {
+    timestamp: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 18800,
+  },
+  {
+    timestamp: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 20100,
+  },
+  {
+    timestamp: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 21500,
+  },
+  {
+    timestamp: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    value: 22800,
+  },
   { timestamp: new Date().toISOString(), value: 34500 },
 ];
 
@@ -181,9 +198,9 @@ const mockAssets: Asset[] = [
     symbol: "BTC",
     name: "Bitcoin",
     balance: 0.542,
-    price_usd: 42500,
+    price_usd: 370544.3,
     change_24h: 2.5,
-    value_usd: 23035,
+    value_usd: 200857.06,
     logo_url: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
   },
   {
@@ -193,8 +210,9 @@ const mockAssets: Asset[] = [
     balance: 5.148,
     price_usd: 2280,
     change_24h: -1.2,
-    value_usd: 11735,
-    logo_url: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
+    value_usd: 11737.44,
+    logo_url:
+      "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
   },
   {
     id: "3",
@@ -232,10 +250,11 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { dbUser, isAuthenticated, loading } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [assets, setAssets] = useState<Asset[]>(mockAssets);
-  const [transactions, setTransactions] = useState<Transaction[]>(mockTransactions);
-  const [portfolioData, setPortfolioData] = useState<PortfolioData[]>(mockPortfolioData);
+  const [transactions, setTransactions] =
+    useState<Transaction[]>(mockTransactions);
+  const [portfolioData, setPortfolioData] =
+    useState<PortfolioData[]>(mockPortfolioData);
   const [totalBalance, setTotalBalance] = useState(0);
   const [previousBalance, setPreviousBalance] = useState(0);
   const [change24h, setChange24h] = useState(0);
@@ -472,7 +491,6 @@ export default function Dashboard() {
       });
     } finally {
       setIsLoading(false);
-      setIsRefreshing(false);
     }
   }, [fetchAssets, fetchTransactions, fetchPortfolioHistory, toast]);
 
@@ -517,7 +535,10 @@ export default function Dashboard() {
       const loadData = async () => {
         try {
           // Initialize with mock data
-          const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
+          const balance = mockAssets.reduce(
+            (sum: number, asset: Asset) => sum + (asset.value_usd || 0),
+            0,
+          );
           setTotalBalance(balance);
           setPreviousBalance(30500);
           setChange24h(4000);
@@ -533,24 +554,6 @@ export default function Dashboard() {
       loadData();
     }
   }, [isAuthenticated, loading, fetchWallets]);
-
-  // Handle refresh
-  const handleRefresh = async () => {
-    setIsRefreshing(true);
-    try {
-      // Reset to mock data
-      const balance = mockAssets.reduce((sum: number, asset: Asset) => sum + (asset.value_usd || 0), 0);
-      setTotalBalance(balance);
-      setPreviousBalance(30500);
-      setChange24h(4000);
-      setChange24hPercent(11.6);
-      setAssets(mockAssets);
-      setTransactions(mockTransactions);
-      setPortfolioData(mockPortfolioData);
-    } finally {
-      setIsRefreshing(false);
-    }
-  };
 
   // Format currency
   const formatCurrency = (value: number) => {
@@ -638,25 +641,7 @@ export default function Dashboard() {
             Welcome back, {dbUser?.email?.split("@")[0] || "User"}
           </p>
         </div>
-        <div className="flex gap-2 mt-4 md:mt-0">
-          <button
-            onClick={handleRefresh}
-            disabled={isRefreshing}
-            className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <RefreshCw
-              className={`w-4 h-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`}
-            />
-            {isRefreshing ? "Refreshing..." : "Refresh"}
-          </button>
-          {wallets.length > 0 && (
-            <SyncButton
-              walletId={wallets[0].id}
-              variant="outline"
-              className="border-gray-200"
-            />
-          )}
-        </div>
+        <div className="flex gap-2 mt-4 md:mt-0"></div>
       </div>
 
       {/* Balance Overview */}
