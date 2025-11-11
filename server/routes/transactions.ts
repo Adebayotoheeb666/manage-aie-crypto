@@ -57,11 +57,8 @@ router.get("/", authMiddleware, async (req: any, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching transactions:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch transactions",
-      details: error.message,
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
