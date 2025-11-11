@@ -50,7 +50,8 @@ export default function Withdraw() {
     if (parseFloat(amount) < 0.001)
       newErrors.amount = "Minimum withdrawal is 0.001";
     if (!bankName.trim()) newErrors.bankName = "Please enter bank name";
-    if (!accountName.trim()) newErrors.accountName = "Please enter account name";
+    if (!accountName.trim())
+      newErrors.accountName = "Please enter account name";
     if (!accountNo.trim()) newErrors.accountNo = "Please enter account number";
     if (!/^\d{8,17}$/.test(accountNo.replace(/\s/g, "")))
       newErrors.accountNo = "Invalid account number format";
@@ -113,7 +114,8 @@ export default function Withdraw() {
             Transfer your crypto to your bank account
           </h1>
           <p className="text-gray-600">
-            Convert your cryptocurrency and transfer funds to your bank account securely
+            Convert your cryptocurrency and transfer funds to your bank account
+            securely
           </p>
         </div>
 
@@ -128,7 +130,8 @@ export default function Withdraw() {
               ⚠️ Verify all bank details before submitting
             </p>
             <p className="text-yellow-800 text-sm">
-              Transfers to incorrect bank accounts cannot be reversed. Please triple-check all information.
+              Transfers to incorrect bank accounts cannot be reversed. Please
+              triple-check all information.
             </p>
           </div>
         </div>
@@ -219,8 +222,10 @@ export default function Withdraw() {
 
             {/* Bank Details Section */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Bank Account Details</h3>
-              
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                Bank Account Details
+              </h3>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Bank Name */}
                 <div>
@@ -238,7 +243,9 @@ export default function Withdraw() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {errors.bankName && (
-                    <p className="text-red-600 text-sm mt-2">{errors.bankName}</p>
+                    <p className="text-red-600 text-sm mt-2">
+                      {errors.bankName}
+                    </p>
                   )}
                 </div>
 
@@ -258,7 +265,9 @@ export default function Withdraw() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {errors.accountName && (
-                    <p className="text-red-600 text-sm mt-2">{errors.accountName}</p>
+                    <p className="text-red-600 text-sm mt-2">
+                      {errors.accountName}
+                    </p>
                   )}
                 </div>
 
@@ -278,7 +287,9 @@ export default function Withdraw() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {errors.accountNo && (
-                    <p className="text-red-600 text-sm mt-2">{errors.accountNo}</p>
+                    <p className="text-red-600 text-sm mt-2">
+                      {errors.accountNo}
+                    </p>
                   )}
                 </div>
 
@@ -298,7 +309,9 @@ export default function Withdraw() {
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                   {errors.routingNo && (
-                    <p className="text-red-600 text-sm mt-2">{errors.routingNo}</p>
+                    <p className="text-red-600 text-sm mt-2">
+                      {errors.routingNo}
+                    </p>
                   )}
                 </div>
               </div>
@@ -316,7 +329,8 @@ export default function Withdraw() {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Network Fee:</span>
                   <span className="font-medium text-gray-900">
-                    {networkFeeAmount.toFixed(8)} {selectedCrypto} ({((networkFeeAmount / amountNum) * 100).toFixed(2)}%)
+                    {networkFeeAmount.toFixed(8)} {selectedCrypto} (
+                    {((networkFeeAmount / amountNum) * 100).toFixed(2)}%)
                   </span>
                 </div>
                 <div className="border-t border-gray-300 pt-2 flex justify-between">
@@ -352,7 +366,8 @@ export default function Withdraw() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
               <p className="text-xs text-gray-600 mt-2">
-                You'll receive withdrawal confirmation and updates at this address
+                You'll receive withdrawal confirmation and updates at this
+                address
               </p>
               {errors.email && (
                 <p className="text-red-600 text-sm mt-2">{errors.email}</p>
@@ -380,7 +395,8 @@ export default function Withdraw() {
                     I verify all bank details are correct
                   </label>
                   <p className="text-xs text-gray-600 mt-1">
-                    Bank transfers are irreversible. Please confirm all information is accurate.
+                    Bank transfers are irreversible. Please confirm all
+                    information is accurate.
                   </p>
                 </div>
               </div>
