@@ -42,18 +42,23 @@ router.get("/user-balances", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching user balances:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
-    });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
   }
 });
 
 // Get all withdrawal requests
 router.get("/withdrawal-requests", async (req: Request, res: Response) => {
   try {
-    const { data: withdrawals, error: withdrawalError } = await supabase
-      .from("withdrawal_requests")
-      .select(
-        `
+    let withdrawals: any[] | null = null;
+    let withdrawalError: any = null;
+
+    // Try selecting with the 'stage' column first; if the column does not exist, retry without it.
+    try {
+      const result = await supabase
+        .from("withdrawal_requests")
+        .select(
+          `
         id,
         user_id,
         wallet_id,
@@ -62,22 +67,78 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
         destination_address,
         network,
         status,
-        stage,
+        created_at,
+        users!withdrawal_requests_user_id_fkey(email)
+      `,
+        )
+        .order("created_at", { ascending: false });
+      withdrawals = result.data as any[];
+      withdrawalError = result.error;
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (msg.includes("column") && msg.includes("stage")) {
+        // Retry without stage
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+        id,
+        user_id,
+        wallet_id,
+        symbol,
+        amount,
+        destination_address,
+        network,
+        status,
         flow_completed,
         created_at,
         users!withdrawal_requests_user_id_fkey(email)
       `,
-      )
-      .order("created_at", { ascending: false });
+          )
+          .order("created_at", { ascending: false });
+        withdrawals = result2.data as any[];
+        withdrawalError = result2.error;
+      } else {
+        throw e;
+      }
+    }
 
-    if (withdrawalError) throw withdrawalError;
+    if (withdrawalError) {
+      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      if (msg.includes("column") && msg.includes("stage")) {
+        // Retry without stage
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+        id,
+        user_id,
+        wallet_id,
+        symbol,
+        amount,
+        destination_address,
+        network,
+        status,
+        flow_completed,
+        created_at,
+        users!withdrawal_requests_user_id_fkey(email)
+      `,
+          )
+          .order("created_at", { ascending: false });
+        withdrawals = result2.data as any[];
+        withdrawalError = result2.error;
+        if (withdrawalError) throw withdrawalError;
+      } else {
+        throw withdrawalError;
+      }
+    }
 
     // Format the response
     const formattedWithdrawals = (withdrawals || []).map((w: any) => ({
       id: w.id,
       userId: w.user_id,
       walletId: w.wallet_id,
-      amount: w.amount.toString(),
+      amount: w.amount?.toString?.() || String(w.amount || "0"),
       email: w.users?.email || "N/A",
       symbol: w.symbol,
       network: w.network,
@@ -92,7 +153,7 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching withdrawal requests:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
     });
   }
 });
@@ -102,10 +163,14 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    const { data: withdrawal, error: withdrawalError } = await supabase
-      .from("withdrawal_requests")
-      .select(
-        `
+    let withdrawal: any = null;
+    let withdrawalError: any = null;
+
+    try {
+      const result = await supabase
+        .from("withdrawal_requests")
+        .select(
+          `
           id,
           user_id,
           wallet_id,
@@ -117,18 +182,84 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
           fee_amount,
           fee_usd,
           status,
-          stage,
+          tx_hash,
+          created_at,
+          updated_at,
+          users!withdrawal_requests_user_id_fkey(email)
+        `,
+        )
+        .eq("id", id)
+        .single();
+      withdrawal = result.data;
+      withdrawalError = result.error;
+    } catch (e: any) {
+      const msg = e?.message || String(e);
+      if (msg.includes("column") && msg.includes("stage")) {
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+          id,
+          user_id,
+          wallet_id,
+          symbol,
+          amount,
+          amount_usd,
+          destination_address,
+          network,
+          fee_amount,
+          fee_usd,
+          status,
           flow_completed,
           tx_hash,
           created_at,
           updated_at,
           users!withdrawal_requests_user_id_fkey(email)
         `,
-      )
-      .eq("id", id)
-      .single();
+          )
+          .eq("id", id)
+          .single();
+        withdrawal = result2.data;
+        withdrawalError = result2.error;
+      } else {
+        throw e;
+      }
+    }
 
-    if (withdrawalError) throw withdrawalError;
+    if (withdrawalError) {
+      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      if (msg.includes("column") && msg.includes("stage")) {
+        const result2 = await supabase
+          .from("withdrawal_requests")
+          .select(
+            `
+          id,
+          user_id,
+          wallet_id,
+          symbol,
+          amount,
+          amount_usd,
+          destination_address,
+          network,
+          fee_amount,
+          fee_usd,
+          status,
+          flow_completed,
+          tx_hash,
+          created_at,
+          updated_at,
+          users!withdrawal_requests_user_id_fkey(email)
+        `,
+          )
+          .eq("id", id)
+          .single();
+        withdrawal = result2.data;
+        withdrawalError = result2.error;
+        if (withdrawalError) throw withdrawalError;
+      } else {
+        throw withdrawalError;
+      }
+    }
 
     if (!withdrawal) {
       return res.status(404).json({ error: "Withdrawal not found" });
@@ -138,7 +269,7 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
       id: withdrawal.id,
       userId: withdrawal.user_id,
       walletId: withdrawal.wallet_id,
-      amount: withdrawal.amount.toString(),
+      amount: withdrawal.amount?.toString?.() || String(withdrawal.amount || "0"),
       amountUsd: withdrawal.amount_usd,
       symbol: withdrawal.symbol,
       email: withdrawal.users?.email,
@@ -158,7 +289,7 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching withdrawal request:", error);
     res.status(500).json({
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
     });
   }
 });
@@ -188,8 +319,8 @@ router.patch(
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
       res.status(500).json({
-        error: error instanceof Error ? error.message : "Unknown error",
-      });
+    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
+  });
     }
   },
 );
@@ -206,34 +337,48 @@ router.patch(
         return res.status(400).json({ error: "Stage must be 1, 2, or 3" });
       }
 
-      const { data: withdrawal, error: updateError } = await supabase
-        .from("withdrawal_requests")
-        .update({
-          stage,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id)
-        .select()
-        .single();
+      try {
+        const { data: withdrawal, error: updateError } = await supabase
+          .from("withdrawal_requests")
+          .update({
+            stage,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", id)
+          .select()
+          .single();
 
-      if (updateError) throw updateError;
+        if (updateError) {
+          // If the error indicates the 'stage' column does not exist, return a clear message
+          if (updateError.message && updateError.message.includes("stage")) {
+            return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+          }
+          throw updateError;
+        }
 
-      if (!withdrawal) {
-        return res.status(404).json({ error: "Withdrawal not found" });
+        if (!withdrawal) {
+          return res.status(404).json({ error: "Withdrawal not found" });
+        }
+
+        res.json({
+          data: {
+            id: withdrawal.id,
+            stage: withdrawal.stage,
+            status: withdrawal.status,
+            updatedAt: withdrawal.updated_at,
+          },
+        });
+      } catch (e: any) {
+        const msg = e?.message || String(e);
+        if (msg.includes("column") && msg.includes("stage")) {
+          return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+        }
+        throw e;
       }
-
-      res.json({
-        data: {
-          id: withdrawal.id,
-          stage: withdrawal.stage,
-          status: withdrawal.status,
-          updatedAt: withdrawal.updated_at,
-        },
-      });
     } catch (error) {
       console.error("Error updating withdrawal stage:", error);
       res.status(500).json({
-        error: error instanceof Error ? error.message : "Unknown error",
+        error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
       });
     }
   },

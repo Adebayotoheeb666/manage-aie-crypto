@@ -165,10 +165,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (data.user) {
         setAuthUser(data.user);
         setDbUser(data.profile);
-        // Store in localStorage
+        // Persist access token for Authorization fallback (needed in iframe where cookies may be blocked)
+        const token = data?.session?.access_token || "";
+        const storedUser = token ? { ...data.user, token } : data.user;
         localStorage.setItem(
           "auth_session",
-          JSON.stringify({ user: data.user, profile: data.profile }),
+          JSON.stringify({ user: storedUser, profile: data.profile }),
         );
       }
     } catch (err) {
@@ -369,8 +371,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // and the server purposely returns user data without setting a cookie).
       try {
         if (data.session) {
+          const headers: Record<string, string> = {};
+          const tokenFromResp = data.session?.access_token;
+          if (tokenFromResp) {
+            headers["Authorization"] = `Bearer ${tokenFromResp}`;
+          } else {
+            try {
+              const stored = localStorage.getItem("auth_session");
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                if (parsed?.user?.token) headers["Authorization"] = `Bearer ${parsed.user.token}`;
+              }
+            } catch {}
+          }
+
           const sessionResp = await fetch("/api/auth/session", {
             credentials: "include",
+            headers,
           });
 
           if (!sessionResp.ok) {
