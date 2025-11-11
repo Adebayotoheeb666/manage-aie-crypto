@@ -41,9 +41,8 @@ router.get("/user-balances", async (req: Request, res: Response) => {
     res.json({ data: userBalances });
   } catch (error) {
     console.error("Error fetching user balances:", error);
-    res.status(500).json({
-    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-  });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
@@ -104,7 +103,10 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
     }
 
     if (withdrawalError) {
-      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      const msg =
+        (withdrawalError &&
+          (withdrawalError.message || String(withdrawalError))) ||
+        String(withdrawalError);
       if (msg.includes("column") && msg.includes("stage")) {
         // Retry without stage
         const result2 = await supabase
@@ -152,9 +154,8 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
     res.json({ data: formattedWithdrawals });
   } catch (error) {
     console.error("Error fetching withdrawal requests:", error);
-    res.status(500).json({
-      error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
@@ -227,7 +228,10 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
     }
 
     if (withdrawalError) {
-      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      const msg =
+        (withdrawalError &&
+          (withdrawalError.message || String(withdrawalError))) ||
+        String(withdrawalError);
       if (msg.includes("column") && msg.includes("stage")) {
         const result2 = await supabase
           .from("withdrawal_requests")
@@ -269,7 +273,8 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
       id: withdrawal.id,
       userId: withdrawal.user_id,
       walletId: withdrawal.wallet_id,
-      amount: withdrawal.amount?.toString?.() || String(withdrawal.amount || "0"),
+      amount:
+        withdrawal.amount?.toString?.() || String(withdrawal.amount || "0"),
       amountUsd: withdrawal.amount_usd,
       symbol: withdrawal.symbol,
       email: withdrawal.users?.email,
@@ -288,9 +293,8 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
     res.json({ data: formatted });
   } catch (error) {
     console.error("Error fetching withdrawal request:", error);
-    res.status(500).json({
-      error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
@@ -318,9 +322,8 @@ router.patch(
       res.json({ data: withdrawal });
     } catch (error) {
       console.error("Error updating withdrawal status:", error);
-      res.status(500).json({
-    error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-  });
+      const { serverError } = await import("../lib/respond");
+      return serverError(res, error, 500);
     }
   },
 );
@@ -351,7 +354,12 @@ router.patch(
         if (updateError) {
           // If the error indicates the 'stage' column does not exist, return a clear message
           if (updateError.message && updateError.message.includes("stage")) {
-            return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+            return res
+              .status(400)
+              .json({
+                error:
+                  "Database does not have a 'stage' column on withdrawal_requests",
+              });
           }
           throw updateError;
         }
@@ -371,15 +379,19 @@ router.patch(
       } catch (e: any) {
         const msg = e?.message || String(e);
         if (msg.includes("column") && msg.includes("stage")) {
-          return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Database does not have a 'stage' column on withdrawal_requests",
+            });
         }
         throw e;
       }
     } catch (error) {
       console.error("Error updating withdrawal stage:", error);
-      res.status(500).json({
-        error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-      });
+      const { serverError } = await import("../lib/respond");
+      return serverError(res, error, 500);
     }
   },
 );

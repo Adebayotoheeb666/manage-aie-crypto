@@ -204,9 +204,7 @@ export const handleWithdraw: RequestHandler<
     });
   } catch (err) {
     console.error("Withdrawal error:", err);
-    res.status(500).json({
-      success: false,
-      error: err instanceof Error ? err.message : "Internal server error",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };

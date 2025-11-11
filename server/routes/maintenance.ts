@@ -33,7 +33,7 @@ export const handleCleanupSessions: RequestHandler<
 
     // Call database function to cleanup expired sessions
     const { data, error } = await supabase.rpc("cleanup_expired_sessions");
-    const cleanedCount = typeof data === 'number' ? data : 0;
+    const cleanedCount = typeof data === "number" ? data : 0;
 
     if (error) {
       throw error;
@@ -46,11 +46,8 @@ export const handleCleanupSessions: RequestHandler<
     });
   } catch (err) {
     console.error("Cleanup sessions error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to cleanup sessions",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -79,7 +76,7 @@ export const handleUnlockAccounts: RequestHandler<
 
     // Call database function to unlock expired account locks
     const { data, error } = await supabase.rpc("unlock_expired_account_locks");
-    const unlockedCount = typeof data === 'number' ? data : 0;
+    const unlockedCount = typeof data === "number" ? data : 0;
 
     if (error) {
       throw error;
@@ -92,11 +89,8 @@ export const handleUnlockAccounts: RequestHandler<
     });
   } catch (err) {
     console.error("Unlock accounts error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to unlock accounts",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -139,10 +133,7 @@ export const handleLockAccounts: RequestHandler<
     });
   } catch (err) {
     console.error("Lock accounts error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to lock accounts",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };

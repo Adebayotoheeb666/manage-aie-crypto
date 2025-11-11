@@ -55,8 +55,9 @@ export const handleSignUp: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sign up failed";
-    return res.status(500).json({ error: message });
+    console.error("Sign up error:", err);
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -152,8 +153,9 @@ export const handleSignIn: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sign in failed";
-    return res.status(500).json({ error: message });
+    console.error("Sign in error:", err);
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -198,8 +200,9 @@ export const handleSignOut: RequestHandler = async (req, res) => {
 
     return res.status(200).json({ message: "Signed out successfully" });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Sign out failed";
-    return res.status(500).json({ error: message });
+    console.error("Sign out error:", err);
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -648,10 +651,9 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Wallet connection failed";
-    console.error(`[wallet-connect] error: ${message}`);
-    return res.status(500).json({ error: message });
+    console.error("[wallet-connect] error:", err);
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -760,6 +762,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     return res.json({ user, profile: profile || null });
   } catch (err) {
     console.error("Error in handleGetSession:", err);
-    return res.status(500).json({ error: "Internal server error" });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
