@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import { supabase } from "../lib/supabase";
+import { serverError, clientError } from "../lib/respond";
 
 declare global {
   namespace Express {
