@@ -206,10 +206,6 @@ export const sessionAuth = async (
     next();
   } catch (error) {
     console.error("Session auth error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Authentication failed",
-      details: error instanceof Error ? error.message : 'Unknown error',
-    });
+    return serverError(res, error, 500);
   }
 };
