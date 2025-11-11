@@ -173,11 +173,7 @@ export const sessionAuth = async (
         tokenLength: token.length,
         tokenPrefix: token.substring(0, 10) + '...'
       });
-      return res.status(401).json({
-        success: false,
-        error: userError?.message || 'Authentication failed',
-        details: 'Please log in again'
-      });
+      return res.status(401).json({ error: userError?.message || 'Authentication failed', details: 'Please log in again' });
     }
 
     // Get the full user from the database
