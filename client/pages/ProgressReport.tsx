@@ -117,12 +117,9 @@ export default function ProgressReport() {
           setError("No active withdrawal request found");
         }
       } catch (err) {
-        console.error("Error fetching withdrawal request:", err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : "Failed to fetch withdrawal request",
-        );
+        const errMsg = err instanceof Error ? err.message : (err && typeof err === 'object' ? JSON.stringify(err) : String(err));
+        console.error("Error fetching withdrawal request:", errMsg);
+        setError(errMsg || "Failed to fetch withdrawal request");
       } finally {
         setLoading(false);
       }
