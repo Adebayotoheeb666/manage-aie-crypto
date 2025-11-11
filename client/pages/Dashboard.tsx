@@ -193,7 +193,7 @@ const mockAssets: Asset[] = [
     balance: 5.148,
     price_usd: 2280,
     change_24h: -1.2,
-    value_usd: 11735,
+    value_usd: 11737.44,
     logo_url: "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
   },
   {
