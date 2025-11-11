@@ -155,7 +155,9 @@ export default function ProgressReport() {
           // Retry transient "body stream already read" errors once
           if (
             typeof errMsg === "string" &&
-            /body stream already read|Failed to execute 'text' on 'Response'/.test(errMsg)
+            /body stream already read|Failed to execute 'text' on 'Response'/.test(
+              errMsg,
+            )
           ) {
             attempts++;
             console.warn(
