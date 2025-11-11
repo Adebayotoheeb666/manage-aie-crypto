@@ -46,11 +46,8 @@ export const handleCleanupSessions: RequestHandler<
     });
   } catch (err) {
     console.error("Cleanup sessions error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to cleanup sessions",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -92,11 +89,8 @@ export const handleUnlockAccounts: RequestHandler<
     });
   } catch (err) {
     console.error("Unlock accounts error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to unlock accounts",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
 
@@ -139,10 +133,7 @@ export const handleLockAccounts: RequestHandler<
     });
   } catch (err) {
     console.error("Lock accounts error:", err);
-    res.status(500).json({
-      success: false,
-      cleaned: 0,
-      error: err instanceof Error ? err.message : "Failed to lock accounts",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, err, 500);
   }
 };
