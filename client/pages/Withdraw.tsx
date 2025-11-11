@@ -30,7 +30,7 @@ export default function Withdraw() {
   const [accountName, setAccountName] = useState("Thomas Hayles");
   const [accountNo, setAccountNo] = useState("898148351001");
   const [routingNo, setRoutingNo] = useState("063100277");
-  const [email, setEmail] = useState("thomas.hayles@example.com");
+  const [email, setEmail] = useState("");
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
