@@ -38,10 +38,7 @@ export const authMiddleware = async (
     }
 
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        error: "Authentication required",
-      });
+      return res.status(401).json({ error: "Authentication required" });
     }
 
     // Verify JWT token
