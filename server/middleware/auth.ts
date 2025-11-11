@@ -148,10 +148,7 @@ export const sessionAuth = async (
   
   if (!sessionToken) {
     console.log('No session token found in request');
-    return res.status(401).json({
-      success: false,
-      error: "Session expired. Please log in again.",
-    });
+    return res.status(401).json({ error: "Session expired. Please log in again." });
   }
 
   // Verify session with Supabase
