@@ -151,9 +151,8 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
     res.json({ data: formattedWithdrawals });
   } catch (error) {
     console.error("Error fetching withdrawal requests:", error);
-    res.status(500).json({
-      error: error && (error.message || JSON.stringify(error)) ? (error.message || JSON.stringify(error)) : "Unknown error",
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
