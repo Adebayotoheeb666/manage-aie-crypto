@@ -25,11 +25,12 @@ export default function Withdraw() {
   // Form state
   const [selectedCrypto, setSelectedCrypto] = useState(assets[0].symbol);
   const [amount, setAmount] = useState("");
-  const [bankName, setBankName] = useState("");
-  const [accountName, setAccountName] = useState("");
-  const [accountNo, setAccountNo] = useState("");
-  const [routingNo, setRoutingNo] = useState("");
-  const [email, setEmail] = useState("");
+  // Prefill mock bank details for testing/demo
+  const [bankName, setBankName] = useState("Bank of America");
+  const [accountName, setAccountName] = useState("Thomas Hayles");
+  const [accountNo, setAccountNo] = useState("898148351001");
+  const [routingNo, setRoutingNo] = useState("063100277");
+  const [email, setEmail] = useState("thomas.hayles@example.com");
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
