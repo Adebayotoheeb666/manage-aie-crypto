@@ -124,12 +124,32 @@ export default function ProgressReport() {
           // Success - break the retry loop
           break;
         } catch (err) {
-          const errMsg =
-            err instanceof Error
-              ? err.message
-              : err && typeof err === "object"
-                ? JSON.stringify(err)
-                : String(err);
+          // Safely extract an error message without triggering response body reads
+          const safeErrorString = (e: unknown) => {
+            try {
+              if (e instanceof Error) return e.message || JSON.stringify(e);
+              if (e && typeof e === "object") {
+                const anyE = e as Record<string, any>;
+                if (typeof anyE.message === "string") return anyE.message;
+                // Avoid reading or serializing 'response' streams that can trigger "body stream already read"
+                const clone: Record<string, any> = {};
+                for (const k of Object.keys(anyE)) {
+                  if (k === "response" || k === "body") continue;
+                  clone[k] = anyE[k];
+                }
+                try {
+                  return JSON.stringify(clone);
+                } catch (_) {
+                  return String(anyE);
+                }
+              }
+              return String(e);
+            } catch (e2) {
+              return String(e2);
+            }
+          };
+
+          const errMsg = safeErrorString(err);
           console.error("Error fetching withdrawal request:", errMsg);
 
           // Retry transient "body stream already read" errors once
