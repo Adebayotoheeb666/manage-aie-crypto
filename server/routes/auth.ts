@@ -55,8 +55,8 @@ export const handleSignUp: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error('Sign up error:', err);
-    const { serverError } = await import('../lib/respond');
+    console.error("Sign up error:", err);
+    const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
 };
@@ -153,8 +153,8 @@ export const handleSignIn: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error('Sign in error:', err);
-    const { serverError } = await import('../lib/respond');
+    console.error("Sign in error:", err);
+    const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
 };
@@ -200,8 +200,8 @@ export const handleSignOut: RequestHandler = async (req, res) => {
 
     return res.status(200).json({ message: "Signed out successfully" });
   } catch (err) {
-    console.error('Sign out error:', err);
-    const { serverError } = await import('../lib/respond');
+    console.error("Sign out error:", err);
+    const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
 };
@@ -651,8 +651,8 @@ export const handleWalletConnect: RequestHandler = async (req, res) => {
       });
     }
   } catch (err) {
-    console.error('[wallet-connect] error:', err);
-    const { serverError } = await import('../lib/respond');
+    console.error("[wallet-connect] error:", err);
+    const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
 };
@@ -762,7 +762,7 @@ export const handleGetSession: RequestHandler = async (req, res) => {
     return res.json({ user, profile: profile || null });
   } catch (err) {
     console.error("Error in handleGetSession:", err);
-    const { serverError } = await import('../lib/respond');
+    const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
 };

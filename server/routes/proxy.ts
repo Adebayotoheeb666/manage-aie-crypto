@@ -38,7 +38,7 @@ export const handlePortfolioValue: RequestHandler = async (req, res) => {
     }
     return res.json({ data });
   } catch (err) {
-    console.error('Proxy error:', err);
+    console.error("Proxy error:", err);
     const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
@@ -64,7 +64,7 @@ export const handlePortfolio24hChange: RequestHandler = async (req, res) => {
     }
     return res.json({ data });
   } catch (err) {
-    console.error('Proxy error:', err);
+    console.error("Proxy error:", err);
     const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
@@ -139,7 +139,7 @@ export const handlePortfolioSnapshots: RequestHandler = async (req, res) => {
     if (error) return res.status(500).json({ error: error.message });
     return res.json({ data });
   } catch (err) {
-    console.error('Proxy error:', err);
+    console.error("Proxy error:", err);
     const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }
@@ -161,7 +161,7 @@ export const handleLatestPrice: RequestHandler = async (req, res) => {
       return res.status(500).json({ error: error.message });
     return res.json({ data: data || null });
   } catch (err) {
-    console.error('Proxy error:', err);
+    console.error("Proxy error:", err);
     const { serverError } = await import("../lib/respond");
     return serverError(res, err, 500);
   }

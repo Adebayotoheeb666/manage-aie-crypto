@@ -33,7 +33,7 @@ export const handleCleanupSessions: RequestHandler<
 
     // Call database function to cleanup expired sessions
     const { data, error } = await supabase.rpc("cleanup_expired_sessions");
-    const cleanedCount = typeof data === 'number' ? data : 0;
+    const cleanedCount = typeof data === "number" ? data : 0;
 
     if (error) {
       throw error;
@@ -76,7 +76,7 @@ export const handleUnlockAccounts: RequestHandler<
 
     // Call database function to unlock expired account locks
     const { data, error } = await supabase.rpc("unlock_expired_account_locks");
-    const unlockedCount = typeof data === 'number' ? data : 0;
+    const unlockedCount = typeof data === "number" ? data : 0;
 
     if (error) {
       throw error;

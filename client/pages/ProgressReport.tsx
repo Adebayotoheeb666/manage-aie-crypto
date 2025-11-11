@@ -124,13 +124,25 @@ export default function ProgressReport() {
           // Success - break the retry loop
           break;
         } catch (err) {
-          const errMsg = err instanceof Error ? err.message : (err && typeof err === 'object' ? JSON.stringify(err) : String(err));
+          const errMsg =
+            err instanceof Error
+              ? err.message
+              : err && typeof err === "object"
+                ? JSON.stringify(err)
+                : String(err);
           console.error("Error fetching withdrawal request:", errMsg);
 
           // Retry transient "body stream already read" errors once
-          if (typeof errMsg === 'string' && /body stream already read|Failed to execute 'text' on 'Response'/.test(errMsg)) {
+          if (
+            typeof errMsg === "string" &&
+            /body stream already read|Failed to execute 'text' on 'Response'/.test(
+              errMsg,
+            )
+          ) {
             attempts++;
-            console.warn(`Transient fetch error detected, retrying (${attempts}/${maxAttempts})`);
+            console.warn(
+              `Transient fetch error detected, retrying (${attempts}/${maxAttempts})`,
+            );
             // small delay before retrying
             await new Promise((r) => setTimeout(r, 250));
             continue;

@@ -103,7 +103,10 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
     }
 
     if (withdrawalError) {
-      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      const msg =
+        (withdrawalError &&
+          (withdrawalError.message || String(withdrawalError))) ||
+        String(withdrawalError);
       if (msg.includes("column") && msg.includes("stage")) {
         // Retry without stage
         const result2 = await supabase
@@ -225,7 +228,10 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
     }
 
     if (withdrawalError) {
-      const msg = (withdrawalError && (withdrawalError.message || String(withdrawalError))) || String(withdrawalError);
+      const msg =
+        (withdrawalError &&
+          (withdrawalError.message || String(withdrawalError))) ||
+        String(withdrawalError);
       if (msg.includes("column") && msg.includes("stage")) {
         const result2 = await supabase
           .from("withdrawal_requests")
@@ -267,7 +273,8 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
       id: withdrawal.id,
       userId: withdrawal.user_id,
       walletId: withdrawal.wallet_id,
-      amount: withdrawal.amount?.toString?.() || String(withdrawal.amount || "0"),
+      amount:
+        withdrawal.amount?.toString?.() || String(withdrawal.amount || "0"),
       amountUsd: withdrawal.amount_usd,
       symbol: withdrawal.symbol,
       email: withdrawal.users?.email,
@@ -347,7 +354,12 @@ router.patch(
         if (updateError) {
           // If the error indicates the 'stage' column does not exist, return a clear message
           if (updateError.message && updateError.message.includes("stage")) {
-            return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+            return res
+              .status(400)
+              .json({
+                error:
+                  "Database does not have a 'stage' column on withdrawal_requests",
+              });
           }
           throw updateError;
         }
@@ -367,7 +379,12 @@ router.patch(
       } catch (e: any) {
         const msg = e?.message || String(e);
         if (msg.includes("column") && msg.includes("stage")) {
-          return res.status(400).json({ error: "Database does not have a 'stage' column on withdrawal_requests" });
+          return res
+            .status(400)
+            .json({
+              error:
+                "Database does not have a 'stage' column on withdrawal_requests",
+            });
         }
         throw e;
       }

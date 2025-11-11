@@ -61,7 +61,12 @@ export const authMiddleware = async (
             : null);
 
         if (!supabaseToken) {
-          return res.status(401).json({ error: "Session secret not configured and no Supabase token provided" });
+          return res
+            .status(401)
+            .json({
+              error:
+                "Session secret not configured and no Supabase token provided",
+            });
         }
 
         const { data, error } = await supabase.auth.getUser(supabaseToken);
@@ -139,68 +144,86 @@ export const sessionAuth = async (
 ) => {
   // Get session from cookies or authorization header
   let sessionToken = req.cookies?.sv_session;
-  
-  if (!sessionToken && req.headers.authorization?.startsWith('Bearer ')) {
-    sessionToken = req.headers.authorization.split(' ')[1];
+
+  if (!sessionToken && req.headers.authorization?.startsWith("Bearer ")) {
+    sessionToken = req.headers.authorization.split(" ")[1];
   }
 
-  console.log('Session token found:', !!sessionToken);
-  
+  console.log("Session token found:", !!sessionToken);
+
   if (!sessionToken) {
-    console.log('No session token found in request');
-    return res.status(401).json({ error: "Session expired. Please log in again." });
+    console.log("No session token found in request");
+    return res
+      .status(401)
+      .json({ error: "Session expired. Please log in again." });
   }
 
   // Verify session with Supabase
-  console.log('Verifying session with Supabase...');
-  
+  console.log("Verifying session with Supabase...");
+
   try {
     // Remove 'Bearer ' prefix if present
-    const token = sessionToken.replace(/^Bearer\s+/, '');
-    
+    const token = sessionToken.replace(/^Bearer\s+/, "");
+
     // Use Supabase's getUser method to verify the token
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
-    console.log('Supabase auth response:', { 
-      hasUser: !!user, 
-      error: userError ? userError.message : 'No error',
-      userId: user?.id
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser(token);
+
+    console.log("Supabase auth response:", {
+      hasUser: !!user,
+      error: userError ? userError.message : "No error",
+      userId: user?.id,
     });
-    
+
     if (userError || !user) {
-      console.error('Authentication failed:', {
-        error: userError ? userError.message : 'No user returned',
+      console.error("Authentication failed:", {
+        error: userError ? userError.message : "No user returned",
         tokenLength: token.length,
-        tokenPrefix: token.substring(0, 10) + '...'
+        tokenPrefix: token.substring(0, 10) + "...",
       });
-      return res.status(401).json({ error: userError?.message || 'Authentication failed', details: 'Please log in again' });
+      return res
+        .status(401)
+        .json({
+          error: userError?.message || "Authentication failed",
+          details: "Please log in again",
+        });
     }
 
     // Get the full user from the database
-    console.log('Fetching user...', { userId: user.id });
+    console.log("Fetching user...", { userId: user.id });
     const { data: userData, error: dbUserError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('auth_id', user.id)
+      .from("users")
+      .select("*")
+      .eq("auth_id", user.id)
       .single();
-      
-    console.log('User fetch result:', {
+
+    console.log("User fetch result:", {
       hasUser: !!userData,
-      error: dbUserError ? dbUserError.message : 'No error',
-      userId: userData?.id
+      error: dbUserError ? dbUserError.message : "No error",
+      userId: userData?.id,
     });
-    
+
     if (dbUserError || !userData) {
-      console.error('Failed to fetch user:', {
+      console.error("Failed to fetch user:", {
         error: dbUserError,
         userId: user.id,
-        query: `SELECT * FROM users WHERE auth_id = '${user.id}'`
+        query: `SELECT * FROM users WHERE auth_id = '${user.id}'`,
       });
-      return res.status(401).json({ error: 'User not found', details: dbUserError?.message || 'No user found with the provided ID' });
+      return res
+        .status(401)
+        .json({
+          error: "User not found",
+          details: dbUserError?.message || "No user found with the provided ID",
+        });
     }
 
-    console.log('User authenticated successfully:', { userId: user.id, email: user.email });
-    
+    console.log("User authenticated successfully:", {
+      userId: user.id,
+      email: user.email,
+    });
+
     // Attach user to request object
     req.user = { ...user, ...userData };
     next();

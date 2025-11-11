@@ -19,6 +19,10 @@ export function serverError(res: Response, err: any, status: number = 500) {
   return res.status(status).json({ error: message });
 }
 
-export function clientError(res: Response, message: string, status: number = 400) {
+export function clientError(
+  res: Response,
+  message: string,
+  status: number = 400,
+) {
   return res.status(status).json({ error: message });
 }

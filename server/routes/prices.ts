@@ -1,5 +1,8 @@
 import { RequestHandler } from "express";
-import { getMultipleCoinPrices, getCoinPrice } from "../../shared/lib/coingecko";
+import {
+  getMultipleCoinPrices,
+  getCoinPrice,
+} from "../../shared/lib/coingecko";
 import { supabase } from "../../shared/lib/supabase";
 import { insertPriceHistory } from "../../shared/lib/supabase";
 import { z } from "zod";
