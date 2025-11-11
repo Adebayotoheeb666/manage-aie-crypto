@@ -138,13 +138,19 @@ export default function Withdraw() {
           <div className="bg-white rounded-xl p-8 border border-blue-100 space-y-6">
             {/* Current Balance */}
             <div className="bg-blue-50 rounded-lg p-4 border border-blue-100">
-              <p className="text-sm text-gray-600">Available Balance</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {maxBalance.toFixed(8)} {selectedCrypto}
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                ≈ ${(maxBalance * selectedPrice).toLocaleString()}
-              </p>
+              <p className="text-sm text-gray-600">Total Balance</p>
+              <p className="text-2xl font-bold text-gray-900">$225,982.00</p>
+              <p className="text-sm text-gray-600 mt-2">&nbsp;</p>
+
+              <div className="mt-4 border-t border-blue-100 pt-4">
+                <p className="text-sm text-gray-600">Available Balance</p>
+                <p className="text-2xl font-bold text-gray-900">
+                  {maxBalance.toFixed(8)} {selectedCrypto}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  ≈ ${(maxBalance * selectedPrice).toLocaleString()}
+                </p>
+              </div>
             </div>
 
             {/* Cryptocurrency Selection */}
