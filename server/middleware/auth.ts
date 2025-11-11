@@ -66,10 +66,7 @@ export const authMiddleware = async (
 
         const { data, error } = await supabase.auth.getUser(supabaseToken);
         if (error || !data.user) {
-          return res.status(401).json({
-            success: false,
-            error: "Invalid Supabase session",
-          });
+          return res.status(401).json({ error: "Invalid Supabase session" });
         }
 
         // Attach Supabase user object
