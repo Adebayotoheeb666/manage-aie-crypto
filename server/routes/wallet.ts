@@ -106,11 +106,8 @@ router.get("/assets", sessionAuth, async (req: any, res: Response) => {
     });
   } catch (error) {
     console.error("Error fetching assets:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to fetch assets",
-      details: error.message,
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
@@ -228,11 +225,8 @@ router.post("/sync-balances", sessionAuth, async (req: any, res: Response) => {
     });
   } catch (error) {
     console.error("Error syncing wallet balances:", error);
-    res.status(500).json({
-      success: false,
-      error: "Failed to sync wallet balances",
-      details: error.message,
-    });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
@@ -357,7 +351,8 @@ router.post("/connect", sessionAuth, async (req: Request & { user?: any }, res: 
     });
   } catch (error) {
     console.error('Error connecting wallet:', error);
-    res.status(500).json({ success: false, error: 'Internal server error' });
+    const { serverError } = await import("../lib/respond");
+    return serverError(res, error, 500);
   }
 });
 
