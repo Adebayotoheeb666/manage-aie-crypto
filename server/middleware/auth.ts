@@ -74,10 +74,7 @@ export const authMiddleware = async (
         return next();
       } catch (err) {
         console.error("Supabase fallback auth error:", err);
-        return res.status(401).json({
-          success: false,
-          error: "Authentication failed",
-        });
+        return res.status(401).json({ error: "Authentication failed" });
       }
     }
 
