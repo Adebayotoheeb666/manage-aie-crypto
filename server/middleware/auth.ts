@@ -110,10 +110,7 @@ export const authMiddleware = async (
         .single();
 
       if (error && error.code !== "PGRST116") {
-        return res.status(500).json({
-          success: false,
-          error: error.message,
-        });
+        return serverError(res, error, 500);
       }
       user = data || null;
     }
