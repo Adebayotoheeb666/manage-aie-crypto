@@ -24,10 +24,19 @@ export const useWalletSync = () => {
         credentials: 'include',
       });
 
-      const result = await response.json();
+      // Read body as text once to avoid 'body stream already read' errors
+      const text = await response.text();
+      let result: any = {};
+      try {
+        result = text ? JSON.parse(text) : {};
+      } catch (err) {
+        console.warn('Failed to parse response JSON:', err);
+        result = { message: text };
+      }
 
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to sync balances');
+        const errMsg = result?.error || result?.message || 'Failed to sync balances';
+        throw new Error(errMsg);
       }
 
       toast({
