@@ -49,7 +49,7 @@ export function formatErrorMessage(err: any): string {
           (item) =>
             item !== null &&
             typeof item !== "function" &&
-            typeof item !== "object"
+            typeof item !== "object",
         );
       } else if (typeof value === "object") {
         // For nested objects, try to extract simple properties
