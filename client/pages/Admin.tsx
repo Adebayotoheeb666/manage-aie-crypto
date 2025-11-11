@@ -144,7 +144,8 @@ export default function Admin() {
 
       // If the server indicates the DB does not have a 'stage' column, fallback to updating status
       const errBody = await response.json().catch(() => null);
-      const errMsg = errBody?.error || `Status ${response.status}`;
+      const rawErr = errBody?.error ?? `Status ${response.status}`;
+      const errMsg = typeof rawErr === "string" ? rawErr : JSON.stringify(rawErr);
 
       if (response.status === 400 && /stage/i.test(errMsg)) {
         // Map nextStage to status if possible
@@ -161,7 +162,9 @@ export default function Admin() {
 
           if (!statusResp.ok) {
             const sb = await statusResp.json().catch(() => null);
-            throw new Error(sb?.error || `Status update failed: ${statusResp.status}`);
+            const rawStatusErr = sb?.error ?? `Status update failed: ${statusResp.status}`;
+            const statusErrMsg = typeof rawStatusErr === "string" ? rawStatusErr : JSON.stringify(rawStatusErr);
+            throw new Error(statusErrMsg);
           }
 
           // Update local state to reflect the status change
