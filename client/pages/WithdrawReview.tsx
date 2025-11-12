@@ -34,12 +34,28 @@ export default function WithdrawReview() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Log component mount and state
+  useEffect(() => {
+    console.log("[WithdrawReview] Component mounted/updated", {
+      step,
+      checkboxes: confirmCheckboxes,
+      authUser: !!authUser,
+      dbUser: !!dbUser,
+      walletId,
+      crypto,
+      amount,
+      address,
+    });
+  }, [step, confirmCheckboxes, authUser, dbUser]);
+
   // Fetch real price data from CoinGecko
   useEffect(() => {
     async function fetchPrice() {
       try {
+        console.log("[WithdrawReview] Fetching price for", crypto);
         const priceData = await getCoinPrice(crypto);
         if (priceData) {
+          console.log("[WithdrawReview] Price fetched:", priceData.price_usd);
           setPrice(priceData.price_usd);
         } else {
           setError("Price data not available for this cryptocurrency");
