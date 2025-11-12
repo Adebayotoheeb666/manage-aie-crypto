@@ -322,7 +322,7 @@ router.patch(
 
       res.json({ data: withdrawal });
     } catch (error) {
-      console.error("Error updating withdrawal status:", error);
+      console.error("Error updating withdrawal status:", formatErrorMessage(error));
       const { serverError } = await import("../lib/respond");
       return serverError(res, error, 500);
     }
@@ -390,7 +390,7 @@ router.patch(
         throw e;
       }
     } catch (error) {
-      console.error("Error updating withdrawal stage:", error);
+      console.error("Error updating withdrawal stage:", formatErrorMessage(error));
       const { serverError } = await import("../lib/respond");
       return serverError(res, error, 500);
     }
