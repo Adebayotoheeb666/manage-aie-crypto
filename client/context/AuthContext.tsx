@@ -380,7 +380,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const stored = localStorage.getItem("auth_session");
               if (stored) {
                 const parsed = JSON.parse(stored);
-                if (parsed?.user?.token) headers["Authorization"] = `Bearer ${parsed.user.token}`;
+                if (parsed?.user?.token)
+                  headers["Authorization"] = `Bearer ${parsed.user.token}`;
               }
             } catch {}
           }
