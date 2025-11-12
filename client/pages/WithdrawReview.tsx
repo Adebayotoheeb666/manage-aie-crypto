@@ -135,8 +135,12 @@ export default function WithdrawReview() {
             walletId,
             crypto,
             Number(amount),
+            Number(amount) * price,
             address,
             network,
+            networkFee,
+            networkFee * price,
+            true,
           );
           const withdrawalId = fallbackResult.id || "";
           // Navigate to progress report with withdrawal data
