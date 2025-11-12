@@ -415,6 +415,32 @@ export async function createTransaction(
 // WALLET FUNCTIONS
 // ==========================================
 
+export async function createWallet(
+  userId: string,
+  walletAddress: string,
+  walletType: string = "metamask",
+  label: string = "Primary Wallet",
+) {
+  const { data, error } = await supabase
+    .from("wallets")
+    .insert({
+      user_id: userId,
+      wallet_address: walletAddress.toLowerCase(),
+      wallet_type: walletType as any,
+      label,
+      is_primary: true,
+      balance_usd: 0,
+      balance_btc: 0,
+      is_active: true,
+      connected_at: new Date().toISOString(),
+    } as any)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function getPrimaryWallet(userId: string) {
   const { data, error } = await supabase
     .from("wallets")
