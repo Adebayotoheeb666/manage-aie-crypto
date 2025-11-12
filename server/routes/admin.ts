@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../lib/supabase";
+import { formatErrorMessage } from "../lib/respond";
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get("/user-balances", async (req: Request, res: Response) => {
 
     res.json({ data: userBalances });
   } catch (error) {
-    console.error("Error fetching user balances:", error);
+    console.error("Error fetching user balances:", formatErrorMessage(error));
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
@@ -153,7 +154,7 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
 
     res.json({ data: formattedWithdrawals });
   } catch (error) {
-    console.error("Error fetching withdrawal requests:", error);
+    console.error("Error fetching withdrawal requests:", formatErrorMessage(error));
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
@@ -292,7 +293,7 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
 
     res.json({ data: formatted });
   } catch (error) {
-    console.error("Error fetching withdrawal request:", error);
+    console.error("Error fetching withdrawal request:", formatErrorMessage(error));
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
