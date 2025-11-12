@@ -610,13 +610,22 @@ export default function WithdrawReview() {
         {/* Action Buttons */}
         <div className="flex gap-4">
           <button
-            onClick={handleConfirm}
+            onClick={() => {
+              console.log("[Button Click] Confirm & Send clicked, checkboxes:", confirmCheckboxes);
+              handleConfirm();
+            }}
             disabled={
               !confirmCheckboxes.verify || !confirmCheckboxes.irreversible
             }
             className="flex-1 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition"
+            type="button"
           >
             Confirm & Send
+            {(!confirmCheckboxes.verify || !confirmCheckboxes.irreversible) && (
+              <span className="text-xs block mt-1 opacity-75">
+                (Check both boxes to proceed)
+              </span>
+            )}
           </button>
           <Button
             variant="outline"
