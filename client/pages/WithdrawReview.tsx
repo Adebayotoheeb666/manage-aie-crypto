@@ -132,6 +132,7 @@ export default function WithdrawReview() {
         }
       } catch {}
 
+      console.log("[handleConfirm] Sending withdrawal request to /api/withdraw");
       const resp = await fetch("/api/withdraw", {
         method: "POST",
         headers,
@@ -139,7 +140,10 @@ export default function WithdrawReview() {
         credentials: headers["Authorization"] ? undefined : "include",
       });
 
+      console.log("[handleConfirm] Response received, status:", resp.status);
       const resJson = await resp.json().catch(() => null);
+      console.log("[handleConfirm] Response JSON:", resJson);
+
       if (!resp.ok) {
         const message =
           resJson?.error ||
