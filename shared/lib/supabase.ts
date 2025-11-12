@@ -111,26 +111,33 @@ function createSupabaseClient(): SupabaseClient<Database> {
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
     // Custom fetch wrapper to handle "body stream already read" errors
     // This ensures that if Supabase needs to read the response body multiple times,
-    // it can do so without errors by caching the body text and creating a new Response
+    // it can do so without errors by cloning the response and caching the body
     const customFetch = (url: string | Request, init?: RequestInit) => {
       return fetch(url, init).then((response) => {
-        // Clone and cache the body text so it can be read multiple times
-        // This prevents "body stream already read" errors from Supabase's internal retry logic
-        return response
-          .text()
-          .then((bodyText) => {
-            // Create a new Response with the cached body, preserving all original properties
-            return new Response(bodyText, {
-              status: response.status,
-              statusText: response.statusText,
-              headers: response.headers,
+        try {
+          // Clone the response so we can read its body without affecting the original
+          const cloned = response.clone();
+
+          // Read and cache the body text
+          return cloned
+            .text()
+            .then((bodyText) => {
+              // Return a fresh Response with the cached body
+              // This allows multiple reads without "body stream already read" errors
+              return new Response(bodyText, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+              });
+            })
+            .catch(() => {
+              // If cloning/reading fails, return the original response
+              return response;
             });
-          })
-          .catch(() => {
-            // If reading body fails, return original response
-            // (it might have already been read by Supabase)
-            return response;
-          });
+        } catch (err) {
+          // If anything goes wrong, just return the original response
+          return response;
+        }
       });
     };
 
