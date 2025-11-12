@@ -94,10 +94,32 @@ export default function WithdrawReview() {
       return;
     }
 
-    console.log("[handleConfirm] Auth check - authUser:", !!authUser, "dbUser:", !!dbUser, "walletId:", !!walletId);
-    if (!authUser || !dbUser || !walletId) {
-      console.error("[handleConfirm] Authentication failed");
-      setError("Authentication required");
+    console.log("[handleConfirm] Auth check:", {
+      authUser: !!authUser,
+      dbUser: !!dbUser,
+      walletId: !!walletId,
+      authUserData: authUser ? { id: authUser.id } : null,
+      dbUserData: dbUser ? { id: dbUser.id } : null,
+    });
+
+    if (!authUser) {
+      console.error("[handleConfirm] Missing authUser");
+      setError("User authentication required. Please sign in.");
+      setStep("failure");
+      return;
+    }
+
+    if (!dbUser) {
+      console.error("[handleConfirm] Missing dbUser");
+      setError("User profile not found. Please sign in again.");
+      setStep("failure");
+      return;
+    }
+
+    if (!walletId) {
+      console.error("[handleConfirm] Missing walletId from state");
+      setError("Wallet ID not found. Please start the withdrawal process again.");
+      setStep("failure");
       return;
     }
 
