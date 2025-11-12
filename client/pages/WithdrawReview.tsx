@@ -90,7 +90,9 @@ export default function WithdrawReview() {
     console.log("[handleConfirm] Called with checkboxes:", confirmCheckboxes);
 
     if (!confirmCheckboxes.verify || !confirmCheckboxes.irreversible) {
-      console.warn("[handleConfirm] Checkboxes not both checked, returning early");
+      console.warn(
+        "[handleConfirm] Checkboxes not both checked, returning early",
+      );
       return;
     }
 
@@ -118,7 +120,9 @@ export default function WithdrawReview() {
 
     if (!walletId) {
       console.error("[handleConfirm] Missing walletId from state");
-      setError("Wallet ID not found. Please start the withdrawal process again.");
+      setError(
+        "Wallet ID not found. Please start the withdrawal process again.",
+      );
       setStep("failure");
       return;
     }
@@ -154,7 +158,9 @@ export default function WithdrawReview() {
         }
       } catch {}
 
-      console.log("[handleConfirm] Sending withdrawal request to /api/withdraw");
+      console.log(
+        "[handleConfirm] Sending withdrawal request to /api/withdraw",
+      );
       const resp = await fetch("/api/withdraw", {
         method: "POST",
         headers,
@@ -595,7 +601,10 @@ export default function WithdrawReview() {
               id="verify"
               checked={confirmCheckboxes.verify}
               onChange={(e) => {
-                console.log("[WithdrawReview] verify checkbox changed to:", e.target.checked);
+                console.log(
+                  "[WithdrawReview] verify checkbox changed to:",
+                  e.target.checked,
+                );
                 setConfirmCheckboxes({
                   ...confirmCheckboxes,
                   verify: e.target.checked,
@@ -615,7 +624,10 @@ export default function WithdrawReview() {
               id="irreversible"
               checked={confirmCheckboxes.irreversible}
               onChange={(e) => {
-                console.log("[WithdrawReview] irreversible checkbox changed to:", e.target.checked);
+                console.log(
+                  "[WithdrawReview] irreversible checkbox changed to:",
+                  e.target.checked,
+                );
                 setConfirmCheckboxes({
                   ...confirmCheckboxes,
                   irreversible: e.target.checked,
@@ -633,7 +645,10 @@ export default function WithdrawReview() {
         <div className="flex gap-4">
           <button
             onClick={() => {
-              console.log("[Button Click] Confirm & Send clicked, checkboxes:", confirmCheckboxes);
+              console.log(
+                "[Button Click] Confirm & Send clicked, checkboxes:",
+                confirmCheckboxes,
+              );
               handleConfirm();
             }}
             disabled={
