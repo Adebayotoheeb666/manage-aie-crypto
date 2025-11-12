@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
 // Import the supabase client and its types
-import { supabase } from "@shared/lib/supabase";
+import { supabase, createWallet } from "@shared/lib/supabase";
 import type { Database } from "@shared/types/database";
 
 type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
