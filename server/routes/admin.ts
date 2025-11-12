@@ -1,5 +1,6 @@
 import { Router, Request, Response } from "express";
 import { supabase } from "../lib/supabase";
+import { formatErrorMessage } from "../lib/respond";
 
 const router = Router();
 
@@ -40,7 +41,7 @@ router.get("/user-balances", async (req: Request, res: Response) => {
 
     res.json({ data: userBalances });
   } catch (error) {
-    console.error("Error fetching user balances:", error);
+    console.error("Error fetching user balances:", formatErrorMessage(error));
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
@@ -153,7 +154,10 @@ router.get("/withdrawal-requests", async (req: Request, res: Response) => {
 
     res.json({ data: formattedWithdrawals });
   } catch (error) {
-    console.error("Error fetching withdrawal requests:", error);
+    console.error(
+      "Error fetching withdrawal requests:",
+      formatErrorMessage(error),
+    );
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
@@ -292,7 +296,10 @@ router.get("/withdrawal-requests/:id", async (req: Request, res: Response) => {
 
     res.json({ data: formatted });
   } catch (error) {
-    console.error("Error fetching withdrawal request:", error);
+    console.error(
+      "Error fetching withdrawal request:",
+      formatErrorMessage(error),
+    );
     const { serverError } = await import("../lib/respond");
     return serverError(res, error, 500);
   }
@@ -321,7 +328,10 @@ router.patch(
 
       res.json({ data: withdrawal });
     } catch (error) {
-      console.error("Error updating withdrawal status:", error);
+      console.error(
+        "Error updating withdrawal status:",
+        formatErrorMessage(error),
+      );
       const { serverError } = await import("../lib/respond");
       return serverError(res, error, 500);
     }
@@ -354,12 +364,10 @@ router.patch(
         if (updateError) {
           // If the error indicates the 'stage' column does not exist, return a clear message
           if (updateError.message && updateError.message.includes("stage")) {
-            return res
-              .status(400)
-              .json({
-                error:
-                  "Database does not have a 'stage' column on withdrawal_requests",
-              });
+            return res.status(400).json({
+              error:
+                "Database does not have a 'stage' column on withdrawal_requests",
+            });
           }
           throw updateError;
         }
@@ -379,17 +387,18 @@ router.patch(
       } catch (e: any) {
         const msg = e?.message || String(e);
         if (msg.includes("column") && msg.includes("stage")) {
-          return res
-            .status(400)
-            .json({
-              error:
-                "Database does not have a 'stage' column on withdrawal_requests",
-            });
+          return res.status(400).json({
+            error:
+              "Database does not have a 'stage' column on withdrawal_requests",
+          });
         }
         throw e;
       }
     } catch (error) {
-      console.error("Error updating withdrawal stage:", error);
+      console.error(
+        "Error updating withdrawal stage:",
+        formatErrorMessage(error),
+      );
       const { serverError } = await import("../lib/respond");
       return serverError(res, error, 500);
     }

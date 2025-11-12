@@ -197,20 +197,20 @@ const mockAssets: Asset[] = [
     id: "1",
     symbol: "BTC",
     name: "Bitcoin",
-    balance: 0.542,
-    price_usd: 370544.3,
+    balance: 2.1529,
+    price_usd: 104961.6,
     change_24h: 2.5,
-    value_usd: 200857.06,
+    value_usd: 225982.0,
     logo_url: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
   },
   {
     id: "2",
     symbol: "ETH",
     name: "Ethereum",
-    balance: 5.148,
-    price_usd: 2280,
+    balance: 0,
+    price_usd: 3536.76,
     change_24h: -1.2,
-    value_usd: 11737.44,
+    value_usd: 0,
     logo_url:
       "https://assets.coingecko.com/coins/images/279/large/ethereum.png",
   },
@@ -218,30 +218,30 @@ const mockAssets: Asset[] = [
     id: "3",
     symbol: "USDC",
     name: "USD Coin",
-    balance: 8500,
+    balance: 0,
     price_usd: 1.0,
     change_24h: 0.0,
-    value_usd: 8500,
+    value_usd: 0,
     logo_url: "https://assets.coingecko.com/coins/images/6319/large/usdc.png",
   },
   {
     id: "4",
     symbol: "ADA",
     name: "Cardano",
-    balance: 2500,
+    balance: 0,
     price_usd: 0.98,
     change_24h: 3.2,
-    value_usd: 2450,
+    value_usd: 0,
     logo_url: "https://assets.coingecko.com/coins/images/975/large/cardano.png",
   },
   {
     id: "5",
     symbol: "SOL",
     name: "Solana",
-    balance: 12.5,
-    price_usd: 195,
+    balance: 0,
+    price_usd: 160.04,
     change_24h: 1.8,
-    value_usd: 2437.5,
+    value_usd: 0,
     logo_url: "https://assets.coingecko.com/coins/images/4128/large/solana.png",
   },
 ];
@@ -540,9 +540,9 @@ export default function Dashboard() {
             0,
           );
           setTotalBalance(balance);
-          setPreviousBalance(30500);
+          setPreviousBalance(221982);
           setChange24h(4000);
-          setChange24hPercent(11.6);
+          setChange24hPercent(1.8);
           setAssets(mockAssets);
           setTransactions(mockTransactions);
           setPortfolioData(mockPortfolioData);

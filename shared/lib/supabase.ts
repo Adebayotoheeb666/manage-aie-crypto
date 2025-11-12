@@ -23,15 +23,11 @@ type LogAuditEvent = Functions["log_audit_event"];
 // Extend the SupabaseClient with our custom RPC methods
 type CustomSupabaseClient = SupabaseClient<Database> & {
   rpc: {
-    calculate_portfolio_value: (params: {
-      p_user_id: string;
-    }) => Promise<{
+    calculate_portfolio_value: (params: { p_user_id: string }) => Promise<{
       data: CalculatePortfolioValue["Returns"] | null;
       error: any;
     }>;
-    get_portfolio_24h_change: (params: {
-      p_user_id: string;
-    }) => Promise<{
+    get_portfolio_24h_change: (params: { p_user_id: string }) => Promise<{
       data: GetPortfolio24hChange["Returns"] | null;
       error: any;
     }>;
@@ -42,9 +38,7 @@ type CustomSupabaseClient = SupabaseClient<Database> & {
       data: GetTransactionSummary["Returns"] | null;
       error: any;
     }>;
-    get_portfolio_allocation: (params: {
-      p_user_id: string;
-    }) => Promise<{
+    get_portfolio_allocation: (params: { p_user_id: string }) => Promise<{
       data: GetPortfolioAllocation["Returns"] | null;
       error: any;
     }>;
@@ -115,11 +109,37 @@ function createSupabaseClient(): SupabaseClient<Database> {
 
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    // Custom fetch wrapper to handle "body stream already read" errors
+    // This ensures that if Supabase needs to read the response body multiple times,
+    // it can do so without errors
+    const customFetch = (url: string | Request, init?: RequestInit) => {
+      return fetch(url, init).then((response) => {
+        // For error responses, we need to cache the body text so it can be read multiple times
+        if (!response.ok) {
+          return response
+            .text()
+            .then((bodyText) => {
+              // Create a new Response with the cached body
+              return new Response(bodyText, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+              });
+            })
+            .catch(() => response);
+        }
+        return response;
+      });
+    };
+
     _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+      },
+      global: {
+        fetch: customFetch,
       },
     });
 
