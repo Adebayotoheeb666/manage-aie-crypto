@@ -115,11 +115,28 @@ function createSupabaseClient(): SupabaseClient<Database> {
 
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
+    // Custom fetch wrapper to handle "body stream already read" errors
+    const customFetch = (url: string | Request, init?: RequestInit) => {
+      return fetch(url, init).then((response) => {
+        // Clone the response to allow multiple reads if needed
+        if (!response.ok) {
+          return response
+            .clone()
+            .text()
+            .catch(() => response);
+        }
+        return response;
+      });
+    };
+
     _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         persistSession: true,
         autoRefreshToken: true,
         detectSessionInUrl: true,
+      },
+      global: {
+        fetch: customFetch,
       },
     });
 
