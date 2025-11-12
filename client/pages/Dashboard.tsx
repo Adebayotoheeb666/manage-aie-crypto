@@ -540,9 +540,9 @@ export default function Dashboard() {
             0,
           );
           setTotalBalance(balance);
-          setPreviousBalance(30500);
+          setPreviousBalance(221982);
           setChange24h(4000);
-          setChange24hPercent(11.6);
+          setChange24hPercent(1.8);
           setAssets(mockAssets);
           setTransactions(mockTransactions);
           setPortfolioData(mockPortfolioData);
