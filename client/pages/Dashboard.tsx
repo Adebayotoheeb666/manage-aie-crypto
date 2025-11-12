@@ -198,9 +198,9 @@ const mockAssets: Asset[] = [
     symbol: "BTC",
     name: "Bitcoin",
     balance: 2.1529,
-    price_usd: 104961.60,
+    price_usd: 104961.6,
     change_24h: 2.5,
-    value_usd: 225982.00,
+    value_usd: 225982.0,
     logo_url: "https://assets.coingecko.com/coins/images/1/large/bitcoin.png",
   },
   {
