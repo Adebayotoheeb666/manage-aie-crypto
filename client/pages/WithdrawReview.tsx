@@ -71,15 +71,21 @@ export default function WithdrawReview() {
   };
 
   const handleConfirm = async () => {
+    console.log("[handleConfirm] Called with checkboxes:", confirmCheckboxes);
+
     if (!confirmCheckboxes.verify || !confirmCheckboxes.irreversible) {
+      console.warn("[handleConfirm] Checkboxes not both checked, returning early");
       return;
     }
 
+    console.log("[handleConfirm] Auth check - authUser:", !!authUser, "dbUser:", !!dbUser, "walletId:", !!walletId);
     if (!authUser || !dbUser || !walletId) {
+      console.error("[handleConfirm] Authentication failed");
       setError("Authentication required");
       return;
     }
 
+    console.log("[handleConfirm] Starting withdrawal process...");
     setStep("processing");
     try {
       // Build request payload expected by server
