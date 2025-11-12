@@ -109,28 +109,9 @@ function createSupabaseClient(): SupabaseClient<Database> {
 
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
-    // Custom fetch wrapper to handle "body stream already read" errors
-    // This ensures that if Supabase needs to read the response body multiple times,
-    // it can do so without errors
-    const customFetch = (url: string | Request, init?: RequestInit) => {
-      return fetch(url, init).then((response) => {
-        // For error responses, we need to cache the body text so it can be read multiple times
-        if (!response.ok) {
-          return response
-            .text()
-            .then((bodyText) => {
-              // Create a new Response with the cached body
-              return new Response(bodyText, {
-                status: response.status,
-                statusText: response.statusText,
-                headers: response.headers,
-              });
-            })
-            .catch(() => response);
-        }
-        return response;
-      });
-    };
+    // No custom fetch wrapper - let Supabase handle responses directly
+    // Supabase-js handles body streaming correctly internally
+    const customFetch = fetch;
 
     _supabaseClient = createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
@@ -414,6 +395,32 @@ export async function createTransaction(
 // ==========================================
 // WALLET FUNCTIONS
 // ==========================================
+
+export async function createWallet(
+  userId: string,
+  walletAddress: string,
+  walletType: string = "metamask",
+  label: string = "Primary Wallet",
+) {
+  const { data, error } = await supabase
+    .from("wallets")
+    .insert({
+      user_id: userId,
+      wallet_address: walletAddress.toLowerCase(),
+      wallet_type: walletType as any,
+      label,
+      is_primary: true,
+      balance_usd: 0,
+      balance_btc: 0,
+      is_active: true,
+      connected_at: new Date().toISOString(),
+    } as any)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data;
+}
 
 export async function getPrimaryWallet(userId: string) {
   const { data, error } = await supabase

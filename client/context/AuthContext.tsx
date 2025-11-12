@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import type { User as DBUser } from "@shared/types/database";
 import { toast } from "@/hooks/use-toast";
 // Import the supabase client and its types
-import { supabase } from "@shared/lib/supabase";
+import { supabase, createWallet } from "@shared/lib/supabase";
 import type { Database } from "@shared/types/database";
 
 type Wallet = Database["public"]["Tables"]["wallets"]["Row"];
@@ -380,7 +380,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               const stored = localStorage.getItem("auth_session");
               if (stored) {
                 const parsed = JSON.parse(stored);
-                if (parsed?.user?.token) headers["Authorization"] = `Bearer ${parsed.user.token}`;
+                if (parsed?.user?.token)
+                  headers["Authorization"] = `Bearer ${parsed.user.token}`;
               }
             } catch {}
           }
