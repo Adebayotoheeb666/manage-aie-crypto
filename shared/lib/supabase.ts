@@ -116,14 +116,20 @@ function createSupabaseClient(): SupabaseClient<Database> {
   // If envs are present, create real client
   if (SUPABASE_URL && /^https?:\/\//.test(SUPABASE_URL) && SUPABASE_ANON_KEY) {
     // Custom fetch wrapper to handle "body stream already read" errors
+    // This ensures that if Supabase needs to read the response body multiple times,
+    // it can do so without errors
     const customFetch = (url: string | Request, init?: RequestInit) => {
       return fetch(url, init).then((response) => {
-        // Clone the response to allow multiple reads if needed
+        // For error responses, we need to cache the body text so it can be read multiple times
         if (!response.ok) {
-          return response
-            .clone()
-            .text()
-            .catch(() => response);
+          return response.text().then((bodyText) => {
+            // Create a new Response with the cached body
+            return new Response(bodyText, {
+              status: response.status,
+              statusText: response.statusText,
+              headers: response.headers,
+            });
+          }).catch(() => response);
         }
         return response;
       });
