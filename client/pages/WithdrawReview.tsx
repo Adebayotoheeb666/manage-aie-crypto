@@ -572,12 +572,13 @@ export default function WithdrawReview() {
               type="checkbox"
               id="verify"
               checked={confirmCheckboxes.verify}
-              onChange={(e) =>
+              onChange={(e) => {
+                console.log("[WithdrawReview] verify checkbox changed to:", e.target.checked);
                 setConfirmCheckboxes({
                   ...confirmCheckboxes,
                   verify: e.target.checked,
-                })
-              }
+                });
+              }}
               className="w-5 h-5 rounded border-gray-300 mt-0.5"
             />
             <label htmlFor="verify" className="text-sm text-gray-700">
@@ -591,12 +592,13 @@ export default function WithdrawReview() {
               type="checkbox"
               id="irreversible"
               checked={confirmCheckboxes.irreversible}
-              onChange={(e) =>
+              onChange={(e) => {
+                console.log("[WithdrawReview] irreversible checkbox changed to:", e.target.checked);
                 setConfirmCheckboxes({
                   ...confirmCheckboxes,
                   irreversible: e.target.checked,
-                })
-              }
+                });
+              }}
               className="w-5 h-5 rounded border-gray-300 mt-0.5"
             />
             <label htmlFor="irreversible" className="text-sm text-gray-700">
