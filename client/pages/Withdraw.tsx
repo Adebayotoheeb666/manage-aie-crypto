@@ -368,7 +368,7 @@ export default function Withdraw() {
                 </div>
                 <p className="text-xs text-gray-600 pt-2">
                   ≈ $
-                  {(receiveAmount * selectedPrice).toLocaleString("en-US", {
+                  {(receiveAmount / usdConversionRates[selectedCrypto]).toLocaleString("en-US", {
                     maximumFractionDigits: 2,
                   })}
                 </p>
