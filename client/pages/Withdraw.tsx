@@ -39,9 +39,8 @@ export default function Withdraw() {
   const selectedPrice = selectedAsset?.price ?? 0;
 
   const totalUsd = assets.reduce((sum, a) => sum + a.balance * a.price, 0);
-  const btcAsset = assets.find((a) => a.symbol === "BTC");
-  const btcPrice = btcAsset?.price ?? 1;
-  const totalBtc = totalUsd / btcPrice;
+  const usdToBtcRate = 0.000010;
+  const totalBtc = totalUsd * usdToBtcRate;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
