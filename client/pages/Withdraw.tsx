@@ -42,13 +42,14 @@ export default function Withdraw() {
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const TOTAL_BALANCE_USD = 225982.00;
+
   const selectedAsset = assets.find((a) => a.symbol === selectedCrypto);
-  const maxBalance = selectedAsset?.balance ?? 0;
+  const maxBalance = (TOTAL_BALANCE_USD * usdConversionRates[selectedCrypto]) ?? 0;
   const selectedPrice = selectedAsset?.price ?? 0;
 
-  const totalUsd = assets.reduce((sum, a) => sum + a.balance * a.price, 0);
-  const usdToBtcRate = 0.000010;
-  const totalBtc = totalUsd * usdToBtcRate;
+  const totalUsd = TOTAL_BALANCE_USD;
+  const totalBtc = totalUsd * usdConversionRates.BTC;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
