@@ -160,11 +160,9 @@ export default function Withdraw() {
               <div className="mt-4 border-t border-blue-100 pt-4">
                 <p className="text-sm text-gray-600">Available Balance</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {maxBalance.toFixed(8)} {selectedCrypto}
+                  {formatCurrency(totalUsd)}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  ≈ ${(maxBalance * selectedPrice).toLocaleString()}
-                </p>
+                <p className="text-sm text-gray-600 mt-1">&nbsp;</p>
               </div>
             </div>
 
