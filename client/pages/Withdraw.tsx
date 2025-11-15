@@ -165,7 +165,9 @@ export default function Withdraw() {
                 <p className="text-2xl font-bold text-gray-900">
                   {formatCurrency(totalUsd)}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">&nbsp;</p>
+                <p className="text-sm text-gray-600 mt-1">
+                  ≈ {totalBtc.toFixed(8)} BTC
+                </p>
               </div>
             </div>
 
