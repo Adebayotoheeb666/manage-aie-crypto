@@ -4,11 +4,19 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
 
 const assets = [
-  { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 100000 }, // 1 USD = 0.000010 BTC
-  { id: 2, symbol: "ETH", name: "Ethereum", balance: 5.148, price: 3225.81 }, // 1 USD = 0.00031 ETH
-  { id: 3, symbol: "USDC", name: "USD Coin", balance: 8500, price: 1.0 }, // 1 USD = 1.00 USDC
-  { id: 4, symbol: "ADA", name: "Cardano", balance: 2500, price: 0.5076 }, // 1 USD = 1.97 ADA
+  { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 370544.3 },
+  { id: 2, symbol: "ETH", name: "Ethereum", balance: 5.148, price: 2280 },
+  { id: 3, symbol: "USDC", name: "USD Coin", balance: 8500, price: 1.0 },
+  { id: 4, symbol: "ADA", name: "Cardano", balance: 2500, price: 0.98 },
 ];
+
+// USD to crypto conversion rates for Select Cryptocurrency dropdown
+const usdConversionRates: Record<string, number> = {
+  BTC: 0.000010,  // 1 USD = 0.000010 BTC
+  ETH: 0.00031,   // 1 USD = 0.00031 ETH
+  USDC: 1.0,      // 1 USD = 1.00 USDC
+  ADA: 1.97,      // 1 USD = 1.97 ADA
+};
 
 // Tiered network fees based on amount
 const getNetworkFee = (amount: number): number => {
