@@ -193,11 +193,14 @@ export default function Withdraw() {
               >
                 {assets
                   .filter((a) => a.balance > 0)
-                  .map((asset) => (
-                    <option key={asset.symbol} value={asset.symbol}>
-                      {asset.name} ({asset.symbol}) - {asset.balance} available
-                    </option>
-                  ))}
+                  .map((asset) => {
+                    const convertedBalance = asset.balance * usdConversionRates[asset.symbol];
+                    return (
+                      <option key={asset.symbol} value={asset.symbol}>
+                        {asset.name} ({asset.symbol}) - {convertedBalance.toFixed(8)} available
+                      </option>
+                    );
+                  })}
               </select>
               {errors.crypto && (
                 <p className="text-red-600 text-sm mt-2">{errors.crypto}</p>
