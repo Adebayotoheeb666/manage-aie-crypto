@@ -10,6 +10,14 @@ const assets = [
   { id: 4, symbol: "ADA", name: "Cardano", balance: 2500, price: 0.98 },
 ];
 
+// USD to crypto conversion rates for Select Cryptocurrency dropdown
+const usdConversionRates: Record<string, number> = {
+  BTC: 0.00001, // 1 USD = 0.000010 BTC
+  ETH: 0.00031, // 1 USD = 0.00031 ETH
+  USDC: 1.0, // 1 USD = 1.00 USDC
+  ADA: 1.97, // 1 USD = 1.97 ADA
+};
+
 // Tiered network fees based on amount
 const getNetworkFee = (amount: number): number => {
   if (amount <= 100) return amount * 0.02; // 2% fee for 0-100
@@ -34,11 +42,15 @@ export default function Withdraw() {
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  const TOTAL_BALANCE_USD = 225982.0;
+
   const selectedAsset = assets.find((a) => a.symbol === selectedCrypto);
-  const maxBalance = selectedAsset?.balance ?? 0;
+  const maxBalance =
+    TOTAL_BALANCE_USD * usdConversionRates[selectedCrypto] ?? 0;
   const selectedPrice = selectedAsset?.price ?? 0;
 
-  const totalUsd = assets.reduce((sum, a) => sum + a.balance * a.price, 0);
+  const totalUsd = TOTAL_BALANCE_USD;
+  const totalBtc = totalUsd * usdConversionRates.BTC;
 
   const formatCurrency = (value: number) =>
     new Intl.NumberFormat("en-US", {
@@ -160,10 +172,10 @@ export default function Withdraw() {
               <div className="mt-4 border-t border-blue-100 pt-4">
                 <p className="text-sm text-gray-600">Available Balance</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {maxBalance.toFixed(8)} {selectedCrypto}
+                  {formatCurrency(totalUsd)}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
-                  ≈ ${(maxBalance * selectedPrice).toLocaleString()}
+                  ≈ {totalBtc.toFixed(8)} BTC
                 </p>
               </div>
             </div>
@@ -181,13 +193,16 @@ export default function Withdraw() {
                 }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
-                {assets
-                  .filter((a) => a.balance > 0)
-                  .map((asset) => (
+                {assets.map((asset) => {
+                  const convertedBalance =
+                    TOTAL_BALANCE_USD * usdConversionRates[asset.symbol];
+                  return (
                     <option key={asset.symbol} value={asset.symbol}>
-                      {asset.name} ({asset.symbol}) - {asset.balance} available
+                      {asset.name} ({asset.symbol}) -{" "}
+                      {convertedBalance.toFixed(8)} available
                     </option>
-                  ))}
+                  );
+                })}
               </select>
               {errors.crypto && (
                 <p className="text-red-600 text-sm mt-2">{errors.crypto}</p>
@@ -222,7 +237,9 @@ export default function Withdraw() {
               {amount && (
                 <p className="text-sm text-gray-600 mt-2">
                   ≈ $
-                  {(amountNum * selectedPrice).toLocaleString("en-US", {
+                  {(
+                    amountNum / usdConversionRates[selectedCrypto]
+                  ).toLocaleString("en-US", {
                     maximumFractionDigits: 2,
                   })}
                 </p>
@@ -355,7 +372,9 @@ export default function Withdraw() {
                 </div>
                 <p className="text-xs text-gray-600 pt-2">
                   ≈ $
-                  {(receiveAmount * selectedPrice).toLocaleString("en-US", {
+                  {(
+                    receiveAmount / usdConversionRates[selectedCrypto]
+                  ).toLocaleString("en-US", {
                     maximumFractionDigits: 2,
                   })}
                 </p>
