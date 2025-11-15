@@ -235,7 +235,7 @@ export default function Withdraw() {
               {amount && (
                 <p className="text-sm text-gray-600 mt-2">
                   ≈ $
-                  {(amountNum * selectedPrice).toLocaleString("en-US", {
+                  {(amountNum / usdConversionRates[selectedCrypto]).toLocaleString("en-US", {
                     maximumFractionDigits: 2,
                   })}
                 </p>
