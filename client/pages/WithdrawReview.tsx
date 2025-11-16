@@ -71,39 +71,53 @@ export default function WithdrawReview() {
   };
 
   const handleConfirm = async () => {
-    console.log("handleConfirm called");
-    console.log("checkboxes:", confirmCheckboxes);
-    console.log("authUser:", authUser);
-    console.log("dbUser:", dbUser);
-    
     if (!confirmCheckboxes.verify || !confirmCheckboxes.irreversible) {
-      console.log("checkboxes not verified, returning");
       return;
     }
 
     if (!authUser || !dbUser) {
-      console.log("missing auth info, setting error");
       setError("Authentication required");
       return;
     }
 
-    console.log("navigating to progress-report");
-    // Navigate to ProgressReport with withdrawal info and first stage set to processing
-    navigate("/progress-report", {
-      state: {
-        amount,
+    try {
+      setError(null);
+      setStep("processing");
+
+      // Create withdrawal request in database
+      const withdrawal = await createWithdrawalRequest(
+        dbUser.id,
+        walletId || "default-wallet",
         crypto,
-        bankName: "Bank Name", // Simplified since we don't have these properties
-        accountName: "Account Name", 
-        lastFourAccount: "0000",
-        email,
-        withdrawalId: `WR-${Date.now()}`,
-        address,
-        network,
-        price,
-        firstStageProcessing: true // Flag to set first stage to processing
-      },
-    });
+        amount || 0,
+        (amount || 0) * price,
+        address || "",
+        network || "",
+        0.0005, // networkFee
+        (0.0005 * price)
+      );
+
+      // Navigate to ProgressReport with withdrawal ID
+      navigate("/progress-report", {
+        state: {
+          withdrawalId: withdrawal.id,
+          amount,
+          crypto,
+          bankName: "Bank Name",
+          accountName: "Account Name",
+          lastFourAccount: "0000",
+          email,
+          address,
+          network,
+          price,
+          firstStageProcessing: true
+        },
+      });
+    } catch (err) {
+      console.error("Failed to create withdrawal:", err);
+      setError("Failed to create withdrawal. Please try again.");
+      setStep("review");
+    }
   };
 
   if (step === "processing") {
