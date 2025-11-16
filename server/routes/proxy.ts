@@ -227,3 +227,48 @@ export const handlePendingWithdrawals: RequestHandler = async (req, res) => {
     return res.json({ data: [] });
   }
 };
+
+export const handleSeedAssets: RequestHandler = async (req, res) => {
+  const { userId, walletId } = req.body || {};
+  if (!userId || !walletId) {
+    return res.status(400).json({ error: "userId and walletId required" });
+  }
+  try {
+    const supabase = serverSupabase();
+
+    // Test assets to seed for demo
+    const testAssets = [
+      { symbol: "BTC", name: "Bitcoin", balance: 0.542, price_usd: 370544.3 },
+      { symbol: "ETH", name: "Ethereum", balance: 5.148, price_usd: 2280 },
+      { symbol: "USDC", name: "USD Coin", balance: 8500, price_usd: 1.0 },
+      { symbol: "ADA", name: "Cardano", balance: 2500, price_usd: 0.98 },
+    ];
+
+    for (const asset of testAssets) {
+      // Upsert assets - update if exists, create if not
+      const { error } = await supabase
+        .from("assets")
+        .upsert({
+          user_id: userId,
+          wallet_id: walletId,
+          symbol: asset.symbol,
+          name: asset.name,
+          balance: asset.balance,
+          balance_usd: asset.balance * asset.price_usd,
+          price_usd: asset.price_usd,
+          chain: "ethereum",
+        }, {
+          onConflict: "user_id,wallet_id,symbol"
+        });
+
+      if (error) {
+        console.error(`Failed to seed ${asset.symbol}:`, error);
+      }
+    }
+
+    return res.json({ data: { success: true, message: "Test assets seeded" } });
+  } catch (err) {
+    console.error("Seed assets error:", err);
+    return res.status(500).json({ error: "Failed to seed test assets" });
+  }
+};
