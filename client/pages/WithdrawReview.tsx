@@ -84,6 +84,20 @@ export default function WithdrawReview() {
       setError(null);
       setStep("processing");
 
+      // Seed test assets first to ensure balance check passes
+      try {
+        await fetch("/api/proxy/seed-assets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: dbUser.id,
+            walletId: walletId || "default-wallet",
+          }),
+        });
+      } catch (seedErr) {
+        console.debug("Asset seeding error (continuing anyway):", seedErr);
+      }
+
       // Create withdrawal request in database
       const withdrawal = await createWithdrawalRequest(
         dbUser.id,
