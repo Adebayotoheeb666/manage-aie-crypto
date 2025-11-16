@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@shared/lib/supabase";
 
 const assets = [
   { id: 1, symbol: "BTC", name: "Bitcoin", balance: 0.542, price: 370544.3 },
