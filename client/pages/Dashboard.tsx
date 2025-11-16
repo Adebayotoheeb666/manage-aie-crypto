@@ -266,6 +266,13 @@ export default function Dashboard() {
   const [wallets, setWallets] = useState<
     Array<{ id: string; wallet_address: string; is_primary: boolean }>
   >([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<Array<{
+    id: string;
+    amount: number;
+    symbol: string;
+    status: string;
+    created_at: string;
+  }>>([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
