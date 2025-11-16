@@ -32,6 +32,7 @@ const getNetworkFee = (amount: number): number => {
 
 export default function Withdraw() {
   const navigate = useNavigate();
+  const { dbUser } = useAuth();
 
   // Form state
   const [selectedCrypto, setSelectedCrypto] = useState(assets[0].symbol);
@@ -42,8 +43,35 @@ export default function Withdraw() {
   const [accountNo, setAccountNo] = useState("898148351001");
   const [routingNo, setRoutingNo] = useState("063100277");
   const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [network, setNetwork] = useState("ethereum");
+  const [walletId, setWalletId] = useState("");
   const [confirmCheckbox, setConfirmCheckbox] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Fetch user's primary wallet on mount
+  useEffect(() => {
+    const fetchWallet = async () => {
+      if (!dbUser?.id) return;
+      try {
+        const { data } = await supabase
+          .from("wallets")
+          .select("id,wallet_address")
+          .eq("user_id", dbUser.id)
+          .eq("is_primary", true)
+          .single();
+
+        if (data) {
+          setWalletId(data.id);
+          setAddress(data.wallet_address);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wallet:", err);
+      }
+    };
+
+    fetchWallet();
+  }, [dbUser?.id]);
 
   const TOTAL_BALANCE_USD = 225982.0;
 
