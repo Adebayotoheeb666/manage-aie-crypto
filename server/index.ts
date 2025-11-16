@@ -34,6 +34,7 @@ import {
   handlePortfolioSnapshots,
   handleLatestPrice,
   handleUserWallets,
+  handlePendingWithdrawals,
 } from "./routes/proxy";
 import { handleDebugSession } from "./routes/debug";
 
