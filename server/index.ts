@@ -34,6 +34,8 @@ import {
   handlePortfolioSnapshots,
   handleLatestPrice,
   handleUserWallets,
+  handlePendingWithdrawals,
+  handleSeedAssets,
 } from "./routes/proxy";
 import { handleDebugSession } from "./routes/debug";
 
@@ -178,6 +180,8 @@ export function createServer() {
   router.post("/portfolio-snapshots", handlePortfolioSnapshots);
   router.post("/latest-price", handleLatestPrice);
   router.post("/user-wallets", handleUserWallets);
+  router.post("/pending-withdrawals", handlePendingWithdrawals);
+  router.post("/seed-assets", handleSeedAssets);
   app.use("/api/proxy", router);
 
   // Withdrawal routes
