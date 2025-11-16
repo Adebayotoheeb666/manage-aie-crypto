@@ -200,3 +200,30 @@ export const handleUserWallets: RequestHandler = async (req, res) => {
     return res.json({ data: [] });
   }
 };
+
+export const handlePendingWithdrawals: RequestHandler = async (req, res) => {
+  const { userId } = req.body || {};
+  if (!userId) return res.status(400).json({ error: "userId required" });
+  try {
+    const supabase = serverSupabase();
+    const { data, error } = await supabase
+      .from("withdrawal_requests")
+      .select("id,amount,symbol,status,created_at")
+      .eq("user_id", userId)
+      .in("status", ["pending", "processing"])
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      // Return empty array if table doesn't exist
+      if (error.message?.includes("does not exist") || error.code === "42P01") {
+        return res.json({ data: [] });
+      }
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json({ data: data || [] });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    // Return empty array instead of error for network/missing table issues
+    return res.json({ data: [] });
+  }
+};
