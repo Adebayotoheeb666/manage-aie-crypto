@@ -244,29 +244,68 @@ export const handleSeedAssets: RequestHandler = async (req, res) => {
       { symbol: "ADA", name: "Cardano", balance: 2500, price_usd: 0.98 },
     ];
 
-    for (const asset of testAssets) {
-      // Upsert assets - update if exists, create if not
-      const { error } = await supabase
-        .from("assets")
-        .upsert({
-          user_id: userId,
-          wallet_id: walletId,
-          symbol: asset.symbol,
-          name: asset.name,
-          balance: asset.balance,
-          balance_usd: asset.balance * asset.price_usd,
-          price_usd: asset.price_usd,
-          chain: "ethereum",
-        }, {
-          onConflict: "user_id,wallet_id,symbol"
-        });
+    const assetsToInsert = testAssets.map(asset => ({
+      user_id: userId,
+      wallet_id: walletId,
+      symbol: asset.symbol,
+      name: asset.name,
+      balance: asset.balance,
+      balance_usd: asset.balance * asset.price_usd,
+      price_usd: asset.price_usd,
+      chain: "ethereum",
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }));
 
-      if (error) {
-        console.error(`Failed to seed ${asset.symbol}:`, error);
+    // Try to insert assets - if they exist, update them
+    const { data: existingAssets } = await supabase
+      .from("assets")
+      .select("id,symbol")
+      .eq("user_id", userId)
+      .eq("wallet_id", walletId);
+
+    const existingSymbols = new Set((existingAssets || []).map(a => a.symbol));
+    const assetsToCreate = assetsToInsert.filter(a => !existingSymbols.has(a.symbol));
+    const assetsToUpdate = assetsToInsert.filter(a => existingSymbols.has(a.symbol));
+
+    // Insert new assets
+    if (assetsToCreate.length > 0) {
+      const { error: insertError } = await supabase
+        .from("assets")
+        .insert(assetsToCreate as never);
+
+      if (insertError) {
+        console.error("Failed to insert assets:", insertError);
       }
     }
 
-    return res.json({ data: { success: true, message: "Test assets seeded" } });
+    // Update existing assets
+    for (const asset of assetsToUpdate) {
+      const { error: updateError } = await supabase
+        .from("assets")
+        .update({
+          balance: asset.balance,
+          balance_usd: asset.balance_usd,
+          price_usd: asset.price_usd,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", userId)
+        .eq("wallet_id", walletId)
+        .eq("symbol", asset.symbol);
+
+      if (updateError) {
+        console.error(`Failed to update ${asset.symbol}:`, updateError);
+      }
+    }
+
+    return res.json({
+      data: {
+        success: true,
+        message: "Test assets seeded",
+        created: assetsToCreate.length,
+        updated: assetsToUpdate.length,
+      }
+    });
   } catch (err) {
     console.error("Seed assets error:", err);
     return res.status(500).json({ error: "Failed to seed test assets" });
