@@ -536,6 +536,26 @@ export default function Dashboard() {
     }
   }, [dbUser]);
 
+  // Fetch pending withdrawals
+  const fetchPendingWithdrawals = useCallback(async () => {
+    try {
+      if (dbUser?.id) {
+        const proxyResp = await fetch("/api/proxy/pending-withdrawals", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id }),
+        });
+
+        if (proxyResp.ok) {
+          const proxyData = await proxyResp.json();
+          setPendingWithdrawals(proxyData.data || []);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching pending withdrawals:", error);
+    }
+  }, [dbUser]);
+
   // Fetch data on component mount
   useEffect(() => {
     if (isAuthenticated && !loading) {
