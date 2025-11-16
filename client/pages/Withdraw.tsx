@@ -123,6 +123,10 @@ export default function Withdraw() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!address) {
+      setErrors({ ...errors, address: "Wallet address not loaded. Please try again." });
+      return;
+    }
     if (validateForm()) {
       // Pass data to review page
       navigate("/withdraw/review", {
@@ -134,6 +138,9 @@ export default function Withdraw() {
           accountNo,
           routingNo,
           email,
+          address,
+          network,
+          walletId,
           networkFee: getNetworkFee(parseFloat(amount)),
         },
       });
