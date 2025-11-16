@@ -114,8 +114,9 @@ export default function WithdrawReview() {
         },
       });
     } catch (err) {
-      console.error("Failed to create withdrawal:", err);
-      setError("Failed to create withdrawal. Please try again.");
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to create withdrawal:", errorMsg);
+      setError(errorMsg || "Failed to create withdrawal. Please try again.");
       setStep("review");
     }
   };
