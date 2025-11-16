@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Copy,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import {
   LineChart,
