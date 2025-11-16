@@ -53,16 +53,22 @@ export default function Withdraw() {
     const fetchWallet = async () => {
       if (!dbUser?.id) return;
       try {
-        const { data } = await supabase
-          .from("wallets")
-          .select("id,wallet_address")
-          .eq("user_id", dbUser.id)
-          .eq("is_primary", true)
-          .single();
+        const response = await fetch("/api/proxy/user-wallets", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: dbUser.id, primaryOnly: true }),
+        });
 
-        if (data) {
-          setWalletId(data.id);
-          setAddress(data.wallet_address);
+        if (!response.ok) {
+          console.error("Failed to fetch wallet:", response.status);
+          return;
+        }
+
+        const result = await response.json();
+        if (result.data && result.data.length > 0) {
+          const wallet = result.data[0];
+          setWalletId(wallet.id);
+          setAddress(wallet.wallet_address);
         }
       } catch (err) {
         console.error("Failed to fetch wallet:", err);
