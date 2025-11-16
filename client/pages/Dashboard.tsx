@@ -1117,6 +1117,55 @@ export default function Dashboard() {
         )}
       </div>
 
+      {/* Pending Withdrawals Alert */}
+      {pendingWithdrawals.length > 0 && (
+        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-4">
+              <div className="bg-blue-100 p-3 rounded-full flex-shrink-0">
+                <AlertCircle className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-blue-900 mb-2">
+                  {pendingWithdrawals.length} Pending Withdrawal
+                  {pendingWithdrawals.length !== 1 ? "s" : ""}
+                </h3>
+                <p className="text-sm text-blue-800 mb-4">
+                  You have {pendingWithdrawals.length} withdrawal
+                  {pendingWithdrawals.length !== 1 ? "s" : ""} in progress.
+                  Click below to check the status.
+                </p>
+                <div className="space-y-2">
+                  {pendingWithdrawals.map((withdrawal) => (
+                    <button
+                      key={withdrawal.id}
+                      onClick={() =>
+                        navigate("/progress-report", {
+                          state: { withdrawalId: withdrawal.id },
+                        })
+                      }
+                      className="block w-full text-left bg-white hover:bg-gray-50 p-3 rounded-lg border border-blue-100 transition-colors"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-sm font-medium text-gray-900">
+                            {withdrawal.amount} {withdrawal.symbol}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {new Date(withdrawal.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <ChevronRight className="w-5 h-5 text-gray-400" />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Quick Actions */}
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
         <button
@@ -1128,15 +1177,17 @@ export default function Dashboard() {
           </div>
           <span className="text-sm font-medium">Withdraw</span>
         </button>
-        <button
-          onClick={() => navigate("/progress-report")}
-          className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center"
-        >
-          <div className="bg-green-100 p-3 rounded-full mb-2">
-            <TrendingUp className="w-6 h-6 text-green-600" />
-          </div>
-          <span className="text-sm font-medium">Progress Report</span>
-        </button>
+        {pendingWithdrawals.length === 0 && (
+          <button
+            onClick={() => navigate("/progress-report")}
+            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:bg-gray-50 transition-colors flex flex-col items-center justify-center"
+          >
+            <div className="bg-green-100 p-3 rounded-full mb-2">
+              <TrendingUp className="w-6 h-6 text-green-600" />
+            </div>
+            <span className="text-sm font-medium">Progress Report</span>
+          </button>
+        )}
       </div>
     </div>
   );
