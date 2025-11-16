@@ -86,7 +86,7 @@ export default function WithdrawReview() {
 
       // Seed test assets first to ensure balance check passes
       try {
-        await fetch("/api/proxy/seed-assets", {
+        const seedResponse = await fetch("/api/proxy/seed-assets", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -94,6 +94,10 @@ export default function WithdrawReview() {
             walletId: walletId || "default-wallet",
           }),
         });
+        if (seedResponse.ok) {
+          // Wait a moment for the database to update
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
       } catch (seedErr) {
         console.debug("Asset seeding error (continuing anyway):", seedErr);
       }
