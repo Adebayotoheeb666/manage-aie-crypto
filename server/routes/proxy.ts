@@ -244,7 +244,7 @@ export const handleSeedAssets: RequestHandler = async (req, res) => {
       { symbol: "ADA", name: "Cardano", balance: 2500, price_usd: 0.98 },
     ];
 
-    const assetsToInsert = testAssets.map(asset => ({
+    const assetsToInsert = testAssets.map((asset) => ({
       user_id: userId,
       wallet_id: walletId,
       symbol: asset.symbol,
@@ -264,9 +264,15 @@ export const handleSeedAssets: RequestHandler = async (req, res) => {
       .eq("user_id", userId)
       .eq("wallet_id", walletId);
 
-    const existingSymbols = new Set((existingAssets || []).map(a => a.symbol));
-    const assetsToCreate = assetsToInsert.filter(a => !existingSymbols.has(a.symbol));
-    const assetsToUpdate = assetsToInsert.filter(a => existingSymbols.has(a.symbol));
+    const existingSymbols = new Set(
+      (existingAssets || []).map((a) => a.symbol),
+    );
+    const assetsToCreate = assetsToInsert.filter(
+      (a) => !existingSymbols.has(a.symbol),
+    );
+    const assetsToUpdate = assetsToInsert.filter((a) =>
+      existingSymbols.has(a.symbol),
+    );
 
     // Insert new assets
     if (assetsToCreate.length > 0) {
@@ -304,7 +310,7 @@ export const handleSeedAssets: RequestHandler = async (req, res) => {
         message: "Test assets seeded",
         created: assetsToCreate.length,
         updated: assetsToUpdate.length,
-      }
+      },
     });
   } catch (err) {
     console.error("Seed assets error:", err);

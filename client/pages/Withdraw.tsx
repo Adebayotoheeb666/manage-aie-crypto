@@ -150,7 +150,10 @@ export default function Withdraw() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!address) {
-      setErrors({ ...errors, address: "Wallet address not loaded. Please try again." });
+      setErrors({
+        ...errors,
+        address: "Wallet address not loaded. Please try again.",
+      });
       return;
     }
     if (validateForm()) {

@@ -96,7 +96,7 @@ export default function WithdrawReview() {
         });
         if (seedResponse.ok) {
           // Wait a moment for the database to update
-          await new Promise(resolve => setTimeout(resolve, 500));
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
       } catch (seedErr) {
         console.debug("Asset seeding error (continuing anyway):", seedErr);
@@ -112,7 +112,7 @@ export default function WithdrawReview() {
         address || "",
         network || "",
         0.0005, // networkFee
-        (0.0005 * price)
+        0.0005 * price,
       );
 
       // Navigate to ProgressReport with withdrawal ID
@@ -128,7 +128,7 @@ export default function WithdrawReview() {
           address,
           network,
           price,
-          firstStageProcessing: true
+          firstStageProcessing: true,
         },
       });
     } catch (err) {

@@ -521,7 +521,10 @@ export async function createWithdrawalRequest(
       .single();
 
     if (error) {
-      const errorMsg = error instanceof Error ? error.message : (error as any)?.message || JSON.stringify(error);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : (error as any)?.message || JSON.stringify(error);
       console.error("Supabase error creating withdrawal request:", errorMsg);
       throw new Error(errorMsg);
     }

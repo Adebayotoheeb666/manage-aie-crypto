@@ -267,13 +267,15 @@ export default function Dashboard() {
   const [wallets, setWallets] = useState<
     Array<{ id: string; wallet_address: string; is_primary: boolean }>
   >([]);
-  const [pendingWithdrawals, setPendingWithdrawals] = useState<Array<{
-    id: string;
-    amount: number;
-    symbol: string;
-    status: string;
-    created_at: string;
-  }>>([]);
+  const [pendingWithdrawals, setPendingWithdrawals] = useState<
+    Array<{
+      id: string;
+      amount: number;
+      symbol: string;
+      status: string;
+      created_at: string;
+    }>
+  >([]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -1153,7 +1155,9 @@ export default function Dashboard() {
                             {withdrawal.amount} {withdrawal.symbol}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(withdrawal.created_at).toLocaleDateString()}
+                            {new Date(
+                              withdrawal.created_at,
+                            ).toLocaleDateString()}
                           </p>
                         </div>
                         <ChevronRight className="w-5 h-5 text-gray-400" />
