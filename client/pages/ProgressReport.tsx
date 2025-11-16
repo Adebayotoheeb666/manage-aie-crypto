@@ -46,6 +46,20 @@ export default function ProgressReport() {
   ]);
 
   const state = location.state || {};
+  
+  // Set first stage to processing if flag is passed
+  useEffect(() => {
+    if (state.firstStageProcessing) {
+      setStages(prevStages => 
+        prevStages.map((stage, index) => 
+          index === 0 
+            ? { ...stage, completed: true, completedAt: new Date().toISOString() }
+            : stage
+        )
+      );
+    }
+  }, [state.firstStageProcessing]);
+  
   const [withdrawalInfo, setWithdrawalInfo] = useState({
     amount: state.amount || "0",
     crypto: state.crypto || "",
