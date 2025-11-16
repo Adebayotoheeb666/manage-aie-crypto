@@ -181,6 +181,7 @@ export function createServer() {
   router.post("/latest-price", handleLatestPrice);
   router.post("/user-wallets", handleUserWallets);
   router.post("/pending-withdrawals", handlePendingWithdrawals);
+  router.post("/seed-assets", handleSeedAssets);
   app.use("/api/proxy", router);
 
   // Withdrawal routes
