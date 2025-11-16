@@ -574,13 +574,14 @@ export default function Dashboard() {
           setTransactions(mockTransactions);
           setPortfolioData(mockPortfolioData);
           await fetchWallets();
+          await fetchPendingWithdrawals();
         } finally {
           setIsLoading(false);
         }
       };
       loadData();
     }
-  }, [isAuthenticated, loading, fetchWallets]);
+  }, [isAuthenticated, loading, fetchWallets, fetchPendingWithdrawals]);
 
   // Format currency
   const formatCurrency = (value: number) => {
