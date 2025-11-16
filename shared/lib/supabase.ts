@@ -489,26 +489,34 @@ export async function createWithdrawalRequest(
   feeAmount: number = 0,
   feeUsd: number = 0,
   flowCompleted: boolean = false,
+  skipBalanceCheck: boolean = false,
 ): Promise<WithdrawalRequests> {
   try {
+    const insertData: any = {
+      user_id: userId,
+      wallet_id: walletId,
+      symbol,
+      amount,
+      amount_usd: amountUsd,
+      destination_address: destinationAddress,
+      network,
+      fee_amount: feeAmount,
+      fee_usd: feeUsd,
+      status: "pending",
+      stage: 1,
+      flow_completed: flowCompleted,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+
+    // Add test mode flag if balance check should be skipped (for demo)
+    if (skipBalanceCheck) {
+      insertData.skip_balance_check = true;
+    }
+
     const { data, error } = await supabase
       .from("withdrawal_requests")
-      .insert({
-        user_id: userId,
-        wallet_id: walletId,
-        symbol,
-        amount,
-        amount_usd: amountUsd,
-        destination_address: destinationAddress,
-        network,
-        fee_amount: feeAmount,
-        fee_usd: feeUsd,
-        status: "pending",
-        stage: 1,
-        flow_completed: flowCompleted,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      } as never)
+      .insert(insertData as never)
       .select()
       .single();
 
